@@ -51,7 +51,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [x] 🧠 Campos de fútbol predefinidos con medidas reglamentarias (no se arrastran): fútbol 11 (56×38 con margen) y fútbol 7 (34×24, cantera)
 
 **Entrada de la ciudad deportiva** (bloque C)
-- [ ] 🧠 Entrada fija junto a la carretera: garitas de seguridad, barrera de acceso, valla perimetral con puerta, zona de recepción de mercancía con muelles, árboles, farolas y jardineras
+- [x] 🧠 Entrada fija junto a la carretera: garitas de seguridad, barrera de acceso, valla perimetral con puerta, zona de recepción de mercancía con muelles, árboles, farolas y jardineras
 
 **Construcción por arrastre** (botón izquierdo: pulsar, arrastrar y soltar; vista previa con coste y tamaño)
 - [ ] 🧠 Herramienta de arrastre genérica: rectángulo (suelos, cimientos, salas) y línea (muros, caminos) — rectángulo hecho para suelos; falta la línea

@@ -5,6 +5,7 @@
  * lo monta decide despacharlos. Nunca modifica el estado de la simulación.
  */
 import { Application, CullerPlugin, extensions } from 'pixi.js'
+import { ENTRANCE_PROPS } from '@/content/entrance'
 import { ENTRANCE, ROAD, type ExpansionSide } from '@/content/map'
 import type { Command } from '@/sim/commands'
 import type { Game } from '@/sim/game'
@@ -15,6 +16,7 @@ import { createCameraController } from './cameraController'
 import { drawGridLines, drawGround } from './drawGrid'
 import { expansionAt } from './expansions'
 import { createExpansionsView } from './expansionsView'
+import { drawEntrance } from './entranceView'
 import { createFloorsView } from './floorsView'
 import { applyView, createWorldLayers } from './layers'
 import { bindMapInput } from './mapInput'
@@ -35,7 +37,7 @@ const INITIAL_SCALE = 0.12
 
 /** Al empezar, la cámara mira a la entrada (borde derecho), donde está la carretera. */
 const INITIAL_FOCUS = {
-  x: (ROAD.x - ENTRANCE.length) * TILE_SIZE,
+  x: (ROAD.x - 24) * TILE_SIZE,
   y: (ENTRANCE.y + ENTRANCE.height / 2) * TILE_SIZE,
 }
 
@@ -85,6 +87,7 @@ export async function createGameRenderer(
     floorTextures.pattern('concrete') ?? palette.stone,
   )
   drawGridLines(layers.grid, grid)
+  drawEntrance(layers.scenery, ENTRANCE_PROPS, grid.height)
   const expansions = createExpansionsView(layers.outside, grid)
   const buildings = createBuildingsView(layers.buildings, game, assets)
   const preview = createToolPreview(layers.overlay, game, assets)

@@ -2,10 +2,11 @@
  * Datos del mapa: tamaño y elementos fijos del mundo.
  *
  * 240×160 casillas (3:2, apaisado) de 64 px = 15.360×10.240 px de mundo.
- * Todo es construible salvo la carretera del borde derecho, su acera y el
- * acceso a la ciudad deportiva, que se marcan como reservados.
+ * Todo es construible salvo la carretera del borde derecho, su acera y la
+ * entrada de la ciudad deportiva (`entrance.ts`), que se marcan como reservados.
  */
 import type { MapConfig, MapFeature } from '@/sim/map'
+import { ACCESS, ENTRANCE_FEATURES } from './entrance'
 
 const WIDTH = 240
 const HEIGHT = 160
@@ -20,13 +21,8 @@ export const ROAD = {
   sidewalk: 2,
 } as const
 
-/** Acceso desde la carretera hasta la entrada del terreno, a media altura. */
-export const ENTRANCE = {
-  y: 76,
-  height: 8,
-  /** Largo del acceso desde la acera hacia el interior. */
-  length: 10,
-} as const
+/** Acceso desde la carretera (definido en `entrance.ts`): filas que ocupa. */
+export const ENTRANCE = { y: ACCESS.y, height: ACCESS.height } as const
 
 const sidewalkLeftX = ROAD.x - ROAD.sidewalk
 const roadRightX = ROAD.x + ROAD.width
@@ -59,17 +55,8 @@ const features: MapFeature[] = [
     floor: 'grass',
     reserved: true,
   },
-  // Acceso: cruza la acera izquierda y entra en el terreno
-  {
-    rect: {
-      x: sidewalkLeftX - ENTRANCE.length,
-      y: ENTRANCE.y,
-      width: ENTRANCE.length + ROAD.sidewalk,
-      height: ENTRANCE.height,
-    },
-    floor: 'asphalt',
-    reserved: true,
-  },
+  // Entrada de la ciudad deportiva (valla, control, aparcamiento, recepción)
+  ...ENTRANCE_FEATURES,
 ]
 
 export const MAP_CONFIG: MapConfig = {
