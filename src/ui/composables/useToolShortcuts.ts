@@ -4,6 +4,7 @@
  */
 import { onBeforeUnmount, onMounted } from 'vue'
 import { useBuildMenu } from '@/ui/composables/useBuildMenu'
+import { useSelectionStore } from '@/ui/stores/selectionStore'
 import { useToolStore } from '@/ui/stores/toolStore'
 
 /** Indica si el foco está en un campo de texto editable. */
@@ -19,10 +20,12 @@ function isEditableTarget(target: EventTarget | null): boolean {
 export function useToolShortcuts(): void {
   const toolStore = useToolStore()
   const buildMenu = useBuildMenu()
+  const selection = useSelectionStore()
 
-  /** Escape: primero suelta la herramienta; si no hay, cierra el menú. */
+  /** Escape: suelta la herramienta; si no hay, deselecciona la sala; si tampoco, cierra el menú. */
   function onEscape(): void {
     if (toolStore.tool.kind !== 'none') return toolStore.clear()
+    if (selection.selectedRoomId !== null) return selection.clear()
     buildMenu.close()
   }
 

@@ -15,6 +15,7 @@ export const LAYER_ORDER = [
   'road', // marcas viales y tramos de carretera fuera del mapa
   'grid', // líneas de la rejilla
   'scenery', // decorado fijo del mundo: entrada, valla, árboles
+  'roomLabels', // nombre de cada sala pintado en el suelo y sus avisos
   'structures', // muros, puertas y sus sombras
   'outside', // zonas de ampliación bloqueadas (fuera del mapa)
   'buildings', // edificios y sus sombras

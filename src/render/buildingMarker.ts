@@ -8,7 +8,9 @@ import { Container, Graphics, Sprite, Text } from 'pixi.js'
 import type { BuildingDef } from '@/sim/buildings'
 import { rotateSize, type Rotation } from '@/sim/geometry'
 import { TILE_SIZE } from './grid'
+import { OBJECT_ART, type ObjectPainter } from './objectArt'
 import { createPitchMarker } from './pitchMarker'
+import { createRandom, seedFromText } from './random'
 import { palette } from './palette'
 import type { RenderAssets } from './renderAssets'
 
@@ -40,6 +42,9 @@ export function createBuildingMarker(
       assets?.floors.pattern(def.pitch.surface) ?? def.markerColor,
     )
   }
+  // Objetos con dibujo propio (taquilla, ducha, mesa…)
+  const painter = OBJECT_ART[def.id]
+  if (painter) return createArtMarker(def, rotation, painter)
 
   const tiles = rotateSize(def.size, rotation)
   const width = tiles.width * TILE_SIZE
@@ -144,6 +149,41 @@ function drawFrontArrow(
     .poly([tipX, tipY, baseX + perpX, baseY + perpY, baseX - perpX, baseY - perpY])
     .fill({ color: palette.chalk, alpha: 0.85 })
     .stroke({ width: 1, color: palette.outline })
+}
+
+/**
+ * Marcador con dibujo propio. El pintor dibuja el objeto sin girar con el
+ * frente hacia abajo; aquí se gira el dibujo entero alrededor de su centro.
+ * La sombra va aparte y sin girar, para que caiga siempre abajo a la derecha.
+ */
+function createArtMarker(def: BuildingDef, rotation: Rotation, painter: ObjectPainter): Container {
+  const w = def.size.width * TILE_SIZE
+  const h = def.size.height * TILE_SIZE
+  const rotated = rotateSize(def.size, rotation)
+  const rw = rotated.width * TILE_SIZE
+  const rh = rotated.height * TILE_SIZE
+
+  const marker = new Container({ label: `building:${def.id}` })
+  const shadowInset = def.symmetric ? 14 : 6
+  marker.addChild(
+    new Graphics()
+      .roundRect(
+        shadowInset + SHADOW_OFFSET,
+        shadowInset + SHADOW_OFFSET,
+        rw - shadowInset * 2,
+        rh - shadowInset * 2,
+        6,
+      )
+      .fill({ color: palette.outline, alpha: 0.28 }),
+  )
+
+  const art = new Graphics()
+  painter(art, w, h, createRandom(seedFromText(def.id)))
+  art.pivot.set(w / 2, h / 2)
+  art.position.set(rw / 2, rh / 2)
+  art.rotation = (rotation * Math.PI) / 2
+  marker.addChild(art)
+  return marker
 }
 
 /** Libera el marcador y sus hijos (los `Text` liberan su textura al destruirse). */

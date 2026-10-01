@@ -6,6 +6,7 @@
 import type { BuildingCatalog } from './buildings'
 import type { SimContent } from './content'
 import type { FloorCatalog } from './floors'
+import type { RoomCatalog } from './roomTypes'
 import type { DoorCatalog, WallCatalog } from './structureTypes'
 import { createMapState, type MapConfig, type MapState } from './map'
 
@@ -71,12 +72,37 @@ export const TEST_DOORS: DoorCatalog = {
   door: { id: 'door', name: 'Puerta', cost: 150, color: 0xc98b3c, pattern: 'wood' },
 }
 
+/**
+ * Salas de prueba: 'kit' (2×2, pide 1 'small', aforo 1 por 'small') y
+ * 'depot' (2×3, pide 1 'wide', sin aforo).
+ */
+export const TEST_ROOMS: RoomCatalog = {
+  kit: {
+    id: 'kit',
+    name: 'Kit',
+    icon: 'K',
+    color: 0x5b8fb9,
+    minSize: { width: 2, height: 2 },
+    requirements: [{ object: 'small', min: 1 }],
+    capacity: { object: 'small', per: 1, unit: 'plazas' },
+  },
+  depot: {
+    id: 'depot',
+    name: 'Depósito',
+    icon: 'D',
+    color: 0x9b9385,
+    minSize: { width: 2, height: 3 },
+    requirements: [{ object: 'wide', min: 1 }],
+  },
+}
+
 /** Contenido de prueba completo, el que reciben `executeCommand` y `createGame`. */
 export const TEST_CONTENT: SimContent = {
   buildings: TEST_CATALOG,
   floors: TEST_FLOORS,
   walls: TEST_WALLS,
   doors: TEST_DOORS,
+  rooms: TEST_ROOMS,
 }
 
 /**

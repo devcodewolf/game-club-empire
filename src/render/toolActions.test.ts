@@ -80,25 +80,25 @@ describe('commandForTool', () => {
   describe('demolish', () => {
     const demolish: Tool = { kind: 'demolish' }
 
-    it('sobre un edificio colocado propone demolishBuilding con su id', () => {
-      const state = createTestMap()
-      executeCommand(
-        state,
-        { type: 'placeBuilding', buildingType: 'small', origin: { x: 2, y: 2 }, rotation: 0 },
-        TEST_CONTENT,
-      )
-
-      expect(commandFor(demolish, { x: 2, y: 2 }, state)).toEqual({
-        type: 'demolishBuilding',
-        buildingId: 1,
+    it('un clic propone demolishAt con la casilla del cursor', () => {
+      expect(commandFor(demolish, { x: 2, y: 2 })).toEqual({
+        type: 'demolishAt',
+        tile: { x: 2, y: 2 },
       })
     })
 
-    it('sobre una casilla vacía devuelve null', () => {
-      expect(commandFor(demolish, { x: 2, y: 2 })).toBeNull()
+    it('un clic en una casilla vacía también propone demolishAt (valida la simulación)', () => {
+      const state = createTestMap()
+      const command = commandFor(demolish, { x: 9, y: 9 }, state)
+
+      expect(command).toEqual({ type: 'demolishAt', tile: { x: 9, y: 9 } })
+      expect(executeCommand(state, command!, TEST_CONTENT)).toEqual({
+        ok: false,
+        reason: 'nothingToDemolish',
+      })
     })
 
-    it('sobre cualquier casilla de la huella devuelve el mismo id', () => {
+    it('un clic sobre un edificio propone demolishAt y la simulación lo quita', () => {
       const state = createTestMap()
       executeCommand(
         state,
@@ -106,18 +106,11 @@ describe('commandForTool', () => {
         TEST_CONTENT,
       )
 
-      // wide 3×2 en (2,2): x 2..4, y 2..3
-      for (const cursor of [
-        { x: 2, y: 2 },
-        { x: 4, y: 2 },
-        { x: 3, y: 3 },
-        { x: 4, y: 3 },
-      ]) {
-        expect(commandFor(demolish, cursor, state)).toEqual({
-          type: 'demolishBuilding',
-          buildingId: 1,
-        })
-      }
+      const command = commandFor(demolish, { x: 4, y: 3 }, state)
+
+      expect(command).toEqual({ type: 'demolishAt', tile: { x: 4, y: 3 } })
+      expect(executeCommand(state, command!, TEST_CONTENT).ok).toBe(true)
+      expect(buildingAt(state, { x: 2, y: 2 })).toBeUndefined()
     })
   })
 
@@ -163,6 +156,21 @@ describe('commandForTool: estructuras', () => {
       rect: { x: 5, y: 6, width: 1, height: 1 },
       wall: 'brick',
       floor: 'dirt',
+    })
+  })
+
+  it('room: un clic propone designateRoom en la casilla del cursor', () => {
+    expect(commandFor({ kind: 'room', roomType: 'kit' }, { x: 5, y: 6 })).toEqual({
+      type: 'designateRoom',
+      tile: { x: 5, y: 6 },
+      roomType: 'kit',
+    })
+  })
+
+  it('removeRoom: un clic propone removeRoom en la casilla del cursor', () => {
+    expect(commandFor({ kind: 'removeRoom' }, { x: 5, y: 6 })).toEqual({
+      type: 'removeRoom',
+      tile: { x: 5, y: 6 },
     })
   })
 
@@ -246,6 +254,35 @@ describe('commandForDrag: estructuras', () => {
   })
 })
 
+describe('commandForDrag: demolish', () => {
+  const state = createTestMap()
+  const demolish: Tool = { kind: 'demolish' }
+
+  it('un arrastre de 1×1 propone demolishAt', () => {
+    expect(commandForDrag(demolish, { x: 4, y: 5 }, { x: 4, y: 5 }, state)).toEqual({
+      type: 'demolishAt',
+      tile: { x: 4, y: 5 },
+    })
+  })
+
+  it('un arrastre mayor propone demolishArea con el rect normalizado', () => {
+    const esperado = { type: 'demolishArea', rect: { x: 3, y: 4, width: 4, height: 4 } }
+    expect(commandForDrag(demolish, { x: 3, y: 4 }, { x: 6, y: 7 }, state)).toEqual(esperado)
+    expect(commandForDrag(demolish, { x: 6, y: 7 }, { x: 3, y: 4 }, state)).toEqual(esperado)
+  })
+
+  it('un arrastre mayor se recorta al mapa', () => {
+    expect(commandForDrag(demolish, { x: 17, y: 18 }, { x: 30, y: 40 }, state)).toEqual({
+      type: 'demolishArea',
+      rect: { x: 17, y: 18, width: 3, height: 2 },
+    })
+  })
+
+  it('un arrastre completamente fuera del mapa da null', () => {
+    expect(commandForDrag(demolish, { x: 25, y: 2 }, { x: 30, y: 6 }, state)).toBeNull()
+  })
+})
+
 describe('dragShape', () => {
   it.each<[string, Tool, 'rect' | 'line' | null]>([
     ['paintFloor', { kind: 'paintFloor', floor: 'dirt' }, 'rect'],
@@ -255,7 +292,7 @@ describe('dragShape', () => {
     ['door', { kind: 'door', door: 'door' }, null],
     ['none', { kind: 'none' }, null],
     ['build', { kind: 'build', buildingType: 'small', rotation: 0 }, null],
-    ['demolish', { kind: 'demolish' }, null],
+    ['demolish', { kind: 'demolish' }, 'rect'],
   ])('%s', (_nombre, tool, esperada) => {
     expect(dragShape(tool)).toBe(esperada)
   })
@@ -316,7 +353,6 @@ describe('commandForDrag', () => {
   it.each<[string, Tool]>([
     ['none', { kind: 'none' }],
     ['build', { kind: 'build', buildingType: 'small', rotation: 0 }],
-    ['demolish', { kind: 'demolish' }],
   ])('devuelve null con la herramienta %s, que no es de arrastre', (_nombre, tool) => {
     expect(drag({ x: 1, y: 1 }, { x: 4, y: 4 }, tool)).toBeNull()
   })
@@ -327,7 +363,7 @@ describe('isDragTool', () => {
     ['paintFloor', { kind: 'paintFloor', floor: 'dirt' }, true],
     ['none', { kind: 'none' }, false],
     ['build', { kind: 'build', buildingType: 'small', rotation: 0 }, false],
-    ['demolish', { kind: 'demolish' }, false],
+    ['demolish', { kind: 'demolish' }, true],
     ['foundation', { kind: 'foundation', wall: 'brick', floor: 'dirt' }, true],
     ['wall', { kind: 'wall', wall: 'brick' }, true],
     ['demolishStructures', { kind: 'demolishStructures' }, true],

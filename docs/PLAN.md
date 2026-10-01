@@ -53,17 +53,20 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 **Entrada de la ciudad deportiva** (bloque C)
 - [x] 🧠 Entrada fija junto a la carretera: garitas de seguridad, barrera de acceso, valla perimetral con puerta, zona de recepción de mercancía con muelles, árboles, farolas y jardineras
 
+> Referencias de Prison Architect para todas las fases (escala, interfaz, construcción, economía, personal, salas y objetos): `docs/referencias/README.md`.
+
 **Construcción por arrastre** (botón izquierdo: pulsar, arrastrar y soltar; vista previa con coste y tamaño)
 - [x] 🧠 Herramienta de arrastre genérica: rectángulo (suelos, cimientos, salas) y línea (muros, caminos) — rectángulo hecho para suelos; falta la línea
 - [x] 🧠 Suelos en `sim/`: un tipo por casilla. Tipos iniciales en `content/floors.ts`: hierba, tierra, grava, losa de piedra, hormigón, madera, baldosa blanca y asfalto
 - [x] 🧠 Muros y puertas: los muros ocupan casillas y las puertas se colocan sobre un muro (el eje de la puerta sale de los muros vecinos)
 - [x] 🧠 Cimientos: arrastrar un rectángulo levanta los muros del perímetro y pone el suelo interior (solapar cimientos amplía el edificio y comparte pared)
-- [ ] 🧠 Salas: se designan arrastrando sobre casillas. El tipo de sala se define en `content/rooms.ts` con requisitos (cerrada o al aire libre, tamaño mínimo, objetos necesarios) y una capacidad que depende del tamaño. Tipos iniciales: vestuario, oficina y recepción (los campos de fútbol son objetos de tamaño fijo, ver bloque A)
-- [ ] 🧠 Objetos: colocación con giro reutilizando el sistema de la Fase 1. Objetos iniciales en `content/objects.ts`: portería, banquillo, taquilla, ducha, banco, mesa, silla y mostrador
-- [ ] 🧠 Validación de salas: indicar qué le falta a cada una ("Vestuario: faltan 2 duchas")
-- [ ] ⚡ Render: suelos por casilla ✓, muros con autotiling, remate, cara de material y sombras ✓, puertas ✓; falta el nombre de la sala sobre el suelo (hito 3)
-- [ ] ⚡ Demoler: muros y puertas ✓, objetos ✓; faltan salas (hito 3) y suelos (pintar hierba ya sirve)
-- [ ] ⚡ Tests: suelos, muros, cimientos, designación de salas, requisitos y capacidad
+- [x] 🧠 Salas: se designan arrastrando sobre casillas. El tipo de sala se define en `content/rooms.ts` con requisitos (cerrada o al aire libre, tamaño mínimo, objetos necesarios) y una capacidad que depende del tamaño. Tipos iniciales: vestuario, oficina y recepción (los campos de fútbol son objetos de tamaño fijo, ver bloque A) — implementado como en PA: clic dentro del edificio y la sala ocupa todo el espacio cerrado (flood fill); 7 tipos con requisitos y capacidad
+- [x] 🧠 Objetos: colocación con giro reutilizando el sistema de la Fase 1. Objetos iniciales en `content/objects.ts`: portería, banquillo, taquilla, ducha, banco, mesa, silla y mostrador — 27 objetos y 6 gradas dibujados por código al estilo PA
+- [x] 🧠 Validación de salas: indicar qué le falta a cada una ("Vestuario: faltan 2 duchas") (aviso sobre el suelo y panel de sala con lista de comprobación)
+- [x] ⚡ Render: suelos por casilla, muros con autotiling, remate, cara de material y sombras, puertas y nombre de la sala sobre el suelo
+- [x] ⚡ Demoler unificado (bulldozer de PA): clic quita lo de encima (objeto → puerta → muro → suelo) y arrastrar arrasa la zona; "Quitar sala" aparte
+- [x] ⚡ Zoom inicial ×0,5 (~60×34 casillas en 1080p, como PA); referencias de escala en `docs/referencias/pa-escala-y-mapa.md`
+- [x] ⚡ Tests: suelos, muros, cimientos, designación de salas, requisitos y capacidad
 
 **Menú de construcción por categorías** (bloque B, se adelanta)
 - [x] ⚡ Iconos de línea con Tabler Icons (Vue y texturas Pixi para los marcadores)
@@ -72,6 +75,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [x] ⚡ Elementos bloqueados en gris con el requisito al pasar el ratón (p. ej. "Se desbloquea en 3.ª División"), con los desbloqueos como datos en `content/`
 
 **Pulido de la construcción**
+- [ ] ⚡ Panel de construcción: pestañas en vertical a la DERECHA del panel (como Prison Architect), en lugar de arriba
 - [ ] ⚡ Animación de construcción: andamio → sala o objeto con rebote + polvo; demolición que se desvanece con polvo
 - [ ] ⚡ Cámara con inercia y zoom suave (GSAP)
 
@@ -112,6 +116,8 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] ⚡ Tests de economía (ingresos/gastos de una semana)
 - [ ] ⚡ Cifras del HUD animadas y textos flotantes "+120 €" sobre las salas
 - [ ] 🧠 Sistema de temas visuales de UI con Tailwind: estilo "carpeta del míster" (papel, clip, pestañas de colores en el lateral), fuente manuscrita para títulos y otra legible para datos
+- [ ] 🧠 **Informes** (como Reports de Prison Architect): botón "Informes" (icono de carpeta con papeles) abajo a la derecha que abre un cuaderno/carpeta con pestañas de colores en vertical a la IZQUIERDA. Hoja de papel con título en recuadro verde, secciones con cabecera de color, barras y listas. Las pestañas aparecen a medida que llegan los sistemas: Finanzas y Valoración (Fase 2) · Horario (Fase 3) · Plantilla y personal, Llegadas y fichajes, Trabajos y Necesidades (Fase 4) · Normas y Patrocinios (Fase 5) · Cantera (backlog)
+- [ ] ⚡ Pestaña Finanzas: ingresos y gastos por concepto y saldo neto por semana (como Finance de PA)
 
 ✅ **Validar:** una partida de 10 minutos tiene sentido económico; guardar y cargar funciona.
 

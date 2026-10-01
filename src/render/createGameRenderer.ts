@@ -19,6 +19,7 @@ import { createExpansionsView } from './expansionsView'
 import { drawEntrance } from './entranceView'
 import { createFloorsView } from './floorsView'
 import { createWallsView } from './wallsView'
+import { createRoomsView } from './roomsView'
 import { applyView, createWorldLayers } from './layers'
 import { bindMapInput } from './mapInput'
 import { palette } from './palette'
@@ -33,8 +34,12 @@ import { TILE_SIZE } from './grid'
 // Debe registrarse antes de crear la aplicación.
 extensions.add(CullerPlugin)
 
-/** Zoom inicial: vista global del terreno, como al abrir una partida en Prison Architect. */
-const INITIAL_SCALE = 0.12
+/**
+ * Zoom inicial ×0,5 (32 px por casilla): en 1920×1080 se ven ~60×34 casillas,
+ * como el zoom por defecto de Prison Architect. Más lejos los objetos son
+ * ilegibles; la vista de conjunto sigue a mano alejando con la rueda.
+ */
+const INITIAL_SCALE = 0.5
 
 /** Al empezar, la cámara mira a la entrada (borde derecho), donde está la carretera. */
 const INITIAL_FOCUS = {
@@ -49,6 +54,8 @@ export interface GameRendererOptions {
   readonly onCancel: () => void
   /** Clic sobre una zona de ampliación bloqueada. */
   readonly onExpansionClick: (side: ExpansionSide) => void
+  /** Clic sin herramienta: el jugador quiere inspeccionar lo que hay en la casilla. */
+  readonly onInspect: (tile: TileCoord) => void
 }
 
 export interface GameRenderer {
@@ -59,7 +66,7 @@ export interface GameRenderer {
 export async function createGameRenderer(
   host: HTMLElement,
   game: Game,
-  { onCommand, onCancel, onExpansionClick }: GameRendererOptions,
+  { onCommand, onCancel, onExpansionClick, onInspect }: GameRendererOptions,
 ): Promise<GameRenderer> {
   const app = new Application()
   await app.init({
@@ -90,6 +97,7 @@ export async function createGameRenderer(
   drawGridLines(layers.grid, grid)
   drawEntrance(layers.scenery, ENTRANCE_PROPS, grid.height)
   const expansions = createExpansionsView(layers.outside, grid)
+  const rooms = createRoomsView(layers.roomLabels, game)
   const walls = createWallsView(layers.structures, game, assets.walls)
   const buildings = createBuildingsView(layers.buildings, game, assets)
   const preview = createToolPreview(layers.overlay, game, assets)
@@ -126,6 +134,7 @@ export async function createGameRenderer(
       const side = expansionAt(tile, grid)
       if (side) return onExpansionClick(side)
 
+      if (tool.kind === 'none') return onInspect(tile)
       const command = commandForTool(tool, tile, game.state, game.content)
       if (command) onCommand(command)
     },
@@ -166,6 +175,7 @@ export async function createGameRenderer(
       buildings.destroy()
       floors.destroy()
       walls.destroy()
+      rooms.destroy()
       assets.destroy()
       // releaseGlobalResources: vacía cachés globales de Pixi para que recrear
       // la app (p. ej. recarga en caliente de Vite) no deje texturas obsoletas.

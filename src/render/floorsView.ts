@@ -69,6 +69,7 @@ export function createFloorsView(
     // Pintar suelo y construir cimientos (ponen suelo interior) cambian suelos.
     if (event.type === 'floorPainted') redrawRect(event.rect)
     if (event.type === 'structuresChanged' && event.cause === 'foundation') redrawRect(event.rect)
+    if (event.type === 'areaDemolished') redrawRect(event.rect)
   })
 
   return {

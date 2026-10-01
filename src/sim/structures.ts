@@ -21,6 +21,7 @@ import {
   type TileRect,
 } from './geometry'
 import { EMPTY_TILE, tileIndex, type MapState } from './map'
+import { NO_ROOM } from './roomTypes'
 import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
 
 /** Tamaño mínimo de unos cimientos (incluidos los muros): deja al menos 1×1 dentro. */
@@ -104,7 +105,11 @@ export function validateWalls(
 
 /** Levanta muros en el rectángulo (ya validado). */
 export function applyWalls(state: MapState, rect: TileRect, wall: WallId): void {
-  for (const tile of tilesInRect(rect)) state.walls[tileIndex(state, tile)] = wall
+  for (const tile of tilesInRect(rect)) {
+    const index = tileIndex(state, tile)
+    state.walls[index] = wall
+    state.roomOf[index] = NO_ROOM
+  }
 }
 
 // ── Cimientos ────────────────────────────────────────────────────
@@ -154,6 +159,7 @@ export function applyFoundation(
     state.floors[index] = floor
     if (onEdge) {
       if (state.doors[index] === NO_DOOR) state.walls[index] = wall
+      state.roomOf[index] = NO_ROOM
       continue
     }
     // Interior: se funden los muros y puertas que hubiera (ampliar un edificio)
@@ -202,6 +208,7 @@ export function applyDoor(state: MapState, tile: TileCoord, door: DoorId): void 
   const index = tileIndex(state, tile)
   state.walls[index] = NO_WALL
   state.doors[index] = door
+  state.roomOf[index] = NO_ROOM
 }
 
 // ── Demolición ───────────────────────────────────────────────────

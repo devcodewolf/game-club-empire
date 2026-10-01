@@ -12,6 +12,8 @@ import type { Game } from '@/sim/game'
 import { footprint, perimeterTiles, type TileCoord, type TileRect } from '@/sim/geometry'
 import { buildingAt, buildingFootprint, validateFloorPaint, validatePlacement } from '@/sim/map'
 import { doorAxis, validateDoor, validateFoundation, validateWalls } from '@/sim/structures'
+import { regionFrom, roomAt, validateDesignateRoom } from '@/sim/rooms'
+import { demolishTargetAt } from '@/sim/demolish'
 import { createBuildingMarker, destroyBuildingMarker } from './buildingMarker'
 import { TILE_SIZE } from './grid'
 import type { RenderAssets } from './renderAssets'
@@ -206,6 +208,63 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
         }
         return
       }
+      case 'designateRoom': {
+        const check = validateDesignateRoom(
+          game.state,
+          game.content,
+          command.tile,
+          command.roomType,
+        )
+        const color = game.content.rooms[command.roomType]?.color ?? palette.previewValid
+        if (!check.ok) {
+          drawRect(
+            highlight,
+            { ...command.tile, width: 1, height: 1 },
+            zoom,
+            palette.previewInvalid,
+            palette.previewInvalid,
+            0.35,
+          )
+          return
+        }
+        // Tinte de toda la zona que pasará a ser sala
+        for (const t of regionFrom(game.state, command.tile).tiles) {
+          highlight
+            .rect(t.x * TILE_SIZE, t.y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            .fill({ color, alpha: 0.35 })
+        }
+        return
+      }
+      case 'removeRoom': {
+        const id = roomAt(game.state, command.tile)
+        if (!id) return
+        game.state.roomOf.forEach((roomId, index) => {
+          if (roomId !== id) return
+          const x = index % game.state.size.width
+          const y = Math.floor(index / game.state.size.width)
+          highlight
+            .rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            .fill({ color: palette.previewInvalid, alpha: 0.3 })
+        })
+        return
+      }
+      case 'demolishAt': {
+        const target = demolishTargetAt(game.state, command.tile)
+        if (!target) return
+        // Se resalta justo lo que se quitaría: el objeto entero o la casilla
+        const def =
+          target.kind === 'building' ? game.content.buildings[target.building.type] : undefined
+        const rect =
+          target.kind === 'building' && def
+            ? buildingFootprint(target.building, def)
+            : { ...command.tile, width: 1, height: 1 }
+        drawRect(highlight, rect, zoom, palette.previewInvalid, palette.previewInvalid, 0.35)
+        return
+      }
+      case 'demolishArea':
+        drawRect(highlight, command.rect, zoom, palette.previewInvalid, palette.previewInvalid, 0.3)
+        showSize(sizeLabel, command.rect, zoom)
+        return
       case 'demolishStructures':
         drawRect(highlight, command.rect, zoom, palette.previewInvalid, palette.previewInvalid, 0.3)
         showSize(sizeLabel, command.rect, zoom)

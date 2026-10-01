@@ -34,6 +34,7 @@ export const ICON_NAMES = [
   'folder',
   // Exterior
   'tree',
+  'plant',
   'lamp',
   'trash',
   'picnic-table',

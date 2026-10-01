@@ -15,7 +15,7 @@ import {
   type Rotation,
   type TileCoord,
 } from '@/sim/geometry'
-import { buildingAt, type MapState } from '@/sim/map'
+import type { MapState } from '@/sim/map'
 import { dragShape, type Tool } from './tool'
 
 /**
@@ -51,12 +51,14 @@ export function commandForTool(
         rotation: tool.rotation,
       }
     }
-    case 'demolish': {
-      const building = buildingAt(state, cursor)
-      return building ? { type: 'demolishBuilding', buildingId: building.id } : null
-    }
+    case 'demolish':
+      return { type: 'demolishAt', tile: cursor }
     case 'door':
       return { type: 'placeDoor', tile: cursor, door: tool.door }
+    case 'room':
+      return { type: 'designateRoom', tile: cursor, roomType: tool.roomType }
+    case 'removeRoom':
+      return { type: 'removeRoom', tile: cursor }
     case 'paintFloor':
     case 'wall':
     case 'foundation':
@@ -93,6 +95,11 @@ export function commandForDrag(
       return { type: 'buildFoundation', rect, wall: tool.wall, floor: tool.floor }
     case 'demolishStructures':
       return { type: 'demolishStructures', rect }
+    case 'demolish':
+      // Un clic (zona de 1×1) quita solo lo de encima; un arrastre arrasa la zona.
+      return rect.width * rect.height === 1
+        ? { type: 'demolishAt', tile: { x: rect.x, y: rect.y } }
+        : { type: 'demolishArea', rect }
     default:
       return null
   }

@@ -14,6 +14,7 @@ import type {
 } from './buildings'
 import { DEFAULT_FLOOR, type FloorCatalog, type FloorId } from './floors'
 import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
+import { NO_ROOM, type Room, type RoomId } from './roomTypes'
 import {
   footprint,
   isInsideGrid,
@@ -48,6 +49,11 @@ export interface MapState {
   readonly doors: DoorId[]
   /** Una entrada por casilla: true si es zona interior (con techo), creada por cimientos. */
   readonly indoor: boolean[]
+  /** Una entrada por casilla: id de la sala a la que pertenece o NO_ROOM (0). */
+  readonly roomOf: RoomId[]
+  readonly rooms: Record<RoomId, Room>
+  /** Siguiente id de sala: deterministas, nunca reutilizados. */
+  nextRoomId: RoomId
   readonly buildings: Record<BuildingId, PlacedBuilding>
   /** Siguiente id a asignar: ids deterministas, nunca reutilizados. */
   nextBuildingId: BuildingId
@@ -76,6 +82,9 @@ export function createMapState({ size, features }: MapConfig): MapState {
     walls: new Array<WallId>(tileCount).fill(NO_WALL),
     doors: new Array<DoorId>(tileCount).fill(NO_DOOR),
     indoor: new Array<boolean>(tileCount).fill(false),
+    roomOf: new Array<RoomId>(tileCount).fill(NO_ROOM),
+    rooms: {},
+    nextRoomId: 1,
     buildings: {},
     nextBuildingId: 1,
   }

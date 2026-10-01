@@ -5,6 +5,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { BuildingTypeId } from '@/sim/buildings'
+import type { RoomTypeId } from '@/sim/roomTypes'
 import type { FloorId } from '@/sim/floors'
 import { nextRotation, type Rotation } from '@/sim/geometry'
 import { NO_TOOL, type Tool } from '@/render/tool'
@@ -27,6 +28,8 @@ export const useToolStore = defineStore('tool', () => {
   )
   const activeWall = computed(() => (tool.value.kind === 'wall' ? tool.value.wall : null))
   const activeDoor = computed(() => (tool.value.kind === 'door' ? tool.value.door : null))
+
+  const activeRoom = computed(() => (tool.value.kind === 'room' ? tool.value.roomType : null))
 
   /** Elegir el mismo edificio otra vez lo suelta (como un interruptor). */
   function selectBuilding(buildingType: BuildingTypeId): void {
@@ -60,8 +63,14 @@ export const useToolStore = defineStore('tool', () => {
     tool.value = { kind: 'door', door }
   }
 
-  function selectDemolishStructures(): void {
-    tool.value = tool.value.kind === 'demolishStructures' ? NO_TOOL : { kind: 'demolishStructures' }
+  /** Designar salas de ese tipo; elegir el mismo tipo otra vez lo suelta. */
+  function selectRoom(roomType: RoomTypeId): void {
+    if (activeRoom.value === roomType) return clear()
+    tool.value = { kind: 'room', roomType }
+  }
+
+  function selectRemoveRoom(): void {
+    tool.value = tool.value.kind === 'removeRoom' ? NO_TOOL : { kind: 'removeRoom' }
   }
 
   function rotate(): void {
@@ -82,13 +91,15 @@ export const useToolStore = defineStore('tool', () => {
     activeFoundation,
     activeWall,
     activeDoor,
+    activeRoom,
     selectBuilding,
     selectFloor,
     selectDemolish,
     selectFoundation,
     selectWall,
     selectDoor,
-    selectDemolishStructures,
+    selectRoom,
+    selectRemoveRoom,
     rotate,
     clear,
   }

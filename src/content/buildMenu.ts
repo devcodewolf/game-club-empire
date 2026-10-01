@@ -10,6 +10,7 @@
 import type { StarterBuildingId } from './buildings'
 import type { DoorTypeId } from './doors'
 import type { FloorTypeId } from './floors'
+import { ROOMS, type RoomTypeId } from './rooms'
 import type { WallTypeId } from './walls'
 import type { IconName } from './icons'
 
@@ -28,8 +29,10 @@ export type MenuItem =
   | { readonly kind: 'foundation'; readonly wall: WallTypeId }
   | { readonly kind: 'wall'; readonly id: WallTypeId }
   | { readonly kind: 'door'; readonly id: DoorTypeId }
+  /** Demoler: clic quita lo de encima; arrastrar arrasa la zona. */
   | { readonly kind: 'demolish' }
-  | { readonly kind: 'demolishStructures' }
+  | { readonly kind: 'room'; readonly id: RoomTypeId }
+  | { readonly kind: 'removeRoom' }
   | {
       readonly kind: 'planned'
       readonly label: string
@@ -60,12 +63,16 @@ const floor = (id: FloorTypeId): MenuItem => ({ kind: 'floor', id })
 const foundation = (wall: WallTypeId): MenuItem => ({ kind: 'foundation', wall })
 const wall = (id: WallTypeId): MenuItem => ({ kind: 'wall', id })
 const door = (id: DoorTypeId): MenuItem => ({ kind: 'door', id })
+const room = (id: RoomTypeId): MenuItem => ({ kind: 'room', id })
 const planned = (label: string, icon: IconName, arrives: string): MenuItem => ({
   kind: 'planned',
   label,
   icon,
   arrives,
 })
+
+/** Ids de las salas, en el orden del catálogo. */
+const ROOM_IDS = Object.keys(ROOMS) as RoomTypeId[]
 
 export const BUILD_CATEGORIES: readonly MenuCategory[] = [
   {
@@ -175,13 +182,9 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
       {
         label: 'Salas',
         items: [
-          planned('Vestuario', 'shirt-sport', 'Fase 1B · hito 3'),
-          planned('Oficina', 'briefcase', 'Fase 1B · hito 3'),
-          planned('Recepción', 'ticket', 'Fase 1B · hito 3'),
-          planned('Enfermería', 'first-aid-kit', 'Fase 4'),
-          planned('Gimnasio', 'barbell', 'Fase 4'),
-          planned('Almacén', 'package', 'Fase 4'),
+          ...ROOM_IDS.map(room),
           planned('Sala de prensa', 'camera', 'Fase 5'),
+          { kind: 'removeRoom' },
         ],
       },
     ],
@@ -200,11 +203,22 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
           building('shower'),
           building('toilet'),
           building('sink'),
+          building('tacticsBoard'),
         ],
       },
       {
         label: 'Oficina',
-        items: [building('officeDesk'), building('officeChair'), building('filingCabinet')],
+        items: [
+          building('officeDesk'),
+          building('officeChair'),
+          building('filingCabinet'),
+          building('plant'),
+          building('waterCooler'),
+        ],
+      },
+      {
+        label: 'Recepción y almacén',
+        items: [building('receptionDesk'), building('storageShelf')],
       },
       {
         label: 'Campo',
@@ -227,6 +241,7 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
           building('weightsBench'),
           building('exerciseBike'),
           building('barCounter'),
+          building('cafeTable'),
           building('vendingMachine'),
         ],
       },
@@ -269,6 +284,6 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
     label: 'Demoler',
     icon: 'hammer',
     color: 'red',
-    tabs: [{ label: 'Demoler', items: [{ kind: 'demolish' }, { kind: 'demolishStructures' }] }],
+    tabs: [{ label: 'Demoler', items: [{ kind: 'demolish' }] }],
   },
 ]

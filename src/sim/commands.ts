@@ -22,6 +22,21 @@ import {
   type StructureError,
 } from './structures'
 import type { DoorId, WallId } from './structureTypes'
+import {
+  applyDesignateRoom,
+  applyRemoveRoom,
+  removeEmptyRooms,
+  validateDesignateRoom,
+  validateRemoveRoom,
+  type RoomError,
+} from './rooms'
+import type { RoomId, RoomTypeId } from './roomTypes'
+import {
+  applyDemolishArea,
+  applyDemolishAt,
+  demolishTargetAt,
+  validateDemolishArea,
+} from './demolish'
 import { tilesInRect, type Rotation, type TileCoord, type TileRect } from './geometry'
 import {
   buildingFootprint,
@@ -54,6 +69,12 @@ export type Command =
     }
   | { readonly type: 'placeDoor'; readonly tile: TileCoord; readonly door: DoorId }
   | { readonly type: 'demolishStructures'; readonly rect: TileRect }
+  | { readonly type: 'designateRoom'; readonly tile: TileCoord; readonly roomType: RoomTypeId }
+  | { readonly type: 'removeRoom'; readonly tile: TileCoord }
+  /** Demoler lo que esté encima en una casilla (objeto → puerta → muro → suelo). */
+  | { readonly type: 'demolishAt'; readonly tile: TileCoord }
+  /** Arrasar una zona entera. */
+  | { readonly type: 'demolishArea'; readonly rect: TileRect }
 
 // ── Resultados ───────────────────────────────────────────────────
 
@@ -73,8 +94,22 @@ export type GameEvent =
       readonly rect: TileRect
       readonly cause: 'walls' | 'foundation' | 'door' | 'demolish'
     }
+  | { readonly type: 'roomDesignated'; readonly roomId: RoomId; readonly roomType: RoomTypeId }
+  | { readonly type: 'roomRemoved'; readonly roomId: RoomId }
+  | {
+      /** Se arrasó una zona (o el suelo de una casilla): todo lo de dentro cambió. */
+      readonly type: 'areaDemolished'
+      readonly rect: TileRect
+      readonly buildings: readonly PlacedBuilding[]
+    }
 
-export type CommandError = PlacementError | FloorPaintError | StructureError | 'buildingNotFound'
+export type CommandError =
+  | PlacementError
+  | FloorPaintError
+  | StructureError
+  | RoomError
+  | 'buildingNotFound'
+  | 'nothingToDemolish'
 
 export type CommandResult =
   | { readonly ok: true; readonly event: GameEvent }
@@ -97,24 +132,52 @@ export function executeCommand(
     case 'buildWalls':
       return runStructure(validateWalls(state, content, command.rect, command.wall), () => {
         applyWalls(state, command.rect, command.wall)
+        cleanRooms(state)
         return { type: 'structuresChanged', rect: command.rect, cause: 'walls' }
       })
     case 'buildFoundation': {
       const { rect, wall, floor } = command
       return runStructure(validateFoundation(state, content, rect, wall, floor), () => {
         applyFoundation(state, rect, wall, floor)
+        cleanRooms(state)
         return { type: 'structuresChanged', rect, cause: 'foundation' }
       })
     }
     case 'placeDoor':
       return runStructure(validateDoor(state, content, command.tile, command.door), () => {
         applyDoor(state, command.tile, command.door)
+        cleanRooms(state)
         return {
           type: 'structuresChanged',
           rect: { ...command.tile, width: 1, height: 1 },
           cause: 'door',
         }
       })
+    case 'designateRoom': {
+      const check = validateDesignateRoom(state, content, command.tile, command.roomType)
+      if (!check.ok) return check
+      const roomId = applyDesignateRoom(state, command.tile, command.roomType)
+      return { ok: true, event: { type: 'roomDesignated', roomId, roomType: command.roomType } }
+    }
+    case 'removeRoom': {
+      const check = validateRemoveRoom(state, command.tile)
+      if (!check.ok) return check
+      return {
+        ok: true,
+        event: { type: 'roomRemoved', roomId: applyRemoveRoom(state, command.tile) },
+      }
+    }
+    case 'demolishAt':
+      return demolishAt(state, command.tile, content)
+    case 'demolishArea': {
+      const check = validateDemolishArea(state, command.rect)
+      if (!check.ok) return check
+      applyDemolishArea(state, content, command.rect, check.buildings)
+      return {
+        ok: true,
+        event: { type: 'areaDemolished', rect: command.rect, buildings: check.buildings },
+      }
+    }
     case 'demolishStructures':
       return runStructure(validateDemolishStructures(state, command.rect), () => {
         applyDemolishStructures(state, command.rect)
@@ -127,6 +190,28 @@ export function executeCommand(
 function runStructure(check: StructureCheck, apply: () => GameEvent): CommandResult {
   if (!check.ok) return { ok: false, reason: check.reason }
   return { ok: true, event: apply() }
+}
+
+function demolishAt(state: MapState, tile: TileCoord, content: SimContent): CommandResult {
+  const target = demolishTargetAt(state, tile)
+  if (!target) return { ok: false, reason: 'nothingToDemolish' }
+
+  applyDemolishAt(state, content, tile, target)
+  const rect = { ...tile, width: 1, height: 1 }
+  switch (target.kind) {
+    case 'building':
+      return { ok: true, event: { type: 'buildingDemolished', building: target.building } }
+    case 'door':
+    case 'wall':
+      return { ok: true, event: { type: 'structuresChanged', rect, cause: 'demolish' } }
+    case 'floor':
+      return { ok: true, event: { type: 'areaDemolished', rect, buildings: [] } }
+  }
+}
+
+/** Tras cambiar estructuras: las salas sin casillas dejan de existir. */
+function cleanRooms(state: MapState): void {
+  removeEmptyRooms(state)
 }
 
 function placeBuilding(

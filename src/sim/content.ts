@@ -7,6 +7,7 @@
  */
 import type { BuildingCatalog } from './buildings'
 import type { FloorCatalog } from './floors'
+import type { RoomCatalog } from './roomTypes'
 import type { DoorCatalog, WallCatalog } from './structureTypes'
 
 export interface SimContent {
@@ -14,4 +15,5 @@ export interface SimContent {
   readonly floors: FloorCatalog
   readonly walls: WallCatalog
   readonly doors: DoorCatalog
+  readonly rooms: RoomCatalog
 }

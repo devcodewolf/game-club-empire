@@ -46,6 +46,7 @@ export function createBuildingsView(
   const unsubscribe = game.subscribe((event) => {
     if (event.type === 'buildingPlaced') add(event.building)
     if (event.type === 'buildingDemolished') remove(event.building.id)
+    if (event.type === 'areaDemolished') for (const building of event.buildings) remove(building.id)
   })
 
   return {

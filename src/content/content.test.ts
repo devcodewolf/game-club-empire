@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BuildingDef } from '@/sim/buildings'
 import type { FloorDef } from '@/sim/floors'
+import type { RoomDef } from '@/sim/roomTypes'
 import type { DoorDef, WallDef } from '@/sim/structureTypes'
 import { BUILDINGS } from './buildings'
 import { BUILD_CATEGORIES, type MenuItem } from './buildMenu'
@@ -9,6 +10,7 @@ import { DOORS } from './doors'
 import { FLOORS } from './floors'
 import { ICON_NAMES } from './icons'
 import { DIVISIONS } from './progression'
+import { ROOMS } from './rooms'
 import { WALLS } from './walls'
 
 const iconNames: readonly string[] = ICON_NAMES
@@ -21,6 +23,7 @@ const buildings: readonly BuildingDef[] = Object.values<BuildingDef>(BUILDINGS)
 const floors: readonly FloorDef[] = Object.values<FloorDef>(FLOORS)
 const walls: readonly WallDef[] = Object.values<WallDef>(WALLS)
 const doors: readonly DoorDef[] = Object.values<DoorDef>(DOORS)
+const rooms: readonly RoomDef[] = Object.values<RoomDef>(ROOMS)
 
 describe('contenido', () => {
   it('cada muro, puerta y cimiento del menú existe en su catálogo', () => {
@@ -93,5 +96,29 @@ describe('contenido', () => {
     capacities
       .slice(1)
       .forEach((capacity, i) => expect(capacity).toBeGreaterThan(capacities[i] ?? 0))
+  })
+
+  it('cada sala del menú existe en ROOMS y cada sala de ROOMS está en el menú', () => {
+    const menuRooms = allItems.flatMap((item) => (item.kind === 'room' ? [item.id] : []))
+    for (const id of menuRooms) expect(ROOMS, id).toHaveProperty(id)
+    expect(menuRooms).toEqual(Object.keys(ROOMS))
+  })
+
+  it('los requisitos y la capacidad de cada sala apuntan a edificios existentes', () => {
+    for (const room of rooms) {
+      for (const { object, min } of room.requirements) {
+        expect(BUILDINGS, `${room.id}: ${object}`).toHaveProperty(object)
+        expect(min, `${room.id}: ${object}`).toBeGreaterThan(0)
+      }
+      if (room.capacity) expect(BUILDINGS, room.id).toHaveProperty(room.capacity.object)
+    }
+  })
+
+  it('cada sala tiene al menos un requisito, icono válido y requires válido', () => {
+    for (const room of rooms) {
+      expect(room.requirements.length, room.id).toBeGreaterThan(0)
+      expect(iconNames, room.id).toContain(room.icon)
+      if (room.requires) expect(divisionIds, room.id).toContain(room.requires)
+    }
   })
 })

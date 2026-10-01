@@ -204,6 +204,54 @@ export const BUILDINGS = defineBuildings({
     icon: 'folder',
   },
 
+  // Recepción y almacén
+  receptionDesk: {
+    id: 'receptionDesk',
+    name: 'Mostrador de recepción',
+    size: { width: 3, height: 1 },
+    cost: 600,
+    markerColor: 0xb5643c,
+    icon: 'desk',
+  },
+  storageShelf: {
+    id: 'storageShelf',
+    name: 'Estantería de material',
+    size: { width: 2, height: 1 },
+    cost: 250,
+    markerColor: 0x9b9385,
+    icon: 'package',
+  },
+
+  // Vestuario (táctica)
+  tacticsBoard: {
+    id: 'tacticsBoard',
+    name: 'Pizarra táctica',
+    size: { width: 2, height: 1 },
+    cost: 180,
+    markerColor: 0x3f5a48,
+    icon: 'clipboard',
+  },
+
+  // Decoración de interior
+  plant: {
+    id: 'plant',
+    symmetric: true,
+    name: 'Planta',
+    size: { width: 1, height: 1 },
+    cost: 40,
+    markerColor: 0x4f8a3c,
+    icon: 'plant',
+  },
+  waterCooler: {
+    id: 'waterCooler',
+    symmetric: true,
+    name: 'Fuente de agua',
+    size: { width: 1, height: 1 },
+    cost: 120,
+    markerColor: 0x7fb7d6,
+    icon: 'droplet',
+  },
+
   // Campo
   dugout: {
     id: 'dugout',
@@ -311,6 +359,15 @@ export const BUILDINGS = defineBuildings({
     size: { width: 4, height: 1 },
     cost: 1500,
     markerColor: 0x7a4f2e,
+    icon: 'coffee',
+    requires: 'regional',
+  },
+  cafeTable: {
+    id: 'cafeTable',
+    name: 'Mesa de cafetería',
+    size: { width: 2, height: 2 },
+    cost: 300,
+    markerColor: 0xd9a441,
     icon: 'coffee',
     requires: 'regional',
   },

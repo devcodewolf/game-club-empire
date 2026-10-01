@@ -7,6 +7,7 @@
 import type { BuildingTypeId } from '@/sim/buildings'
 import type { FloorId } from '@/sim/floors'
 import type { Rotation } from '@/sim/geometry'
+import type { RoomTypeId } from '@/sim/roomTypes'
 import type { DoorId, WallId } from '@/sim/structureTypes'
 
 export type Tool =
@@ -18,6 +19,8 @@ export type Tool =
   | { readonly kind: 'wall'; readonly wall: WallId }
   | { readonly kind: 'door'; readonly door: DoorId }
   | { readonly kind: 'demolishStructures' }
+  | { readonly kind: 'room'; readonly roomType: RoomTypeId }
+  | { readonly kind: 'removeRoom' }
 
 export const NO_TOOL: Tool = { kind: 'none' }
 
@@ -32,6 +35,7 @@ export function dragShape(tool: Tool): 'rect' | 'line' | null {
     case 'paintFloor':
     case 'foundation':
     case 'demolishStructures':
+    case 'demolish':
       return 'rect'
     case 'wall':
       return 'line'

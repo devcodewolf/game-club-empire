@@ -33,6 +33,7 @@ import deskSvg from '@tabler/icons/outline/desk.svg?raw'
 import chairDirectorSvg from '@tabler/icons/outline/chair-director.svg?raw'
 import folderSvg from '@tabler/icons/outline/folder.svg?raw'
 import treeSvg from '@tabler/icons/outline/tree.svg?raw'
+import plantSvg from '@tabler/icons/outline/plant.svg?raw'
 import lampSvg from '@tabler/icons/outline/lamp.svg?raw'
 import trashSvg from '@tabler/icons/outline/trash.svg?raw'
 import picnicTableSvg from '@tabler/icons/outline/picnic-table.svg?raw'
@@ -84,6 +85,7 @@ const SVG_SOURCES = {
   'chair-director': chairDirectorSvg,
   folder: folderSvg,
   tree: treeSvg,
+  plant: plantSvg,
   lamp: lampSvg,
   trash: trashSvg,
   'picnic-table': picnicTableSvg,

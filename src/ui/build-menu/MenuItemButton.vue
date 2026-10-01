@@ -4,10 +4,12 @@ import { computed } from 'vue'
 import { getBuilding } from '@/content/buildings'
 import { getDoor } from '@/content/doors'
 import { getFloor } from '@/content/floors'
+import { getRoom } from '@/content/rooms'
 import { getWall } from '@/content/walls'
 import type { MenuColor, MenuItem } from '@/content/buildMenu'
 import type { IconName } from '@/content/icons'
 import BlueprintButton from '@/ui/components/BlueprintButton.vue'
+import { buildingName } from '@/ui/composables/contentLookup'
 import { useProgressionStore } from '@/ui/stores/progressionStore'
 import { useToolStore } from '@/ui/stores/toolStore'
 
@@ -112,15 +114,32 @@ const model = computed<ButtonModel>(() => {
     }
   }
 
-  if (item.kind === 'demolishStructures') {
+  if (item.kind === 'room') {
+    const def = getRoom(item.id)
+    const reason = progression.lockReason(def.requires)
+    const needs = def.requirements.map((req) => `${req.min} ${buildingName(req.object)}`).join(', ')
+    const info = `${def.name} · mínimo ${def.minSize.width}×${def.minSize.height} · Requiere: ${needs} · Clic dentro de un edificio`
     return {
-      label: 'Demoler muros',
-      icon: 'wall',
-      color: 'red',
-      title: 'Demoler muros, puertas y cimientos',
+      label: def.name,
+      icon: def.icon,
+      color: props.color,
+      swatch: def.color,
+      title: reason ? `${info} · ${reason}` : info,
+      locked: reason !== null,
+      active: toolStore.activeRoom === item.id,
+      select: () => toolStore.selectRoom(item.id),
+    }
+  }
+
+  if (item.kind === 'removeRoom') {
+    return {
+      label: 'Quitar sala',
+      icon: 'layout-grid',
+      color: props.color,
+      title: 'Clic sobre una sala para quitar su designación',
       locked: false,
-      active: toolStore.tool.kind === 'demolishStructures',
-      select: () => toolStore.selectDemolishStructures(),
+      active: toolStore.tool.kind === 'removeRoom',
+      select: () => toolStore.selectRemoveRoom(),
     }
   }
 
@@ -129,7 +148,8 @@ const model = computed<ButtonModel>(() => {
       label: 'Demoler',
       icon: 'hammer',
       color: 'red',
-      title: 'Demoler edificio',
+      title:
+        'Clic: quita lo que haya encima (objeto, puerta, muro o suelo) · Arrastrar: arrasa la zona',
       locked: false,
       active: toolStore.tool.kind === 'demolish',
       select: () => toolStore.selectDemolish(),
