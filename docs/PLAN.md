@@ -37,6 +37,20 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 
 ---
 
+## Fase 1B — Estilo visual base
+**Resultado visible:** los 4 edificios iniciales y el suelo se ven con arte propio, no con rectángulos de color.
+
+- [ ] Hoja de muestra de estilo validada por Raul (escala de personas, grosor de contorno, pieles y pelo)
+- [ ] Completar `docs/GUIA-ESTILO.md` y `src/render/palette.ts` con lo decidido en la muestra
+- [ ] 🧠 Pipeline de assets en `tools/`: SVG → PNG (a 1x y 2x) → atlas, con un solo comando
+- [ ] Sprites propios de los edificios iniciales (campo, vestuario, oficina, grada) siguiendo la guía
+- [ ] ⚡ Cargador de atlas con fallback al marcador de color
+- [ ] ⚡ Crear `docs/ASSETS-LICENSES.md` y registrar cada asset
+
+✅ **Validar:** el mapa con los 4 edificios se ve coherente con la guía de estilo.
+
+---
+
 ## Fase 2 — Tiempo y economía
 **Resultado visible:** el reloj avanza, el dinero sube y baja, y el HUD lo muestra.
 
@@ -46,10 +60,12 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] ⚡ HUD en Vue: fecha, velocidad, recursos con variación (+/−)
 - [ ] ⚡ Panel de edificio al hacer clic: nombre, mantenimiento, qué aporta
 - [ ] 🧠 Condición de quiebra (dinero negativo X semanas)
-- [ ] ⚡ Guardado y carga en IndexedDB (autoguardado semanal + botón manual)
+- [ ] 🧠 Guardado en IndexedDB tras una interfaz `SaveRepository` (permite pasar a archivos si se empaqueta como app de escritorio)
+- [ ] 🧠 Partidas versionadas: versión del formato + migraciones para no romper partidas antiguas
+- [ ] ⚡ Autoguardado semanal, botón manual y exportar/importar partida como `.json`
 - [ ] ⚡ Tests de economía (ingresos/gastos de una semana)
 - [ ] ⚡ Cifras del HUD animadas y textos flotantes "+120 €" sobre los edificios
-- [ ] 🧠 Sistema de temas visuales de UI con Tailwind (colores, tipografías, paneles)
+- [ ] 🧠 Sistema de temas visuales de UI con Tailwind: estilo "carpeta del míster" (papel, clip, pestañas de colores en el lateral), fuente manuscrita para títulos y otra legible para datos
 
 ✅ **Validar:** una partida de 10 minutos tiene sentido económico; guardar y cargar funciona.
 
@@ -97,10 +113,9 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 ---
 
 ## Fase 6 — Arte y mundo vivo
-- [ ] Guía de estilo: paleta, grosor de contorno, sombra, escala de personas frente a edificios (en el chat con Claude)
-- [ ] 🧠 Pipeline de assets en `tools/`: SVG → PNG (a 1x y 2x) → atlas, con un solo comando
-- [ ] Sprites propios de los edificios iniciales (campo, vestuario, oficina, grada) siguiendo la guía
-- [ ] ⚡ Cargador de atlas con fallback al marcador de color
+> Guía de estilo, pipeline de assets, sprites iniciales y cargador de atlas se adelantaron a la Fase 1B.
+
+- [ ] Sprites del resto de edificios, objetos, personas y vehículos siguiendo la guía
 - [ ] 🧠 Techos que se desvanecen para mostrar el interior de los edificios
 - [ ] ⚡ Figuritas caminando (jugadores, staff, afición) con balanceo y rutas simples
 - [ ] ⚡ Terreno: hierba con variaciones, tierra, caminos, árboles y bordes suaves
@@ -108,7 +123,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 
 ✅ **Validar:** el juego se ve coherente y "vivo" en una captura de pantalla.
 
-> La pista de arte puede empezar en paralelo desde la Fase 2 sin bloquear el código.
+> El arte lo dibuja Claude en SVG (`assets/src/`) siguiendo `docs/GUIA-ESTILO.md` y Raul lo valida. Prison Architect es solo referencia de estilo: nunca se copian sus assets.
 
 ---
 
