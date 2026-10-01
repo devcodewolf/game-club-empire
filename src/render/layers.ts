@@ -12,6 +12,7 @@ import type { ViewTransform } from './grid'
 export const LAYER_ORDER = [
   'ground', // terreno: hierba, tierra, caminos
   'grid', // líneas de la rejilla
+  'parcels', // velo del terreno ajeno y borde del propio
   'buildings', // edificios y sus sombras
   'people', // figuritas
   'effects', // polvo, textos flotantes, partículas

@@ -26,9 +26,9 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [x] 🧠 Sistema de comandos (`colocarEdificio`, `demolerEdificio`, `comprarParcela`) con validación
 - [x] ⚡ Definir 4 edificios iniciales en `content/buildings.ts`: campo de tierra, vestuario básico, oficina, grada pequeña (tamaño, coste, color de marcador)
 - [x] ⚡ Cámara: arrastrar para mover, rueda para zoom, con límites (adelantada en Fase 0)
-- [ ] 🧠 Modo construcción: vista previa del edificio bajo el cursor (verde válido / rojo inválido)
-- [ ] ⚡ Barra de construcción en Vue con los edificios disponibles
-- [ ] ⚡ Marcadores SVG sencillos por edificio (rectángulo con color, contorno e icono) generados por código
+- [x] 🧠 Modo construcción: vista previa del edificio bajo el cursor (verde válido / rojo inválido)
+- [x] ⚡ Barra de construcción en Vue con los edificios disponibles
+- [x] ⚡ Marcadores sencillos por edificio (rectángulo con color, contorno e icono) generados por código (con Graphics de Pixi en vez de SVG)
 - [x] ⚡ Tests de validación de colocación
 - [ ] ⚡ Animación de construcción: andamio → edificio con rebote + polvo; demolición que se desvanece con polvo
 - [ ] ⚡ Cámara con inercia y zoom suave (GSAP)

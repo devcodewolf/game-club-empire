@@ -16,10 +16,10 @@ import { palette } from './palette'
 export function drawGround(layer: Container, grid: GridSize, renderer: Renderer): void {
   const pattern = new Graphics()
     .rect(0, 0, TILE_SIZE * 2, TILE_SIZE * 2)
-    .fill(palette.grassDark)
+    .fill(palette.grass)
     .rect(0, 0, TILE_SIZE, TILE_SIZE)
     .rect(TILE_SIZE, TILE_SIZE, TILE_SIZE, TILE_SIZE)
-    .fill(palette.grassLight)
+    .fill(palette.grassPitch)
 
   const texture = renderer.generateTexture(pattern)
   pattern.destroy()
@@ -40,7 +40,7 @@ export function drawGridLines(layer: Container, grid: GridSize): void {
     lines.moveTo(0, y * TILE_SIZE).lineTo(width, y * TILE_SIZE)
   }
   // pixelLine: siempre 1 px de pantalla, sea cual sea el zoom (evita líneas borrosas)
-  lines.stroke({ color: palette.gridLine, alpha: 0.35, pixelLine: true })
+  lines.stroke({ color: palette.grassShadow, alpha: 0.35, pixelLine: true })
 
   lines.rect(0, 0, width, height).stroke({ color: palette.outline, width: 2 })
 

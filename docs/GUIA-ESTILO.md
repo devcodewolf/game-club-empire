@@ -39,3 +39,25 @@ Los colores del club (camisetas, banderas, gradas) los elige el jugador y no for
 - La paleta vive en `src/render/palette.ts` y es la única fuente de colores para sprites y efectos.
 - Los sprites se dibujan en SVG en `assets/src/` usando solo colores de esta paleta.
 - Cualquier color nuevo se añade primero aquí y en `palette.ts`.
+
+## Decisiones de la hoja de muestra (1-oct-2026)
+Muestra: `assets/src/muestras/muestra-estilo.svg` (se regenera con `node tools/muestras/muestra-estilo.mjs assets/src/muestras/muestra-estilo.svg`).
+
+- **Escala de personas: opción A**, unos 40 px de ancho por persona en una casilla de 64 px (escala "de juego", como Prison Architect). Sustituye a los 12×8 px de "Vista y escala".
+- **Pieles, pelo y colores del club:** se aceptan como punto de partida los de la muestra; se pasarán a la paleta en la Fase 1B.
+- **Primera aproximación aceptada, pero hace falta más textura y más detalle** (referencia: materiales y salas de Prison Architect):
+  - Materiales con más vida: segundo y tercer tono, juntas, vetas y piezas irregulares (madera en tablas desalineadas, baldosas con junta, grava con piedras sueltas). Siguen siendo colores planos, sin degradados.
+  - Sombras planas interiores: una franja oscura junto a los muros dentro de las salas y bajo los muebles, para dar profundidad.
+  - Objetos reconocibles a primera vista: cada objeto debe tener sus 2-3 detalles característicos (la ducha con plato, grifo y alcachofa; la taquilla con puerta, rejilla y tirador), con contorno y una sombra propia.
+- **Botones de menú de construcción** (estilo "plano de obra"): cuadrado de color según la categoría (azul = suelos y materiales, verde = salas operativas, amarillo = ocio y bienestar, naranja = jugadores, rojo = demoler o acciones de riesgo), fondo con rejilla de plano más clara, icono de líneas blancas gruesas, texto debajo con contorno oscuro y botones bloqueados en gris oscuro con el texto apagado.
+
+## Colores de interfaz sobre el mapa
+No forman parte del mundo, solo dan feedback al jugador.
+
+| Uso | Color |
+|---|---|
+| Vista previa válida | `#8fd16a` |
+| Vista previa inválida / demoler | `#e0574a` |
+| Parcela no comprada (velo) | `#2e2a26` a baja opacidad |
+| Parcela comprable | `#f2c46b` |
+| Fondo fuera del mapa | `#1b2a1f` |

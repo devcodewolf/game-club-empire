@@ -2,7 +2,7 @@
  * Matemática de la cámara: funciones puras sobre `ViewTransform`.
  *
  * Recordatorio del modelo: `pantalla = mundo × scale + (x, y)`.
- * Nada de Pixi ni DOM aquí; la entrada de ratón vive en `cameraInput.ts`.
+ * Nada de Pixi ni DOM aquí; la entrada de ratón vive en `mapInput.ts`.
  */
 import type { GridSize } from '@/sim/geometry'
 import { gridWorldSize, screenToWorld, type Point, type Size, type ViewTransform } from './grid'

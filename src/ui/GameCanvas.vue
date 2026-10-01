@@ -1,24 +1,46 @@
 <script setup lang="ts">
-// Monta el renderer de Pixi en un div que ocupa todo el padre.
-import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
+/**
+ * Monta el renderer de Pixi y hace de puente con la UI:
+ *  - pasa la herramienta activa (Pinia) al renderer
+ *  - despacha en la partida los comandos que propone el renderer
+ */
+import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
 import { createGameRenderer, type GameRenderer } from '@/render/createGameRenderer'
-import { MAP_SIZE } from '@/content/map'
+import type { Command } from '@/sim/commands'
+import type { Game } from '@/sim/game'
+import { useToolStore } from '@/ui/stores/toolStore'
 
+const props = defineProps<{ game: Game }>()
+
+const toolStore = useToolStore()
 const host = useTemplateRef('host')
 let renderer: GameRenderer | null = null
 // Evita la carrera: si se desmonta antes de que termine el init async.
 let disposed = false
 
+function onCommand(command: Command): void {
+  props.game.dispatch(command)
+}
+
 onMounted(async () => {
   if (!host.value) return
 
-  const created = await createGameRenderer(host.value, MAP_SIZE)
+  const created = await createGameRenderer(host.value, props.game, {
+    onCommand,
+    onCancel: toolStore.clear,
+  })
   if (disposed) {
     created.destroy()
     return
   }
   renderer = created
+  renderer.setTool(toolStore.tool)
 })
+
+watch(
+  () => toolStore.tool,
+  (tool) => renderer?.setTool(tool),
+)
 
 onBeforeUnmount(() => {
   disposed = true
