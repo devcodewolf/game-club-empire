@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { BLUEPRINT_TILE } from './blueprint'
 /**
  * Botón cuadrado estilo "plano de obra": icono de líneas blancas sobre fondo
  * de rejilla y etiqueta con contorno oscuro debajo. El color depende de la
@@ -27,7 +28,13 @@ const props = withDefaults(
     /** Texto del `title` (tooltip nativo). */
     title?: string
   }>(),
-  { tileSize: 64, icon: undefined, badge: undefined, swatch: undefined, title: undefined },
+  {
+    tileSize: BLUEPRINT_TILE,
+    icon: undefined,
+    badge: undefined,
+    swatch: undefined,
+    title: undefined,
+  },
 )
 
 const emit = defineEmits<{ select: [] }>()

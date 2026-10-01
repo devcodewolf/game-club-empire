@@ -3,6 +3,10 @@
 import { computed } from 'vue'
 import type { MenuCategory } from '@/content/buildMenu'
 import MenuItemButton from '@/ui/build-menu/MenuItemButton.vue'
+import { BLUEPRINT_WIDTH } from '@/ui/components/blueprint'
+
+/** 5 columnas + 4 huecos de 4 px + padding de 24 px + borde de 4 px. */
+const PANEL_WIDTH = BLUEPRINT_WIDTH * 5 + 4 * 4 + 24 + 4
 
 const props = defineProps<{ category: MenuCategory; tabIndex: number }>()
 defineEmits<{ close: []; selectTab: [index: number] }>()
@@ -12,7 +16,8 @@ const tab = computed(() => props.category.tabs[props.tabIndex] ?? props.category
 
 <template>
   <section
-    class="flex max-h-[60vh] w-[404px] max-w-full flex-col rounded-md border-2 border-[#1f2124] bg-[rgba(40,42,46,0.92)] text-white shadow-[4px_4px_0_rgba(0,0,0,0.35)]"
+    :style="{ width: `${PANEL_WIDTH}px` }"
+    class="flex max-h-[60vh] max-w-full flex-col rounded-md border-2 border-[#1f2124] bg-[rgba(40,42,46,0.92)] text-white shadow-[4px_4px_0_rgba(0,0,0,0.35)]"
     :aria-label="category.label"
   >
     <header class="flex items-center justify-between px-3 pt-2">
@@ -55,7 +60,7 @@ const tab = computed(() => props.category.tabs[props.tabIndex] ?? props.category
 
     <footer class="border-t border-[#1f2124] px-3 py-1.5 text-[11px] text-[#c9ccd1]">
       <kbd class="kbd">R</kbd>: girar · <kbd class="kbd">Esc</kbd>: soltar ·
-      <kbd class="kbd">Arrastrar</kbd>: pintar suelo · <kbd class="kbd">Botón derecho</kbd>: mover
+      <kbd class="kbd">Arrastrar</kbd>: pintar · <kbd class="kbd">Clic dcho.</kbd>: mover
     </footer>
   </section>
 </template>
