@@ -9,11 +9,11 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 ## Fase 0 — Esqueleto del proyecto
 **Resultado visible:** abres el navegador y ves una rejilla cenital vacía.
 
-- [ ] ⚡ Crear proyecto Vite + Vue 3 + TS, instalar PixiJS v8, Tailwind v4, GSAP, Pinia, Vitest, ESLint, Prettier
-- [ ] ⚡ Crear la estructura de carpetas de `CLAUDE.md`
-- [ ] 🧠 Utilidades de rejilla: conversión casilla ↔ pantalla (casillas de 64×64 px) y sistema de capas de render
-- [ ] ⚡ Componente `GameCanvas.vue` que monta Pixi y dibuja una rejilla de 30×30
-- [ ] ⚡ Tests de las conversiones de rejilla
+- [x] ⚡ Crear proyecto Vite + Vue 3 + TS, instalar PixiJS v8, Tailwind v4, GSAP, Pinia, Vitest, ESLint, Prettier
+- [x] ⚡ Crear la estructura de carpetas de `CLAUDE.md`
+- [x] 🧠 Utilidades de rejilla: conversión casilla ↔ pantalla (casillas de 64×64 px) y sistema de capas de render
+- [x] ⚡ Componente `GameCanvas.vue` que monta Pixi y dibuja una rejilla de 30×30
+- [x] ⚡ Tests de las conversiones de rejilla
 
 ✅ **Validar:** la rejilla se ve bien y se adapta al tamaño de ventana.
 

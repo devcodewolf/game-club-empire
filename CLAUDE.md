@@ -11,6 +11,7 @@ Juego 2D en **vista cenital** (desde arriba, estilo visual de Prison Architect) 
 
 ## Stack
 - Vite + Vue 3 (Composition API, `<script setup>`) + TypeScript estricto
+- Gestor de paquetes: **pnpm** (nunca npm ni yarn; usar `pnpm add`, `pnpm <script>`)
 - PixiJS v8 para el mapa cenital (solo renderizado)
 - Tailwind CSS v4 (plugin `@tailwindcss/vite`) para toda la UI en Vue. No afecta al canvas de Pixi
 - GSAP para animaciones (tweens en Pixi y en la UI)
