@@ -30,6 +30,15 @@ export interface BuildingDef {
    * por eso es de tamaño fijo y no se arrastra. El render dibuja sus líneas.
    */
   readonly pitch?: { readonly format: 7 | 11; readonly surface: FloorId }
+  /** Sin orientación (árbol, farola…): no se dibuja la flecha de frente. */
+  readonly symmetric?: boolean
+  /** Aforo, para gradas (espectadores). */
+  readonly capacity?: number
+  /**
+   * División a partir de la cual se puede construir (id de división). Sin él,
+   * está disponible desde el principio. De momento solo lo usa el menú.
+   */
+  readonly requires?: string
 }
 
 export type BuildingCatalog = Readonly<Record<BuildingTypeId, BuildingDef>>

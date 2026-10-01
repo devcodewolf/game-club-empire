@@ -16,7 +16,6 @@ import { drawGridLines, drawGround } from './drawGrid'
 import { expansionAt } from './expansions'
 import { createExpansionsView } from './expansionsView'
 import { createFloorsView } from './floorsView'
-import { createFloorTextures } from './floorTextures'
 import { applyView, createWorldLayers } from './layers'
 import { bindMapInput } from './mapInput'
 import { palette } from './palette'
@@ -24,6 +23,7 @@ import { drawRoad } from './roadView'
 import { isDragTool, NO_TOOL, type Tool } from './tool'
 import { commandForDrag, commandForTool } from './toolActions'
 import { createToolPreview } from './toolPreview'
+import { createRenderAssets } from './renderAssets'
 import { TILE_SIZE } from './grid'
 
 // Culling: no dibujar lo que queda fuera de pantalla (los trozos de suelo lo usan).
@@ -71,7 +71,8 @@ export async function createGameRenderer(
   const grid = game.state.size
   const { world, layers } = createWorldLayers()
   app.stage.addChild(world)
-  const floorTextures = createFloorTextures(app.renderer, game.content.floors)
+  const assets = await createRenderAssets(app.renderer, game.content.floors)
+  const floorTextures = assets.floors
   // Solo en desarrollo: la extensión PixiJS DevTools busca la app en esta global.
   if (import.meta.env.DEV) Object.assign(globalThis, { __PIXI_APP__: app })
   const grassTexture = floorTextures.texture('grass')
@@ -85,8 +86,8 @@ export async function createGameRenderer(
   )
   drawGridLines(layers.grid, grid)
   const expansions = createExpansionsView(layers.outside, grid)
-  const buildings = createBuildingsView(layers.buildings, game, floorTextures)
-  const preview = createToolPreview(layers.overlay, game, floorTextures)
+  const buildings = createBuildingsView(layers.buildings, game, assets)
+  const preview = createToolPreview(layers.overlay, game, assets)
 
   let tool: Tool = NO_TOOL
   /** Casilla donde empezó el arrastre en curso (null si no se arrastra o se canceló). */
@@ -159,7 +160,7 @@ export async function createGameRenderer(
       preview.destroy()
       buildings.destroy()
       floors.destroy()
-      floorTextures.destroy()
+      assets.destroy()
       // releaseGlobalResources: vacía cachés globales de Pixi para que recrear
       // la app (p. ej. recarga en caliente de Vite) no deje texturas obsoletas.
       app.destroy(

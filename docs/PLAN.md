@@ -66,8 +66,10 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] ⚡ Tests: suelos, muros, cimientos, designación de salas, requisitos y capacidad
 
 **Menú de construcción por categorías** (bloque B, se adelanta)
-- [ ] ⚡ Barra abajo a la izquierda con categorías (Cimientos, Muros y puertas, Suelos, Salas, Objetos, Demoler) que despliega hacia arriba un panel con las opciones, estilo "plano de obra" (como Prison Architect)
-- [ ] ⚡ Elementos bloqueados en gris con el requisito al pasar el ratón (p. ej. "Se desbloquea en 3.ª División"), con los desbloqueos como datos en `content/`
+- [x] ⚡ Iconos de línea con Tabler Icons (Vue y texturas Pixi para los marcadores)
+- [x] ⚡ Catálogo inicial: 8 campos (fútbol 11 y 7 × 4 superficies), 6 gradas por aforo y 21 objetos, con desbloqueos por división (provisionales)
+- [x] ⚡ Barra abajo a la izquierda con categorías (Cimientos, Muros y puertas, Suelos, Salas, Objetos, Demoler) que despliega hacia arriba un panel con las opciones, estilo "plano de obra" (como Prison Architect)
+- [x] ⚡ Elementos bloqueados en gris con el requisito al pasar el ratón (p. ej. "Se desbloquea en 3.ª División"), con los desbloqueos como datos en `content/`
 
 **Pulido de la construcción**
 - [ ] ⚡ Animación de construcción: andamio → sala o objeto con rebote + polvo; demolición que se desvanece con polvo

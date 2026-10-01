@@ -12,8 +12,8 @@ import type { Game } from '@/sim/game'
 import { footprint, type TileCoord, type TileRect } from '@/sim/geometry'
 import { buildingAt, buildingFootprint, validateFloorPaint, validatePlacement } from '@/sim/map'
 import { createBuildingMarker, destroyBuildingMarker } from './buildingMarker'
-import type { FloorTextures } from './floorTextures'
 import { TILE_SIZE } from './grid'
+import type { RenderAssets } from './renderAssets'
 import { palette } from './palette'
 import { NO_TOOL, type Tool } from './tool'
 import { commandForDrag, commandForTool } from './toolActions'
@@ -33,11 +33,7 @@ export interface ToolPreview {
   destroy(): void
 }
 
-export function createToolPreview(
-  layer: Container,
-  game: Game,
-  textures: FloorTextures,
-): ToolPreview {
+export function createToolPreview(layer: Container, game: Game, assets: RenderAssets): ToolPreview {
   const root = new Container({ label: 'toolPreview' })
   const highlight = new Graphics()
   const sizeLabel = new Text({
@@ -74,7 +70,7 @@ export function createToolPreview(
     const def = tool.kind === 'build' ? game.content.buildings[tool.buildingType] : undefined
     if (!def || tool.kind !== 'build') return
 
-    ghost = createBuildingMarker(def, tool.rotation, textures)
+    ghost = createBuildingMarker(def, tool.rotation, assets)
     ghost.alpha = GHOST_ALPHA
     root.addChildAt(ghost, 0)
   }

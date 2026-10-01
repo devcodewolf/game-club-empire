@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import GameCanvas from '@/ui/GameCanvas.vue'
 import GameLayout from '@/ui/GameLayout.vue'
-import BuildBar from '@/ui/BuildBar.vue'
+import BuildMenu from '@/ui/build-menu/BuildMenu.vue'
 import NoticeToasts from '@/ui/components/NoticeToasts.vue'
 import { useToolShortcuts } from '@/ui/composables/useToolShortcuts'
 import { markRaw } from 'vue'
@@ -28,7 +28,7 @@ useToolShortcuts()
         </div>
       </template>
       <template #bottom>
-        <BuildBar />
+        <BuildMenu />
       </template>
     </GameLayout>
   </main>

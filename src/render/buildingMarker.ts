@@ -4,13 +4,13 @@
  * Sustituyen a los sprites hasta que existan los atlas. Solo dibujan: no
  * conocen la simulación más allá de la definición del edificio (`BuildingDef`).
  */
-import { Container, Graphics, Text } from 'pixi.js'
+import { Container, Graphics, Sprite, Text } from 'pixi.js'
 import type { BuildingDef } from '@/sim/buildings'
 import { rotateSize, type Rotation } from '@/sim/geometry'
-import type { FloorTextures } from './floorTextures'
 import { TILE_SIZE } from './grid'
 import { createPitchMarker } from './pitchMarker'
 import { palette } from './palette'
+import type { RenderAssets } from './renderAssets'
 
 /** Desplazamiento de la sombra plana (hacia abajo a la derecha), en px. */
 const SHADOW_OFFSET = 4
@@ -30,11 +30,15 @@ const NAME_MIN_TILES = { width: 3, height: 2 } as const
 export function createBuildingMarker(
   def: BuildingDef,
   rotation: Rotation,
-  textures?: FloorTextures,
+  assets?: RenderAssets,
 ): Container {
   // Los terrenos de juego tienen su propio dibujo (superficie + líneas de cal).
   if (def.pitch) {
-    return createPitchMarker(def, rotation, textures?.pattern(def.pitch.surface) ?? def.markerColor)
+    return createPitchMarker(
+      def,
+      rotation,
+      assets?.floors.pattern(def.pitch.surface) ?? def.markerColor,
+    )
   }
 
   const tiles = rotateSize(def.size, rotation)
@@ -52,17 +56,15 @@ export function createBuildingMarker(
     .stroke({ width: 1.5, color: palette.outline, alignment: 1 })
     .rect(INNER_INSET, INNER_INSET, width - INNER_INSET * 2, height - INNER_INSET * 2)
     .stroke({ width: 1, color: palette.outline, alpha: 0.25 })
-  drawFrontArrow(body, width, height, rotation)
+  if (!def.symmetric) drawFrontArrow(body, width, height, rotation)
   marker.addChild(body)
 
   const showName = tiles.width >= NAME_MIN_TILES.width && tiles.height >= NAME_MIN_TILES.height
 
   const iconSize = Math.min(ICON_MAX_SIZE, Math.min(width, height) * 0.45)
-  const icon = new Text({ text: def.icon, style: { fontSize: iconSize }, resolution: 2 })
-  icon.anchor.set(0.5)
   // Con nombre, el icono sube un poco para dejar sitio debajo.
-  icon.position.set(width / 2, showName ? height / 2 - 8 : height / 2)
-  marker.addChild(icon)
+  const iconY = showName ? height / 2 - 8 : height / 2
+  addIcon(marker, assets?.icons.get(def.icon), width / 2, iconY, iconSize)
 
   if (!showName) return marker
 
@@ -78,10 +80,32 @@ export function createBuildingMarker(
     resolution: 2,
   })
   name.anchor.set(0.5)
-  name.position.set(width / 2, icon.y + iconSize / 2 + 12)
+  name.position.set(width / 2, iconY + iconSize / 2 + 12)
   marker.addChild(name)
 
   return marker
+}
+
+/**
+ * Icono de línea blanco con una sombra oscura desplazada, para que se lea
+ * sobre cualquier color de marcador. Sin textura (aún cargando) no dibuja nada.
+ */
+function addIcon(
+  marker: Container,
+  texture: ReturnType<RenderAssets['icons']['get']>,
+  x: number,
+  y: number,
+  size: number,
+): void {
+  if (!texture) return
+
+  const shadow = new Sprite({ texture, anchor: 0.5, tint: palette.outline, alpha: 0.6 })
+  shadow.setSize(size)
+  shadow.position.set(x + 1.5, y + 1.5)
+  const icon = new Sprite({ texture, anchor: 0.5 })
+  icon.setSize(size)
+  icon.position.set(x, y)
+  marker.addChild(shadow, icon)
 }
 
 /** Dirección del frente del edificio según el giro (sentido horario, 0 = abajo). */

@@ -227,11 +227,44 @@ const PAINTERS: Record<FloorPattern, Painter> = {
     }
   },
 
+  /** Césped artificial: franjas anchas de dos tonos y grano fino de fibras. */
+  turf(g, base, rnd) {
+    drawMowingStripes(g, base, 0.05)
+    speckles(g, rnd, 420, [shade(base, 0.1), shade(base, -0.1)], [0.35, 0.7])
+  },
+
+  /** Césped natural: franjas de corte (cortacésped) y briznas cortas. */
+  lawn(g, base, rnd) {
+    drawMowingStripes(g, base, 0.07)
+    for (let i = 0; i < 220; i++) {
+      const length = rnd.range(1.5, 3.5)
+      const color = shade(base, rnd.pick([-0.16, -0.08, 0.1]))
+      wrapped(rnd.range(0, PATTERN), rnd.range(0, PATTERN), 4, (x, y) =>
+        g
+          .moveTo(x, y)
+          .lineTo(x + rnd.range(-1, 1), y - length)
+          .stroke({ color, width: 1, cap: 'round' }),
+      )
+    }
+  },
+
   /** Asfalto: oscuro con grano claro y oscuro. */
   asphalt(g, base, rnd) {
     g.rect(0, 0, PATTERN, PATTERN).fill(base)
     speckles(g, rnd, 260, [shade(base, 0.12), shade(base, -0.12), shade(base, 0.2)], [0.4, 0.9])
   },
+}
+
+/**
+ * Franjas de corte: dos bandas por casilla (32 px), alternando un tono algo
+ * más claro y otro algo más oscuro que la base.
+ */
+function drawMowingStripes(g: Graphics, base: number, contrast: number): void {
+  const band = TILE_SIZE / 2
+  for (let x = 0; x < PATTERN; x += band) {
+    const light = (x / band) % 2 === 0
+    g.rect(x, 0, band, PATTERN).fill(shade(base, light ? contrast : -contrast))
+  }
 }
 
 /**

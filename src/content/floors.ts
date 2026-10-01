@@ -8,15 +8,18 @@
  * - Los costes se cobran a partir de la Fase 2.
  */
 import type { FloorDef } from '@/sim/floors'
+import type { DivisionId } from './progression'
 
 /**
  * Función identidad que solo sirve para tipar: obliga a que la clave de cada
  * entrada coincida con su `id` (si no, falla el typecheck) y conserva los
  * tipos literales para que `FloorTypeId` sea una unión exacta.
  */
-function defineFloors<const T extends { [K in keyof T]: FloorDef & { readonly id: K } }>(
-  catalog: T,
-): T {
+function defineFloors<
+  const T extends {
+    [K in keyof T]: FloorDef & { readonly id: K; readonly requires?: DivisionId }
+  },
+>(catalog: T): T {
   return catalog
 }
 
@@ -46,6 +49,31 @@ export const FLOORS = defineFloors({
     color: 0xdfe3dc,
     pattern: 'tiles',
   },
+  // Superficies de campo: se eligen al construir el campo, no se pintan (no están en FLOOR_MENU).
+  artificialTurf: {
+    id: 'artificialTurf',
+    name: 'Césped artificial',
+    costPerTile: 20,
+    color: 0x4f9a4a,
+    pattern: 'turf',
+    requires: 'regional',
+  },
+  naturalGrass: {
+    id: 'naturalGrass',
+    name: 'Césped natural',
+    costPerTile: 30,
+    color: 0x5a9a3a,
+    pattern: 'lawn',
+    requires: 'autonomica',
+  },
+  hybridGrass: {
+    id: 'hybridGrass',
+    name: 'Césped híbrido',
+    costPerTile: 60,
+    color: 0x64a844,
+    pattern: 'lawn',
+    requires: 'nacionalA',
+  },
   /** Solo existe en la carretera: no se puede pintar. */
   asphalt: { id: 'asphalt', name: 'Asfalto', costPerTile: 0, color: 0x3e4347, pattern: 'asphalt' },
 })
@@ -62,3 +90,11 @@ export const FLOOR_MENU: readonly FloorTypeId[] = [
   'wood',
   'whiteTile',
 ]
+
+/** Suelo del catálogo con la división ya concretada. */
+export type CatalogFloor = FloorDef & { readonly requires?: DivisionId }
+
+/** Acceso tipado a un suelo del catálogo. */
+export function getFloor(id: FloorTypeId): CatalogFloor {
+  return FLOORS[id]
+}

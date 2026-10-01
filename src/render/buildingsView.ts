@@ -8,8 +8,8 @@ import type { Container } from 'pixi.js'
 import type { BuildingId, PlacedBuilding } from '@/sim/buildings'
 import type { Game } from '@/sim/game'
 import { createBuildingMarker, destroyBuildingMarker } from './buildingMarker'
-import type { FloorTextures } from './floorTextures'
 import { tileToWorld } from './grid'
+import type { RenderAssets } from './renderAssets'
 
 export interface BuildingsView {
   destroy(): void
@@ -18,7 +18,7 @@ export interface BuildingsView {
 export function createBuildingsView(
   layer: Container,
   game: Game,
-  textures: FloorTextures,
+  assets: RenderAssets,
 ): BuildingsView {
   const markers = new Map<BuildingId, Container>()
 
@@ -26,7 +26,7 @@ export function createBuildingsView(
     const def = game.content.buildings[building.type]
     if (!def) return
 
-    const marker = createBuildingMarker(def, building.rotation, textures)
+    const marker = createBuildingMarker(def, building.rotation, assets)
     const position = tileToWorld(building.origin)
     marker.position.set(position.x, position.y)
     layer.addChild(marker)

@@ -14,7 +14,16 @@ export const DEFAULT_FLOOR: FloorId = 'grass'
  * patrón se genera por código con tonos derivados de `color`.
  */
 export type FloorPattern =
-  'grass' | 'dirt' | 'gravel' | 'slabs' | 'concrete' | 'planks' | 'tiles' | 'asphalt'
+  | 'grass'
+  | 'dirt'
+  | 'gravel'
+  | 'slabs'
+  | 'concrete'
+  | 'planks'
+  | 'tiles'
+  | 'asphalt'
+  | 'turf'
+  | 'lawn'
 
 export interface FloorDef {
   readonly id: FloorId
@@ -24,6 +33,8 @@ export interface FloorDef {
   /** Color base del suelo (0xRRGGBB); el patrón deriva de él sus otros tonos. */
   readonly color: number
   readonly pattern: FloorPattern
+  /** División a partir de la cual se puede usar (id de división). */
+  readonly requires?: string
 }
 
 export type FloorCatalog = Readonly<Record<FloorId, FloorDef>>

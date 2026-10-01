@@ -30,7 +30,7 @@ defineSlots<{
     <aside class="flex flex-col gap-3 overflow-y-auto *:pointer-events-auto">
       <slot name="right" />
     </aside>
-    <footer class="col-span-3 flex items-end justify-center gap-3 *:pointer-events-auto">
+    <footer class="col-span-3 flex items-end justify-start gap-3 *:pointer-events-auto">
       <slot name="bottom" />
     </footer>
   </div>
