@@ -1,10 +1,11 @@
 /**
- * Estado de UI de la herramienta activa (construir, demoler, comprar parcela).
+ * Estado de UI de la herramienta activa (construir, pintar suelo, demoler).
  * Setup store de Pinia: estado con `ref`, acciones como funciones.
  */
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { BuildingTypeId } from '@/sim/buildings'
+import type { FloorId } from '@/sim/floors'
 import { nextRotation, type Rotation } from '@/sim/geometry'
 import { NO_TOOL, type Tool } from '@/render/tool'
 
@@ -16,6 +17,7 @@ export const useToolStore = defineStore('tool', () => {
   const activeBuilding = computed(() =>
     tool.value.kind === 'build' ? tool.value.buildingType : null,
   )
+  const activeFloor = computed(() => (tool.value.kind === 'paintFloor' ? tool.value.floor : null))
 
   /** Elegir el mismo edificio otra vez lo suelta (como un interruptor). */
   function selectBuilding(buildingType: BuildingTypeId): void {
@@ -23,12 +25,14 @@ export const useToolStore = defineStore('tool', () => {
     tool.value = { kind: 'build', buildingType, rotation: rotation.value }
   }
 
-  function selectDemolish(): void {
-    tool.value = tool.value.kind === 'demolish' ? NO_TOOL : { kind: 'demolish' }
+  /** Elegir el mismo suelo otra vez lo suelta. */
+  function selectFloor(floor: FloorId): void {
+    if (activeFloor.value === floor) return clear()
+    tool.value = { kind: 'paintFloor', floor }
   }
 
-  function selectBuyParcel(): void {
-    tool.value = tool.value.kind === 'buyParcel' ? NO_TOOL : { kind: 'buyParcel' }
+  function selectDemolish(): void {
+    tool.value = tool.value.kind === 'demolish' ? NO_TOOL : { kind: 'demolish' }
   }
 
   function rotate(): void {
@@ -45,9 +49,10 @@ export const useToolStore = defineStore('tool', () => {
     tool,
     rotation,
     activeBuilding,
+    activeFloor,
     selectBuilding,
+    selectFloor,
     selectDemolish,
-    selectBuyParcel,
     rotate,
     clear,
   }

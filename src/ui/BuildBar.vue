@@ -1,10 +1,12 @@
 <script setup lang="ts">
 /**
- * Barra de construcción: un botón por edificio del menú, más comprar parcela
- * y demoler. Solo lee y modifica el store de herramienta.
+ * Barra de construcción: un botón por edificio del menú, girar y demoler,
+ * y una segunda fila con los suelos pintables. Solo lee y modifica el store de herramienta.
  */
 import { BUILDINGS, BUILD_MENU } from '@/content/buildings'
+import { FLOORS, FLOOR_MENU } from '@/content/floors'
 import BlueprintButton from '@/ui/components/BlueprintButton.vue'
+import FloorSwatch from '@/ui/components/FloorSwatch.vue'
 import { useToolStore } from '@/ui/stores/toolStore'
 
 const toolStore = useToolStore()
@@ -35,11 +37,10 @@ const toolStore = useToolStore()
 
       <BlueprintButton
         category="land"
-        label="Comprar parcela"
-        icon="🧱"
-        hint="Comprar parcela contigua"
-        :active="toolStore.tool.kind === 'buyParcel'"
-        @select="toolStore.selectBuyParcel()"
+        :label="`Girar · ${toolStore.rotation * 90}°`"
+        icon="↻"
+        hint="Girar 90° (tecla R)"
+        @select="toolStore.rotate()"
       />
       <BlueprintButton
         category="danger"
@@ -51,10 +52,24 @@ const toolStore = useToolStore()
       />
     </div>
 
+    <div class="flex items-start gap-2">
+      <span class="self-center pr-1 text-[10px] font-bold tracking-wider text-[#d9c9a8] uppercase">
+        Suelos
+      </span>
+      <FloorSwatch
+        v-for="id in FLOOR_MENU"
+        :key="id"
+        :name="FLOORS[id].name"
+        :color="FLOORS[id].color"
+        :active="toolStore.activeFloor === id"
+        @select="toolStore.selectFloor(id)"
+      />
+    </div>
+
     <p class="text-[11px] text-[#d9c9a8]">
-      <kbd class="kbd">Clic</kbd>: usar · <kbd class="kbd">R</kbd>: girar ·
-      <kbd class="kbd">Esc</kbd> / <kbd class="kbd">clic derecho</kbd>: soltar · Arrastrar con
-      <kbd class="kbd">botón derecho</kbd>: mover
+      <kbd class="kbd">Clic</kbd>: usar · <kbd class="kbd">Arrastrar</kbd>: pintar suelo ·
+      <kbd class="kbd">R</kbd>: girar · <kbd class="kbd">Esc</kbd> /
+      <kbd class="kbd">clic derecho</kbd>: soltar · <kbd class="kbd">Botón derecho</kbd>: mover
     </p>
   </section>
 </template>

@@ -8,20 +8,25 @@ import type { Container } from 'pixi.js'
 import type { BuildingId, PlacedBuilding } from '@/sim/buildings'
 import type { Game } from '@/sim/game'
 import { createBuildingMarker, destroyBuildingMarker } from './buildingMarker'
+import type { FloorTextures } from './floorTextures'
 import { tileToWorld } from './grid'
 
 export interface BuildingsView {
   destroy(): void
 }
 
-export function createBuildingsView(layer: Container, game: Game): BuildingsView {
+export function createBuildingsView(
+  layer: Container,
+  game: Game,
+  textures: FloorTextures,
+): BuildingsView {
   const markers = new Map<BuildingId, Container>()
 
   const add = (building: PlacedBuilding): void => {
-    const def = game.catalog[building.type]
+    const def = game.content.buildings[building.type]
     if (!def) return
 
-    const marker = createBuildingMarker(def, building.rotation)
+    const marker = createBuildingMarker(def, building.rotation, textures)
     const position = tileToWorld(building.origin)
     marker.position.set(position.x, position.y)
     layer.addChild(marker)

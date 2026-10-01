@@ -1,13 +1,20 @@
 /**
- * Traduce "herramienta + casilla bajo el cursor" en el comando a proponer.
+ * Traduce "herramienta + casillas bajo el cursor" en el comando a proponer.
  *
- * Funciones puras (sin Pixi): la vista previa y el clic usan exactamente el
- * mismo cálculo, así lo que ves es lo que se construye.
+ * Funciones puras (sin Pixi): la vista previa, el clic y el arrastre usan
+ * exactamente el mismo cálculo, así lo que ves es lo que se construye.
  */
-import type { BuildingCatalog } from '@/sim/buildings'
 import type { Command } from '@/sim/commands'
-import { rotateSize, type GridSize, type Rotation, type TileCoord } from '@/sim/geometry'
-import { buildingAt, parcelOfTile, type MapState } from '@/sim/map'
+import type { SimContent } from '@/sim/content'
+import {
+  clipRectToGrid,
+  rectFromCorners,
+  rotateSize,
+  type GridSize,
+  type Rotation,
+  type TileCoord,
+} from '@/sim/geometry'
+import { buildingAt, type MapState } from '@/sim/map'
 import type { Tool } from './tool'
 
 /**
@@ -27,13 +34,13 @@ export function commandForTool(
   tool: Tool,
   cursor: TileCoord,
   state: MapState,
-  catalog: BuildingCatalog,
+  content: SimContent,
 ): Command | null {
   switch (tool.kind) {
     case 'none':
       return null
     case 'build': {
-      const def = catalog[tool.buildingType]
+      const def = content.buildings[tool.buildingType]
       if (!def) return null
       const origin = placementOrigin(cursor, def.size, tool.rotation)
       return {
@@ -47,7 +54,25 @@ export function commandForTool(
       const building = buildingAt(state, cursor)
       return building ? { type: 'demolishBuilding', buildingId: building.id } : null
     }
-    case 'buyParcel':
-      return { type: 'buyParcel', parcel: parcelOfTile(state, cursor) }
+    case 'paintFloor':
+      // Un clic sin arrastrar pinta una sola casilla.
+      return commandForDrag(tool, cursor, cursor, state)
   }
+}
+
+/**
+ * Comando que propondría un arrastre de `from` a `to`, o null si la
+ * herramienta no se arrastra o el rectángulo queda fuera del mapa. El
+ * rectángulo se recorta al mapa: arrastrar más allá del borde es cómodo.
+ */
+export function commandForDrag(
+  tool: Tool,
+  from: TileCoord,
+  to: TileCoord,
+  state: MapState,
+): Command | null {
+  if (tool.kind !== 'paintFloor') return null
+
+  const rect = clipRectToGrid(rectFromCorners(from, to), state.size)
+  return rect ? { type: 'paintFloor', rect, floor: tool.floor } : null
 }

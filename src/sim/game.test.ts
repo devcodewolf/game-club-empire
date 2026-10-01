@@ -1,20 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Command } from './commands'
 import { createGame } from './game'
-import type { MapConfig } from './map'
-import { TEST_CATALOG } from './test-fixtures'
-
-/** Misma configuración que `createTestMap`: 20×20, parcelas de 5, 2×2 iniciales. */
-const TEST_CONFIG: MapConfig = {
-  size: { width: 20, height: 20 },
-  parcelSize: 5,
-  initialParcels: [
-    { x: 0, y: 0 },
-    { x: 1, y: 0 },
-    { x: 0, y: 1 },
-    { x: 1, y: 1 },
-  ],
-}
+import { TEST_CONTENT, TEST_MAP_CONFIG } from './test-fixtures'
 
 const validCommand: Command = {
   type: 'placeBuilding',
@@ -23,17 +10,17 @@ const validCommand: Command = {
   rotation: 0,
 }
 
-/** Casilla fuera de las parcelas propias: siempre inválido. */
+/** Casilla en la carretera reservada: siempre inválido. */
 const invalidCommand: Command = {
   type: 'placeBuilding',
   buildingType: 'small',
-  origin: { x: 15, y: 15 },
+  origin: { x: 18, y: 15 },
   rotation: 0,
 }
 
 describe('createGame · dispatch', () => {
   it('un comando válido devuelve ok y avisa al suscriptor con el evento correcto', () => {
-    const game = createGame(TEST_CONFIG, TEST_CATALOG)
+    const game = createGame(TEST_MAP_CONFIG, TEST_CONTENT)
     const listener = vi.fn()
     game.subscribe(listener)
 
@@ -48,18 +35,18 @@ describe('createGame · dispatch', () => {
   })
 
   it('un comando inválido devuelve el error y no avisa a los suscriptores', () => {
-    const game = createGame(TEST_CONFIG, TEST_CATALOG)
+    const game = createGame(TEST_MAP_CONFIG, TEST_CONTENT)
     const listener = vi.fn()
     game.subscribe(listener)
 
     const result = game.dispatch(invalidCommand)
 
-    expect(result).toEqual({ ok: false, reason: 'parcelNotOwned' })
+    expect(result).toEqual({ ok: false, reason: 'reserved' })
     expect(listener).not.toHaveBeenCalled()
   })
 
   it('varios suscriptores reciben el mismo evento', () => {
-    const game = createGame(TEST_CONFIG, TEST_CATALOG)
+    const game = createGame(TEST_MAP_CONFIG, TEST_CONTENT)
     const a = vi.fn()
     const b = vi.fn()
     game.subscribe(a)
@@ -73,7 +60,7 @@ describe('createGame · dispatch', () => {
   })
 
   it('la función de baja deja de avisar al suscriptor', () => {
-    const game = createGame(TEST_CONFIG, TEST_CATALOG)
+    const game = createGame(TEST_MAP_CONFIG, TEST_CONTENT)
     const listener = vi.fn()
     const unsubscribe = game.subscribe(listener)
 
@@ -84,7 +71,7 @@ describe('createGame · dispatch', () => {
   })
 
   it('darse de baja no afecta a los demás suscriptores', () => {
-    const game = createGame(TEST_CONFIG, TEST_CATALOG)
+    const game = createGame(TEST_MAP_CONFIG, TEST_CONTENT)
     const baja = vi.fn()
     const activo = vi.fn()
     game.subscribe(baja)()
@@ -97,7 +84,7 @@ describe('createGame · dispatch', () => {
   })
 
   it('state refleja los cambios tras el dispatch', () => {
-    const game = createGame(TEST_CONFIG, TEST_CATALOG)
+    const game = createGame(TEST_MAP_CONFIG, TEST_CONTENT)
     expect(Object.keys(game.state.buildings)).toHaveLength(0)
 
     game.dispatch(validCommand)
@@ -110,7 +97,52 @@ describe('createGame · dispatch', () => {
     })
   })
 
-  it('expone el catálogo recibido', () => {
-    expect(createGame(TEST_CONFIG, TEST_CATALOG).catalog).toBe(TEST_CATALOG)
+  it('expone el contenido recibido', () => {
+    expect(createGame(TEST_MAP_CONFIG, TEST_CONTENT).content).toBe(TEST_CONTENT)
+  })
+})
+
+describe('createGame · paintFloor', () => {
+  const paintCommand: Command = {
+    type: 'paintFloor',
+    rect: { x: 1, y: 1, width: 2, height: 3 },
+    floor: 'dirt',
+  }
+
+  it('avisa a los suscriptores con el evento floorPainted', () => {
+    const game = createGame(TEST_MAP_CONFIG, TEST_CONTENT)
+    const listener = vi.fn()
+    game.subscribe(listener)
+
+    const result = game.dispatch(paintCommand)
+
+    expect(result.ok).toBe(true)
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(listener).toHaveBeenCalledWith({
+      type: 'floorPainted',
+      rect: { x: 1, y: 1, width: 2, height: 3 },
+      floor: 'dirt',
+      changed: 6,
+    })
+  })
+
+  it('refleja el suelo nuevo en state', () => {
+    const game = createGame(TEST_MAP_CONFIG, TEST_CONTENT)
+
+    game.dispatch(paintCommand)
+
+    expect(game.state.floors[1 * 20 + 1]).toBe('dirt')
+    expect(game.state.floors[0]).toBe('grass')
+  })
+
+  it('pintar sobre la carretera falla sin avisar a nadie', () => {
+    const game = createGame(TEST_MAP_CONFIG, TEST_CONTENT)
+    const listener = vi.fn()
+    game.subscribe(listener)
+
+    const result = game.dispatch({ ...paintCommand, rect: { x: 18, y: 0, width: 1, height: 1 } })
+
+    expect(result).toEqual({ ok: false, reason: 'reserved' })
+    expect(listener).not.toHaveBeenCalled()
   })
 })

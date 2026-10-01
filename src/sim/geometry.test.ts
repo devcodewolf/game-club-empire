@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  clipRectToGrid,
   footprint,
   isInsideGrid,
   isRectInsideGrid,
   nextRotation,
+  rectFromCorners,
   rotateSize,
   tilesInRect,
   type GridSize,
@@ -128,5 +130,74 @@ describe('tilesInRect', () => {
 
   it('un rectángulo de alto 0 no devuelve casillas', () => {
     expect([...tilesInRect({ x: 0, y: 0, width: 5, height: 0 })]).toEqual([])
+  })
+})
+
+describe('rectFromCorners', () => {
+  const a: TileCoord = { x: 3, y: 4 }
+
+  it.each<[string, TileCoord]>([
+    ['abajo a la derecha', { x: 6, y: 7 }],
+    ['abajo a la izquierda', { x: 0, y: 7 }],
+    ['arriba a la derecha', { x: 6, y: 1 }],
+    ['arriba a la izquierda', { x: 0, y: 1 }],
+  ])('arrastrando hacia %s abarca ambas esquinas', (_nombre, b) => {
+    const rect = rectFromCorners(a, b)
+
+    expect(rect.x).toBe(Math.min(a.x, b.x))
+    expect(rect.y).toBe(Math.min(a.y, b.y))
+    expect(rect.width).toBe(Math.abs(a.x - b.x) + 1)
+    expect(rect.height).toBe(Math.abs(a.y - b.y) + 1)
+  })
+
+  it('da el mismo rectángulo con las esquinas intercambiadas', () => {
+    const b: TileCoord = { x: 8, y: 2 }
+    expect(rectFromCorners(a, b)).toEqual(rectFromCorners(b, a))
+  })
+
+  it('valores concretos: de (3,4) a (6,7) es x3 y4 4×4', () => {
+    expect(rectFromCorners(a, { x: 6, y: 7 })).toEqual({ x: 3, y: 4, width: 4, height: 4 })
+  })
+
+  it('con la misma casilla da un rectángulo 1×1', () => {
+    expect(rectFromCorners(a, a)).toEqual({ x: 3, y: 4, width: 1, height: 1 })
+  })
+})
+
+describe('clipRectToGrid', () => {
+  const grid: GridSize = { width: 20, height: 10 }
+
+  it('devuelve el mismo rectángulo si ya está dentro', () => {
+    const rect: TileRect = { x: 2, y: 3, width: 4, height: 5 }
+    expect(clipRectToGrid(rect, grid)).toEqual(rect)
+  })
+
+  it('no recorta un rectángulo que es el mapa entero', () => {
+    const rect: TileRect = { x: 0, y: 0, width: 20, height: 10 }
+    expect(clipRectToGrid(rect, grid)).toEqual(rect)
+  })
+
+  it.each<[string, TileRect, TileRect]>([
+    ['izquierda', { x: -3, y: 2, width: 5, height: 2 }, { x: 0, y: 2, width: 2, height: 2 }],
+    ['arriba', { x: 2, y: -2, width: 3, height: 4 }, { x: 2, y: 0, width: 3, height: 2 }],
+    ['derecha', { x: 18, y: 2, width: 5, height: 2 }, { x: 18, y: 2, width: 2, height: 2 }],
+    ['abajo', { x: 2, y: 8, width: 3, height: 5 }, { x: 2, y: 8, width: 3, height: 2 }],
+    [
+      'todos los lados',
+      { x: -5, y: -5, width: 40, height: 40 },
+      { x: 0, y: 0, width: 20, height: 10 },
+    ],
+  ])('recorta lo que sobresale por %s', (_nombre, rect, esperado) => {
+    expect(clipRectToGrid(rect, grid)).toEqual(esperado)
+  })
+
+  it.each<[string, TileRect]>([
+    ['a la izquierda', { x: -5, y: 0, width: 5, height: 3 }],
+    ['encima', { x: 0, y: -4, width: 3, height: 4 }],
+    ['a la derecha', { x: 20, y: 0, width: 3, height: 3 }],
+    ['debajo', { x: 0, y: 10, width: 3, height: 3 }],
+    ['lejos en diagonal', { x: 50, y: 50, width: 2, height: 2 }],
+  ])('devuelve null si está completamente fuera %s', (_nombre, rect) => {
+    expect(clipRectToGrid(rect, grid)).toBeNull()
   })
 })

@@ -66,3 +66,23 @@ export function* tilesInRect(rect: TileRect): Generator<TileCoord> {
     }
   }
 }
+
+/**
+ * Rectángulo que abarcan dos casillas cualesquiera (p. ej. inicio y fin de un
+ * arrastre), sin importar en qué dirección se arrastró. Ambas quedan dentro.
+ */
+export function rectFromCorners(a: TileCoord, b: TileCoord): TileRect {
+  const x = Math.min(a.x, b.x)
+  const y = Math.min(a.y, b.y)
+  return { x, y, width: Math.abs(a.x - b.x) + 1, height: Math.abs(a.y - b.y) + 1 }
+}
+
+/** Recorta un rectángulo a los límites del mapa; null si queda fuera del todo. */
+export function clipRectToGrid(rect: TileRect, grid: GridSize): TileRect | null {
+  const x = Math.max(rect.x, 0)
+  const y = Math.max(rect.y, 0)
+  const right = Math.min(rect.x + rect.width, grid.width)
+  const bottom = Math.min(rect.y + rect.height, grid.height)
+  if (right <= x || bottom <= y) return null
+  return { x, y, width: right - x, height: bottom - y }
+}

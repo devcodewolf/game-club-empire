@@ -4,26 +4,48 @@
  * Solo renderiza y traduce gestos en comandos PROPUESTOS (`onCommand`): quien
  * lo monta decide despacharlos. Nunca modifica el estado de la simulación.
  */
-import { Application } from 'pixi.js'
+import { Application, CullerPlugin, extensions } from 'pixi.js'
+import { ENTRANCE, ROAD, type ExpansionSide } from '@/content/map'
 import type { Command } from '@/sim/commands'
 import type { Game } from '@/sim/game'
+import type { TileCoord } from '@/sim/geometry'
 import { createBuildingsView } from './buildingsView'
 import { gridLineAlpha } from './camera'
 import { createCameraController } from './cameraController'
 import { drawGridLines, drawGround } from './drawGrid'
+import { expansionAt } from './expansions'
+import { createExpansionsView } from './expansionsView'
+import { createFloorsView } from './floorsView'
+import { createFloorTextures } from './floorTextures'
 import { applyView, createWorldLayers } from './layers'
 import { bindMapInput } from './mapInput'
 import { palette } from './palette'
-import { createParcelsView } from './parcelsView'
-import { NO_TOOL, type Tool } from './tool'
-import { commandForTool } from './toolActions'
+import { drawRoad } from './roadView'
+import { isDragTool, NO_TOOL, type Tool } from './tool'
+import { commandForDrag, commandForTool } from './toolActions'
 import { createToolPreview } from './toolPreview'
+import { TILE_SIZE } from './grid'
+
+// Culling: no dibujar lo que queda fuera de pantalla (los trozos de suelo lo usan).
+// Debe registrarse antes de crear la aplicación.
+extensions.add(CullerPlugin)
+
+/** Zoom inicial: vista global del terreno, como al abrir una partida en Prison Architect. */
+const INITIAL_SCALE = 0.12
+
+/** Al empezar, la cámara mira a la entrada (borde derecho), donde está la carretera. */
+const INITIAL_FOCUS = {
+  x: (ROAD.x - ENTRANCE.length) * TILE_SIZE,
+  y: (ENTRANCE.y + ENTRANCE.height / 2) * TILE_SIZE,
+}
 
 export interface GameRendererOptions {
-  /** Comando propuesto por un clic con la herramienta activa. */
+  /** Comando propuesto por un clic o un arrastre con la herramienta activa. */
   readonly onCommand: (command: Command) => void
   /** Clic derecho sin arrastrar: el jugador quiere soltar la herramienta. */
   readonly onCancel: () => void
+  /** Clic sobre una zona de ampliación bloqueada. */
+  readonly onExpansionClick: (side: ExpansionSide) => void
 }
 
 export interface GameRenderer {
@@ -34,7 +56,7 @@ export interface GameRenderer {
 export async function createGameRenderer(
   host: HTMLElement,
   game: Game,
-  { onCommand, onCancel }: GameRendererOptions,
+  { onCommand, onCancel, onExpansionClick }: GameRendererOptions,
 ): Promise<GameRenderer> {
   const app = new Application()
   await app.init({
@@ -49,32 +71,75 @@ export async function createGameRenderer(
   const grid = game.state.size
   const { world, layers } = createWorldLayers()
   app.stage.addChild(world)
-  drawGround(layers.ground, grid, app.renderer)
+  const floorTextures = createFloorTextures(app.renderer, game.content.floors)
+  // Solo en desarrollo: la extensión PixiJS DevTools busca la app en esta global.
+  if (import.meta.env.DEV) Object.assign(globalThis, { __PIXI_APP__: app })
+  const grassTexture = floorTextures.texture('grass')
+  if (grassTexture) drawGround(layers.ground, grid, grassTexture)
+  const floors = createFloorsView(layers.floors, game, floorTextures)
+  drawRoad(
+    layers.road,
+    grid,
+    floorTextures.pattern('asphalt') ?? palette.outline,
+    floorTextures.pattern('concrete') ?? palette.stone,
+  )
   drawGridLines(layers.grid, grid)
+  const expansions = createExpansionsView(layers.outside, grid)
+  const buildings = createBuildingsView(layers.buildings, game, floorTextures)
+  const preview = createToolPreview(layers.overlay, game, floorTextures)
 
-  const parcels = createParcelsView(layers.parcels, game)
-  const buildings = createBuildingsView(layers.buildings, game)
-  const preview = createToolPreview(layers.overlay, game)
   let tool: Tool = NO_TOOL
+  /** Casilla donde empezó el arrastre en curso (null si no se arrastra o se canceló). */
+  let dragStart: TileCoord | null = null
+
+  const setDragStart = (tile: TileCoord | null): void => {
+    dragStart = tile
+    preview.setDragStart(tile)
+  }
 
   // La cámara decide qué parte del mapa se ve; aquí solo se aplica su vista.
   const camera = createCameraController({
     grid,
     screen: { width: app.screen.width, height: app.screen.height },
+    initialScale: INITIAL_SCALE,
+    initialFocus: INITIAL_FOCUS,
     onChange: (view) => {
       applyView(world, view)
       layers.grid.alpha = gridLineAlpha(view.scale)
+      // Elementos de interfaz con tamaño constante en pantalla
+      preview.setZoom(view.scale)
+      expansions.setZoom(view.scale)
     },
   })
 
   const unbindInput = bindMapInput(app.canvas, camera, {
     hasTool: () => tool.kind !== 'none',
+    isDragTool: () => isDragTool(tool),
     onHover: (tile) => preview.setHover(tile),
     onPrimaryClick: (tile) => {
-      const command = commandForTool(tool, tile, game.state, game.catalog)
+      const side = expansionAt(tile, grid)
+      if (side) return onExpansionClick(side)
+
+      const command = commandForTool(tool, tile, game.state, game.content)
       if (command) onCommand(command)
     },
-    onCancel,
+    onDragStart: (tile) => {
+      const side = expansionAt(tile, grid)
+      if (side) return onExpansionClick(side)
+      setDragStart(tile)
+    },
+    onDragMove: (tile) => preview.setHover(tile),
+    onDragEnd: (tile) => {
+      if (!dragStart) return
+      const command = commandForDrag(tool, dragStart, tile, game.state)
+      setDragStart(null)
+      if (command) onCommand(command)
+    },
+    onCancel: () => {
+      // Primero se cancela el arrastre en curso; si no lo hay, se suelta la herramienta.
+      if (dragStart) return setDragStart(null)
+      onCancel()
+    },
   })
 
   const onResize = (): void => {
@@ -85,15 +150,16 @@ export async function createGameRenderer(
   return {
     setTool(next) {
       tool = next
+      dragStart = null
       preview.setTool(next)
-      parcels.setBuyMode(next.kind === 'buyParcel')
     },
     destroy(): void {
       unbindInput()
       app.renderer.off('resize', onResize)
       preview.destroy()
       buildings.destroy()
-      parcels.destroy()
+      floors.destroy()
+      floorTextures.destroy()
       // releaseGlobalResources: vacía cachés globales de Pixi para que recrear
       // la app (p. ej. recarga en caliente de Vite) no deje texturas obsoletas.
       app.destroy(

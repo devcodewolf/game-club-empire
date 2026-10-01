@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { executeCommand, type Command } from './commands'
-import type { Rotation, TileCoord } from './geometry'
-import { buildingAt, isParcelOwned, isTileOwned, type MapState } from './map'
-import { createTestMap, TEST_CATALOG } from './test-fixtures'
+import type { Rotation, TileCoord, TileRect } from './geometry'
+import { buildingAt, floorAt, type MapState } from './map'
+import { createTestMap, TEST_CONTENT } from './test-fixtures'
 
 // ── Atajos para construir comandos ───────────────────────────────
 
+const paintCmd = (rect: TileRect, floor: string): Command => ({ type: 'paintFloor', rect, floor })
 const placeCmd = (buildingType: string, origin: TileCoord, rotation: Rotation = 0): Command => ({
   type: 'placeBuilding',
   buildingType,
@@ -13,9 +14,8 @@ const placeCmd = (buildingType: string, origin: TileCoord, rotation: Rotation = 
   rotation,
 })
 const demolishCmd = (buildingId: number): Command => ({ type: 'demolishBuilding', buildingId })
-const buyCmd = (parcel: TileCoord): Command => ({ type: 'buyParcel', parcel })
 
-const run = (state: MapState, command: Command) => executeCommand(state, command, TEST_CATALOG)
+const run = (state: MapState, command: Command) => executeCommand(state, command, TEST_CONTENT)
 
 /** Número de casillas ocupadas por un id de edificio. */
 const countTiles = (state: MapState, id: number) => state.occupancy.filter((v) => v === id).length
@@ -79,7 +79,7 @@ describe('placeBuilding', () => {
   it.each<[string, string, TileCoord, string]>([
     ['tipo desconocido', 'noExiste', { x: 0, y: 0 }, 'unknownBuilding'],
     ['fuera del mapa', 'small', { x: 20, y: 0 }, 'outOfBounds'],
-    ['parcela no comprada', 'big', { x: 8, y: 8 }, 'parcelNotOwned'],
+    ['pisa la carretera reservada', 'big', { x: 15, y: 8 }, 'reserved'],
   ])('inválido (%s): devuelve el motivo y deja el estado idéntico', (_n, tipo, origin, motivo) => {
     const state = createTestMap()
     run(state, placeCmd('small', { x: 0, y: 0 }))
@@ -154,67 +154,15 @@ describe('demolishBuilding', () => {
   })
 })
 
-describe('buyParcel', () => {
-  it('rechaza una parcela con coordenadas no enteras', () => {
-    const state = createTestMap()
-    expect(run(state, buyCmd({ x: 2.5, y: 0 }))).toEqual({ ok: false, reason: 'outOfBounds' })
-  })
-
-  it('compra una parcela adyacente y devuelve el evento', () => {
-    const state = createTestMap()
-    const result = run(state, buyCmd({ x: 2, y: 0 }))
-
-    expect(result).toEqual({ ok: true, event: { type: 'parcelBought', parcel: { x: 2, y: 0 } } })
-    expect(isParcelOwned(state, { x: 2, y: 0 })).toBe(true)
-    expect(isTileOwned(state, { x: 10, y: 0 })).toBe(true)
-  })
-
-  it.each<[string, TileCoord, string]>([
-    ['ya comprada', { x: 1, y: 1 }, 'alreadyOwned'],
-    ['solo en diagonal', { x: 2, y: 2 }, 'notAdjacent'],
-    ['lejos de las propias', { x: 3, y: 3 }, 'notAdjacent'],
-    ['fuera del mapa por la derecha', { x: 4, y: 0 }, 'outOfBounds'],
-    ['fuera del mapa por abajo', { x: 0, y: 4 }, 'outOfBounds'],
-    ['con coordenada negativa', { x: -1, y: 0 }, 'outOfBounds'],
-  ])('rechaza una parcela %s con %s', (_nombre, parcel, motivo) => {
-    const state = createTestMap()
-    const antes = structuredClone(state)
-
-    expect(run(state, buyCmd(parcel))).toEqual({ ok: false, reason: motivo })
-    expect(state).toEqual(antes)
-  })
-
-  it('tras comprar se puede construir en la parcela nueva y en la siguiente adyacente', () => {
-    const state = createTestMap()
-    expect(run(state, placeCmd('big', { x: 10, y: 0 })).ok).toBe(false)
-
-    expect(run(state, buyCmd({ x: 2, y: 0 })).ok).toBe(true)
-    expect(run(state, placeCmd('big', { x: 10, y: 0 })).ok).toBe(true)
-
-    // La parcela (3,0) solo es comprable ahora que (2,0) es nuestra.
-    expect(run(state, placeCmd('small', { x: 15, y: 0 })).ok).toBe(false)
-    expect(run(state, buyCmd({ x: 3, y: 0 })).ok).toBe(true)
-    expect(run(state, placeCmd('big', { x: 15, y: 0 })).ok).toBe(true)
-  })
-
-  it('una parcela nueva hace comprable la diagonal anterior', () => {
-    const state = createTestMap()
-    expect(run(state, buyCmd({ x: 2, y: 2 }))).toEqual({ ok: false, reason: 'notAdjacent' })
-
-    run(state, buyCmd({ x: 2, y: 1 }))
-    expect(run(state, buyCmd({ x: 2, y: 2 })).ok).toBe(true)
-  })
-})
-
 describe('determinismo', () => {
   const secuencia: Command[] = [
     placeCmd('wide', { x: 2, y: 2 }),
     placeCmd('big', { x: 6, y: 6 }),
-    buyCmd({ x: 2, y: 0 }),
     placeCmd('big', { x: 10, y: 0 }),
+    paintCmd({ x: 0, y: 10, width: 4, height: 2 }, 'dirt'),
+    paintCmd({ x: 17, y: 0, width: 2, height: 1 }, 'dirt'), // inválido: pisa la carretera
     demolishCmd(1),
     placeCmd('small', { x: 2, y: 2 }, 3),
-    buyCmd({ x: 3, y: 3 }), // inválido: no adyacente
     demolishCmd(42), // inválido: no existe
     placeCmd('wide', { x: 8, y: 0 }, 1),
   ]
@@ -228,5 +176,107 @@ describe('determinismo', () => {
 
     expect(resultadosA).toEqual(resultadosB)
     expect(a).toEqual(b)
+  })
+})
+
+describe('paintFloor', () => {
+  it('cambia exactamente las casillas del rectángulo y ninguna más', () => {
+    const state = createTestMap()
+    const rect: TileRect = { x: 2, y: 3, width: 4, height: 2 }
+
+    run(state, paintCmd(rect, 'dirt'))
+
+    const pintadas = state.floors.flatMap((floor, i) => (floor === 'dirt' ? [i] : []))
+    const esperadas = [3, 4].flatMap((y) => [2, 3, 4, 5].map((x) => y * 20 + x))
+    expect(pintadas).toEqual(esperadas)
+  })
+
+  it('devuelve el evento floorPainted con el rect, el suelo y changed', () => {
+    const state = createTestMap()
+    const rect: TileRect = { x: 0, y: 0, width: 3, height: 3 }
+
+    expect(run(state, paintCmd(rect, 'dirt'))).toEqual({
+      ok: true,
+      event: { type: 'floorPainted', rect, floor: 'dirt', changed: 9 },
+    })
+  })
+
+  it('changed excluye las casillas que ya tenían ese suelo', () => {
+    const state = createTestMap()
+    run(state, paintCmd({ x: 0, y: 0, width: 2, height: 1 }, 'dirt'))
+
+    const result = run(state, paintCmd({ x: 0, y: 0, width: 3, height: 1 }, 'dirt'))
+
+    expect(result.ok && result.event.type === 'floorPainted' && result.event.changed).toBe(1)
+  })
+
+  it('pintar una sola casilla funciona', () => {
+    const state = createTestMap()
+    const result = run(state, paintCmd({ x: 5, y: 5, width: 1, height: 1 }, 'stone'))
+
+    expect(result.ok).toBe(true)
+    expect(floorAt(state, { x: 5, y: 5 })).toBe('stone')
+    expect(floorAt(state, { x: 6, y: 5 })).toBe('grass')
+  })
+
+  it('se puede repintar un suelo ya pintado con otro distinto', () => {
+    const state = createTestMap()
+    const rect: TileRect = { x: 1, y: 1, width: 2, height: 2 }
+    run(state, paintCmd(rect, 'dirt'))
+
+    expect(run(state, paintCmd(rect, 'stone')).ok).toBe(true)
+    expect(floorAt(state, { x: 2, y: 2 })).toBe('stone')
+  })
+
+  it('no toca edificios ni la numeración de ids', () => {
+    const state = createTestMap()
+    run(state, placeCmd('small', { x: 1, y: 1 }))
+
+    run(state, paintCmd({ x: 0, y: 0, width: 3, height: 3 }, 'dirt'))
+
+    expect(buildingAt(state, { x: 1, y: 1 })?.id).toBe(1)
+    expect(state.nextBuildingId).toBe(2)
+  })
+
+  it.each<[string, TileRect, string, string]>([
+    ['suelo desconocido', { x: 0, y: 0, width: 2, height: 2 }, 'lava', 'unknownFloor'],
+    ['fuera del mapa', { x: 19, y: 19, width: 2, height: 2 }, 'dirt', 'outOfBounds'],
+    [
+      'rectángulo con coordenada negativa',
+      { x: -1, y: 0, width: 2, height: 2 },
+      'dirt',
+      'outOfBounds',
+    ],
+    ['toca una casilla reservada', { x: 17, y: 0, width: 2, height: 2 }, 'dirt', 'reserved'],
+    ['todo en la carretera', { x: 18, y: 0, width: 2, height: 2 }, 'dirt', 'reserved'],
+    ['ya tenía ese suelo', { x: 0, y: 0, width: 4, height: 4 }, 'grass', 'nothingToPaint'],
+  ])('inválido (%s): devuelve el motivo y deja el estado idéntico', (_n, rect, floor, motivo) => {
+    const state = createTestMap()
+    run(state, placeCmd('small', { x: 0, y: 0 }))
+    run(state, paintCmd({ x: 10, y: 10, width: 2, height: 2 }, 'dirt'))
+    const antes = structuredClone(state)
+
+    expect(run(state, paintCmd(rect, floor))).toEqual({ ok: false, reason: motivo })
+    expect(state).toEqual(antes)
+  })
+
+  it('se puede colocar un edificio sobre un suelo pintado', () => {
+    const state = createTestMap()
+    run(state, paintCmd({ x: 2, y: 2, width: 3, height: 2 }, 'dirt'))
+
+    const result = run(state, placeCmd('wide', { x: 2, y: 2 }))
+
+    expect(result.ok).toBe(true)
+    expect(buildingAt(state, { x: 3, y: 3 })?.id).toBe(1)
+    expect(floorAt(state, { x: 3, y: 3 })).toBe('dirt')
+  })
+
+  it('se puede pintar debajo de un edificio ya construido', () => {
+    const state = createTestMap()
+    run(state, placeCmd('wide', { x: 2, y: 2 }))
+
+    expect(run(state, paintCmd({ x: 2, y: 2, width: 3, height: 2 }, 'dirt')).ok).toBe(true)
+    expect(floorAt(state, { x: 2, y: 2 })).toBe('dirt')
+    expect(buildingAt(state, { x: 2, y: 2 })?.id).toBe(1)
   })
 })

@@ -5,6 +5,7 @@
  * viven en `src/content/buildings.ts`. La simulación recibe el catálogo como
  * parámetro en lugar de importarlo, así los tests usan edificios de prueba.
  */
+import type { FloorId } from './floors'
 import type { GridSize, Rotation, TileCoord } from './geometry'
 
 /** Identificador de tipo de edificio (p. ej. 'office'). */
@@ -24,6 +25,11 @@ export interface BuildingDef {
   readonly markerColor: number
   /** Emoji o glifo corto para el marcador provisional. */
   readonly icon: string
+  /**
+   * Si es un terreno de juego: formato y suelo. Tiene medidas reglamentarias,
+   * por eso es de tamaño fijo y no se arrastra. El render dibuja sus líneas.
+   */
+  readonly pitch?: { readonly format: 7 | 11; readonly surface: FloorId }
 }
 
 export type BuildingCatalog = Readonly<Record<BuildingTypeId, BuildingDef>>

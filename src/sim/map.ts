@@ -1,5 +1,5 @@
 /**
- * Estado del mapa: parcelas compradas, edificios y ocupación de casillas.
+ * Estado del mapa: suelos, casillas reservadas, edificios y ocupación.
  *
  * Es un objeto plano (arrays y records, sin clases, Map ni Set) para poder
  * guardarlo en IndexedDB tal cual y compararlo fácilmente en los tests.
@@ -12,6 +12,7 @@ import type {
   BuildingTypeId,
   PlacedBuilding,
 } from './buildings'
+import { DEFAULT_FLOOR, type FloorCatalog, type FloorId } from './floors'
 import {
   footprint,
   isInsideGrid,
@@ -28,10 +29,13 @@ export const EMPTY_TILE = 0
 
 export interface MapState {
   readonly size: GridSize
-  /** Lado de una parcela en casillas. */
-  readonly parcelSize: number
-  /** Una entrada por parcela (fila a fila): true = comprada. */
-  readonly ownedParcels: boolean[]
+  /** Una entrada por casilla (fila a fila): tipo de suelo. */
+  readonly floors: FloorId[]
+  /**
+   * Una entrada por casilla (fila a fila): true si forma parte de un elemento
+   * fijo del mundo (carretera, acceso) que el jugador no puede modificar.
+   */
+  readonly reserved: boolean[]
   /**
    * Una entrada por casilla (fila a fila): id del edificio que la ocupa o
    * EMPTY_TILE. Es una caché derivada de `buildings` para consultas O(1).
@@ -42,72 +46,60 @@ export interface MapState {
   nextBuildingId: BuildingId
 }
 
-export interface MapConfig {
-  readonly size: GridSize
-  readonly parcelSize: number
-  /** Parcelas en propiedad al empezar, en coordenadas de parcela. */
-  readonly initialParcels: readonly TileCoord[]
+/** Elemento fijo del mundo: una zona con un suelo dado, opcionalmente intocable. */
+export interface MapFeature {
+  readonly rect: TileRect
+  readonly floor: FloorId
+  readonly reserved: boolean
 }
 
-export function createMapState({ size, parcelSize, initialParcels }: MapConfig): MapState {
-  const parcels = parcelGridSize({ size, parcelSize })
-  const ownedParcels = new Array<boolean>(parcels.width * parcels.height).fill(false)
-  for (const parcel of initialParcels) {
-    ownedParcels[parcel.y * parcels.width + parcel.x] = true
-  }
+export interface MapConfig {
+  readonly size: GridSize
+  /** Elementos fijos (carretera, acceso…), aplicados en orden. */
+  readonly features: readonly MapFeature[]
+}
 
-  return {
+export function createMapState({ size, features }: MapConfig): MapState {
+  const tileCount = size.width * size.height
+  const state: MapState = {
     size,
-    parcelSize,
-    ownedParcels,
-    occupancy: new Array<BuildingId>(size.width * size.height).fill(EMPTY_TILE),
+    floors: new Array<FloorId>(tileCount).fill(DEFAULT_FLOOR),
+    reserved: new Array<boolean>(tileCount).fill(false),
+    occupancy: new Array<BuildingId>(tileCount).fill(EMPTY_TILE),
     buildings: {},
     nextBuildingId: 1,
   }
-}
 
-// ── Parcelas ──────────────────────────────────────────────────────
-
-/** Cuántas parcelas hay en cada eje (la última puede quedar incompleta). */
-export function parcelGridSize(state: Pick<MapState, 'size' | 'parcelSize'>): GridSize {
-  return {
-    width: Math.ceil(state.size.width / state.parcelSize),
-    height: Math.ceil(state.size.height / state.parcelSize),
+  for (const feature of features) {
+    for (const tile of tilesInRect(feature.rect)) {
+      if (!isInsideGrid(tile, size)) continue
+      const index = tileIndex(state, tile)
+      state.floors[index] = feature.floor
+      state.reserved[index] = feature.reserved
+    }
   }
+
+  return state
 }
 
-/** Parcela que contiene una casilla. */
-export function parcelOfTile(state: MapState, tile: TileCoord): TileCoord {
-  return { x: Math.floor(tile.x / state.parcelSize), y: Math.floor(tile.y / state.parcelSize) }
-}
+// ── Casillas ─────────────────────────────────────────────────────
 
-/** Rectángulo de casillas que cubre una parcela (recortado al mapa). */
-export function parcelRect(state: MapState, parcel: TileCoord): TileRect {
-  const x = parcel.x * state.parcelSize
-  const y = parcel.y * state.parcelSize
-  return {
-    x,
-    y,
-    width: Math.min(state.parcelSize, state.size.width - x),
-    height: Math.min(state.parcelSize, state.size.height - y),
-  }
-}
-
-export function isParcelOwned(state: MapState, parcel: TileCoord): boolean {
-  const grid = parcelGridSize(state)
-  if (!isInsideGrid(parcel, grid)) return false
-  return state.ownedParcels[parcel.y * grid.width + parcel.x] === true
-}
-
-export function isTileOwned(state: MapState, tile: TileCoord): boolean {
-  return isParcelOwned(state, parcelOfTile(state, tile))
-}
-
-// ── Casillas y edificios ─────────────────────────────────────────
-
-export function tileIndex(state: MapState, tile: TileCoord): number {
+export function tileIndex(state: Pick<MapState, 'size'>, tile: TileCoord): number {
   return tile.y * state.size.width + tile.x
 }
+
+/** Suelo de una casilla, o undefined si está fuera del mapa. */
+export function floorAt(state: MapState, tile: TileCoord): FloorId | undefined {
+  if (!isInsideGrid(tile, state.size)) return undefined
+  return state.floors[tileIndex(state, tile)]
+}
+
+export function isTileReserved(state: MapState, tile: TileCoord): boolean {
+  if (!isInsideGrid(tile, state.size)) return false
+  return state.reserved[tileIndex(state, tile)] === true
+}
+
+// ── Edificios ────────────────────────────────────────────────────
 
 /** Edificio que ocupa una casilla, o undefined si está libre o fuera del mapa. */
 export function buildingAt(state: MapState, tile: TileCoord): PlacedBuilding | undefined {
@@ -125,7 +117,7 @@ export function buildingFootprint(building: PlacedBuilding, def: BuildingDef): T
 
 // ── Validación de colocación ─────────────────────────────────────
 
-export type PlacementError = 'unknownBuilding' | 'outOfBounds' | 'parcelNotOwned' | 'occupied'
+export type PlacementError = 'unknownBuilding' | 'outOfBounds' | 'reserved' | 'occupied'
 
 export type PlacementCheck =
   | { readonly ok: true; readonly rect: TileRect }
@@ -144,18 +136,50 @@ export function validatePlacement(
 ): PlacementCheck {
   const def = catalog[buildingType]
   if (!def) return { ok: false, reason: 'unknownBuilding' }
-
   if (!isInsideGrid(origin, state.size)) return { ok: false, reason: 'outOfBounds' }
 
   const rect = footprint(origin, def.size, rotation)
   if (!isRectInsideGrid(rect, state.size)) return { ok: false, reason: 'outOfBounds', rect }
 
   for (const tile of tilesInRect(rect)) {
-    if (!isTileOwned(state, tile)) return { ok: false, reason: 'parcelNotOwned', rect }
-    if (state.occupancy[tileIndex(state, tile)] !== EMPTY_TILE) {
-      return { ok: false, reason: 'occupied', rect }
-    }
+    const index = tileIndex(state, tile)
+    if (state.reserved[index]) return { ok: false, reason: 'reserved', rect }
+    if (state.occupancy[index] !== EMPTY_TILE) return { ok: false, reason: 'occupied', rect }
   }
 
   return { ok: true, rect }
+}
+
+// ── Validación de suelos ─────────────────────────────────────────
+
+export type FloorPaintError = 'unknownFloor' | 'outOfBounds' | 'reserved' | 'nothingToPaint'
+
+export type FloorPaintCheck =
+  | { readonly ok: true; readonly changed: number }
+  | { readonly ok: false; readonly reason: FloorPaintError }
+
+/**
+ * Comprueba si se puede pintar un suelo en un rectángulo. No se puede tocar
+ * ninguna casilla reservada; pintar con el mismo suelo que ya hay no cuenta.
+ */
+export function validateFloorPaint(
+  state: MapState,
+  floors: FloorCatalog,
+  rect: TileRect,
+  floor: FloorId,
+): FloorPaintCheck {
+  if (!floors[floor]) return { ok: false, reason: 'unknownFloor' }
+  if (!isInsideGrid(rect, state.size) || !isRectInsideGrid(rect, state.size)) {
+    return { ok: false, reason: 'outOfBounds' }
+  }
+
+  let changed = 0
+  for (const tile of tilesInRect(rect)) {
+    const index = tileIndex(state, tile)
+    if (state.reserved[index]) return { ok: false, reason: 'reserved' }
+    if (state.floors[index] !== floor) changed += 1
+  }
+  if (changed === 0) return { ok: false, reason: 'nothingToPaint' }
+
+  return { ok: true, changed }
 }

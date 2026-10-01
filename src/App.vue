@@ -2,15 +2,17 @@
 import GameCanvas from '@/ui/GameCanvas.vue'
 import GameLayout from '@/ui/GameLayout.vue'
 import BuildBar from '@/ui/BuildBar.vue'
+import NoticeToasts from '@/ui/components/NoticeToasts.vue'
 import { useToolShortcuts } from '@/ui/composables/useToolShortcuts'
 import { markRaw } from 'vue'
 import { BUILDINGS } from '@/content/buildings'
+import { FLOORS } from '@/content/floors'
 import { MAP_CONFIG } from '@/content/map'
 import { createGame } from '@/sim/game'
 
 // markRaw: la simulación no debe ser reactiva (Vue la envolvería en Proxies
 // y cada lectura del estado sería más lenta). La UI se entera por eventos.
-const game = markRaw(createGame(MAP_CONFIG, BUILDINGS))
+const game = markRaw(createGame(MAP_CONFIG, { buildings: BUILDINGS, floors: FLOORS }))
 
 useToolShortcuts()
 </script>
@@ -20,7 +22,10 @@ useToolShortcuts()
     <GameCanvas :game="game" />
     <GameLayout>
       <template #top>
-        <span class="pointer-events-none! text-sm font-bold text-amber-400">Grassroots</span>
+        <div class="flex flex-col items-center gap-2">
+          <span class="pointer-events-none! text-sm font-bold text-amber-400">Grassroots</span>
+          <NoticeToasts />
+        </div>
       </template>
       <template #bottom>
         <BuildBar />

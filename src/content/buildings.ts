@@ -19,13 +19,25 @@ function defineBuildings<const T extends { [K in keyof T]: BuildingDef & { reado
 }
 
 export const BUILDINGS = defineBuildings({
-  dirtPitch: {
-    id: 'dirtPitch',
-    name: 'Campo de tierra',
-    size: { width: 16, height: 10 },
+  // Terrenos de juego: medidas reglamentarias a escala "de juego" (metros / 2)
+  // más 2 casillas de margen por lado. Tamaño fijo: no se arrastran.
+  pitch11Dirt: {
+    id: 'pitch11Dirt',
+    name: 'Campo de fútbol 11 (tierra)',
+    size: { width: 56, height: 38 },
     cost: 500,
-    markerColor: 0xa9784a,
+    markerColor: 0x7a5a3a,
     icon: '⚽',
+    pitch: { format: 11, surface: 'dirt' },
+  },
+  pitch7Dirt: {
+    id: 'pitch7Dirt',
+    name: 'Campo de fútbol 7 (tierra)',
+    size: { width: 34, height: 24 },
+    cost: 300,
+    markerColor: 0x7a5a3a,
+    icon: '⚽',
+    pitch: { format: 7, surface: 'dirt' },
   },
   basicChangingRoom: {
     id: 'basicChangingRoom',
@@ -58,7 +70,8 @@ export type StarterBuildingId = keyof typeof BUILDINGS
 
 /** Orden de los edificios en la barra de construcción. */
 export const BUILD_MENU: readonly StarterBuildingId[] = [
-  'dirtPitch',
+  'pitch11Dirt',
+  'pitch7Dirt',
   'basicChangingRoom',
   'office',
   'smallStand',

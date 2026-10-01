@@ -7,7 +7,9 @@
 import { Container, Graphics, Text } from 'pixi.js'
 import type { BuildingDef } from '@/sim/buildings'
 import { rotateSize, type Rotation } from '@/sim/geometry'
+import type { FloorTextures } from './floorTextures'
 import { TILE_SIZE } from './grid'
+import { createPitchMarker } from './pitchMarker'
 import { palette } from './palette'
 
 /** Desplazamiento de la sombra plana (hacia abajo a la derecha), en px. */
@@ -25,7 +27,16 @@ const NAME_MIN_TILES = { width: 3, height: 2 } as const
  * Crea el marcador de un edificio. El origen (0,0) del contenedor es la
  * esquina superior izquierda de la huella ya girada.
  */
-export function createBuildingMarker(def: BuildingDef, rotation: Rotation): Container {
+export function createBuildingMarker(
+  def: BuildingDef,
+  rotation: Rotation,
+  textures?: FloorTextures,
+): Container {
+  // Los terrenos de juego tienen su propio dibujo (superficie + líneas de cal).
+  if (def.pitch) {
+    return createPitchMarker(def, rotation, textures?.pattern(def.pitch.surface) ?? def.markerColor)
+  }
+
   const tiles = rotateSize(def.size, rotation)
   const width = tiles.width * TILE_SIZE
   const height = tiles.height * TILE_SIZE
@@ -41,6 +52,7 @@ export function createBuildingMarker(def: BuildingDef, rotation: Rotation): Cont
     .stroke({ width: 1.5, color: palette.outline, alignment: 1 })
     .rect(INNER_INSET, INNER_INSET, width - INNER_INSET * 2, height - INNER_INSET * 2)
     .stroke({ width: 1, color: palette.outline, alpha: 0.25 })
+  drawFrontArrow(body, width, height, rotation)
   marker.addChild(body)
 
   const showName = tiles.width >= NAME_MIN_TILES.width && tiles.height >= NAME_MIN_TILES.height
@@ -70,6 +82,44 @@ export function createBuildingMarker(def: BuildingDef, rotation: Rotation): Cont
   marker.addChild(name)
 
   return marker
+}
+
+/** Dirección del frente del edificio según el giro (sentido horario, 0 = abajo). */
+const FRONT_DIRECTIONS = [
+  { x: 0, y: 1 },
+  { x: -1, y: 0 },
+  { x: 0, y: -1 },
+  { x: 1, y: 0 },
+] as const
+
+/** Distancia de la flecha al borde y tamaño de su punta, en px. */
+const ARROW_INSET = 16
+const ARROW_SIZE = 11
+
+/**
+ * Flecha junto al borde "frontal" (p. ej. hacia dónde mira la grada). Hace
+ * visible cualquier giro, incluso en edificios cuadrados o girados 180°.
+ */
+function drawFrontArrow(
+  graphics: Graphics,
+  width: number,
+  height: number,
+  rotation: Rotation,
+): void {
+  const dir = FRONT_DIRECTIONS[rotation]
+  // Punta pegada al borde frontal, centrada en ese lado.
+  const tipX = width / 2 + dir.x * (width / 2 - ARROW_INSET)
+  const tipY = height / 2 + dir.y * (height / 2 - ARROW_INSET)
+  // Base perpendicular a la dirección, retrasada hacia el centro.
+  const baseX = tipX - dir.x * ARROW_SIZE * 1.3
+  const baseY = tipY - dir.y * ARROW_SIZE * 1.3
+  const perpX = -dir.y * ARROW_SIZE
+  const perpY = dir.x * ARROW_SIZE
+
+  graphics
+    .poly([tipX, tipY, baseX + perpX, baseY + perpY, baseX - perpX, baseY - perpY])
+    .fill({ color: palette.chalk, alpha: 0.85 })
+    .stroke({ width: 1, color: palette.outline })
 }
 
 /** Libera el marcador y sus hijos (los `Text` liberan su textura al destruirse). */

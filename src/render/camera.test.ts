@@ -4,6 +4,7 @@ import {
   centerOn,
   clampView,
   DEFAULT_CAMERA_LIMITS,
+  GRID_MIN_ALPHA,
   gridLineAlpha,
   panBy,
   wheelToZoomFactor,
@@ -124,11 +125,12 @@ describe('wheelToZoomFactor', () => {
 })
 
 describe('gridLineAlpha', () => {
-  it('vale 0 a escala ≤ 0.3 y 1 a escala ≥ 0.6', () => {
-    expect(gridLineAlpha(0.1)).toBe(0)
-    expect(gridLineAlpha(0.3)).toBe(0)
-    expect(gridLineAlpha(0.6)).toBe(1)
+  it('nunca desaparece: GRID_MIN_ALPHA a escala ≤ 0.1 y 1 a escala ≥ 0.5', () => {
+    expect(gridLineAlpha(0.05)).toBe(GRID_MIN_ALPHA)
+    expect(gridLineAlpha(0.1)).toBe(GRID_MIN_ALPHA)
+    expect(gridLineAlpha(0.5)).toBe(1)
     expect(gridLineAlpha(2)).toBe(1)
+    expect(GRID_MIN_ALPHA).toBeGreaterThan(0)
   })
 
   it('es monótona y se mantiene en [0, 1]', () => {

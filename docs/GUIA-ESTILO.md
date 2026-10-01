@@ -26,6 +26,8 @@ El clima es parte del juego: la lluvia embarra el campo y crea charcos que se ve
 | Pizarra (tejados) | `#4a5560` · `#3b444d` hileras |
 | Madera | `#8a5f3c` |
 | Suelo interior | `#b9a68a` |
+| Suelos construidos | `#9b9385` grava · `#a8aaa5` hormigón · `#dfe3dc` baldosa blanca · `#3e4347` asfalto |
+| Carretera | `#eef0ea` línea (cal) · `#6d7275` bordillo (piedra oscura) |
 | Agua y charcos | `#7c98a8` · `#a9c2cf` reflejo · `#5f7d8d` borde |
 | Árboles | `#3f6630` copa · `#4e7a3a` luz · `#2a4420` contorno |
 | Cal y líneas | `#eef0ea` |
@@ -58,6 +60,12 @@ No forman parte del mundo, solo dan feedback al jugador.
 |---|---|
 | Vista previa válida | `#8fd16a` |
 | Vista previa inválida / demoler | `#e0574a` |
-| Parcela no comprada (velo) | `#2e2a26` a baja opacidad |
-| Parcela comprable | `#f2c46b` |
+| Zona bloqueada (velo de ampliación) | `#2e2a26` a baja opacidad |
 | Fondo fuera del mapa | `#1b2a1f` |
+
+## Texturas de suelo (Fase 1B)
+- Se generan por código en `src/render/floorTextures.ts`, cada una de 128×128 px (2×2 casillas) para que casillas vecinas no sean idénticas.
+- Solo usan el color base de cada suelo (`src/content/floors.ts`) y tonos derivados con `shade()` (más claro/más oscuro): nada de colores sueltos.
+- Lo que toca un borde se repite en el opuesto: la textura es continua y queda alineada con la rejilla.
+- Referencia de aspecto: los materiales de Prison Architect (solo como referencia; no se copian sus imágenes).
+- Idea para cuando haya personas: cada suelo modifica la velocidad al caminar (hierba y barro frenan, asfalto y losa aceleran), como en Prison Architect.

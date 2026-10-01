@@ -10,9 +10,11 @@ import { Container } from 'pixi.js'
 import type { ViewTransform } from './grid'
 
 export const LAYER_ORDER = [
-  'ground', // terreno: hierba, tierra, caminos
+  'ground', // fondo de hierba
+  'floors', // suelos pintados (por trozos) y asfalto
+  'road', // marcas viales y tramos de carretera fuera del mapa
   'grid', // líneas de la rejilla
-  'parcels', // velo del terreno ajeno y borde del propio
+  'outside', // zonas de ampliación bloqueadas (fuera del mapa)
   'buildings', // edificios y sus sombras
   'people', // figuritas
   'effects', // polvo, textos flotantes, partículas

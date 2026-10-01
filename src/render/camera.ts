@@ -18,7 +18,7 @@ export interface CameraLimits {
 }
 
 export const DEFAULT_CAMERA_LIMITS: CameraLimits = {
-  minScale: 0.25,
+  minScale: 0.07,
   maxScale: 2,
   overscroll: 320,
 }
@@ -84,12 +84,17 @@ export function wheelToZoomFactor(deltaY: number): number {
   return Math.exp(-deltaY * WHEEL_ZOOM_SENSITIVITY)
 }
 
+/** Opacidad mínima de la rejilla: nunca desaparece, como en Prison Architect. */
+export const GRID_MIN_ALPHA = 0.45
+
 /**
- * Opacidad de las líneas de rejilla según el zoom: al alejarse se desvanecen
- * para no convertir el mapa en ruido (0 a escala ≤ 0.3, 1 a escala ≥ 0.6).
+ * Opacidad de la capa de rejilla según el zoom: al alejarse se atenúa (sin
+ * llegar a desaparecer) para no convertir el mapa en ruido.
+ * GRID_MIN_ALPHA a escala ≤ 0.1 y 1 a escala ≥ 0.5.
  */
 export function gridLineAlpha(scale: number): number {
-  return clamp((scale - 0.3) / 0.3, 0, 1)
+  const t = clamp((scale - 0.1) / 0.4, 0, 1)
+  return GRID_MIN_ALPHA + (1 - GRID_MIN_ALPHA) * t
 }
 
 function clampAxis(

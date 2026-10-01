@@ -28,6 +28,8 @@ export interface CameraControllerOptions {
   readonly limits?: CameraLimits
   /** Escala inicial; por defecto 1 (casillas a 64 px reales). */
   readonly initialScale?: number
+  /** Punto de mundo que se ve en el centro al empezar; por defecto, el centro del mapa. */
+  readonly initialFocus?: Point
 }
 
 export function createCameraController({
@@ -36,10 +38,12 @@ export function createCameraController({
   onChange,
   limits = DEFAULT_CAMERA_LIMITS,
   initialScale = 1,
+  initialFocus,
 }: CameraControllerOptions): CameraController {
   let screen = initialScreen
   const world = gridWorldSize(grid)
-  let view = centerOn({ x: world.width / 2, y: world.height / 2 }, initialScale, screen)
+  const focus = initialFocus ?? { x: world.width / 2, y: world.height / 2 }
+  let view = centerOn(focus, initialScale, screen)
 
   const commit = (next: ViewTransform): void => {
     view = clampView(next, grid, screen, limits)

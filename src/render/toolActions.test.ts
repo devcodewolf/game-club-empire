@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { executeCommand } from '@/sim/commands'
 import { buildingAt, type MapState } from '@/sim/map'
 import type { Rotation, TileCoord } from '@/sim/geometry'
-import { createTestMap, TEST_CATALOG } from '@/sim/test-fixtures'
-import type { Tool } from './tool'
-import { commandForTool, placementOrigin } from './toolActions'
+import { createTestMap, TEST_CATALOG, TEST_CONTENT } from '@/sim/test-fixtures'
+import { isDragTool, type Tool } from './tool'
+import { commandForDrag, commandForTool, placementOrigin } from './toolActions'
 
 const build = (buildingType: string, rotation: Rotation = 0): Tool => ({
   kind: 'build',
@@ -13,7 +13,7 @@ const build = (buildingType: string, rotation: Rotation = 0): Tool => ({
 })
 
 const commandFor = (tool: Tool, cursor: TileCoord, state: MapState = createTestMap()) =>
-  commandForTool(tool, cursor, state, TEST_CATALOG)
+  commandForTool(tool, cursor, state, TEST_CONTENT)
 
 describe('placementOrigin', () => {
   it('con tamaño impar (3×3) centra exacto el edificio bajo el cursor', () => {
@@ -69,7 +69,7 @@ describe('commandForTool', () => {
         const command = commandFor(build(type, rotation), cursor, state)
         expect(command).not.toBeNull()
 
-        const result = executeCommand(state, command!, TEST_CATALOG)
+        const result = executeCommand(state, command!, TEST_CONTENT)
 
         expect(result.ok).toBe(true)
         expect(buildingAt(state, cursor)).toBeDefined()
@@ -85,7 +85,7 @@ describe('commandForTool', () => {
       executeCommand(
         state,
         { type: 'placeBuilding', buildingType: 'small', origin: { x: 2, y: 2 }, rotation: 0 },
-        TEST_CATALOG,
+        TEST_CONTENT,
       )
 
       expect(commandFor(demolish, { x: 2, y: 2 }, state)).toEqual({
@@ -103,7 +103,7 @@ describe('commandForTool', () => {
       executeCommand(
         state,
         { type: 'placeBuilding', buildingType: 'wide', origin: { x: 2, y: 2 }, rotation: 0 },
-        TEST_CATALOG,
+        TEST_CONTENT,
       )
 
       // wide 3×2 en (2,2): x 2..4, y 2..3
@@ -121,12 +121,91 @@ describe('commandForTool', () => {
     })
   })
 
-  describe('buyParcel', () => {
-    it('propone buyParcel con la parcela de la casilla', () => {
-      expect(commandFor({ kind: 'buyParcel' }, { x: 12, y: 3 })).toEqual({
-        type: 'buyParcel',
-        parcel: { x: 2, y: 0 },
+  describe('paintFloor', () => {
+    const paint: Tool = { kind: 'paintFloor', floor: 'dirt' }
+
+    it('un clic propone pintar un rectángulo 1×1 en la casilla del cursor', () => {
+      expect(commandFor(paint, { x: 7, y: 4 })).toEqual({
+        type: 'paintFloor',
+        rect: { x: 7, y: 4, width: 1, height: 1 },
+        floor: 'dirt',
       })
     })
+
+    it('un clic fuera del mapa devuelve null', () => {
+      expect(commandFor(paint, { x: 25, y: 4 })).toBeNull()
+    })
+  })
+})
+
+describe('commandForDrag', () => {
+  const paint: Tool = { kind: 'paintFloor', floor: 'stone' }
+  const state = createTestMap()
+  const drag = (from: TileCoord, to: TileCoord, tool: Tool = paint) =>
+    commandForDrag(tool, from, to, state)
+
+  it.each<[string, TileCoord, TileCoord]>([
+    ['abajo a la derecha', { x: 3, y: 4 }, { x: 6, y: 7 }],
+    ['abajo a la izquierda', { x: 6, y: 4 }, { x: 3, y: 7 }],
+    ['arriba a la derecha', { x: 3, y: 7 }, { x: 6, y: 4 }],
+    ['arriba a la izquierda', { x: 6, y: 7 }, { x: 3, y: 4 }],
+  ])('arrastrando %s propone el mismo rectángulo 4×4', (_nombre, from, to) => {
+    expect(drag(from, to)).toEqual({
+      type: 'paintFloor',
+      rect: { x: 3, y: 4, width: 4, height: 4 },
+      floor: 'stone',
+    })
+  })
+
+  it('arrastrar sobre la misma casilla da un rectángulo 1×1', () => {
+    expect(drag({ x: 2, y: 2 }, { x: 2, y: 2 })).toEqual({
+      type: 'paintFloor',
+      rect: { x: 2, y: 2, width: 1, height: 1 },
+      floor: 'stone',
+    })
+  })
+
+  it('recorta al mapa cuando se arrastra fuera por la izquierda y arriba', () => {
+    expect(drag({ x: 2, y: 3 }, { x: -4, y: -5 })).toEqual({
+      type: 'paintFloor',
+      rect: { x: 0, y: 0, width: 3, height: 4 },
+      floor: 'stone',
+    })
+  })
+
+  it('recorta al mapa cuando se arrastra fuera por la derecha y abajo', () => {
+    expect(drag({ x: 17, y: 18 }, { x: 30, y: 40 })).toEqual({
+      type: 'paintFloor',
+      rect: { x: 17, y: 18, width: 3, height: 2 },
+      floor: 'stone',
+    })
+  })
+
+  it.each<[string, TileCoord, TileCoord]>([
+    ['a la izquierda', { x: -5, y: 2 }, { x: -1, y: 6 }],
+    ['encima', { x: 2, y: -6 }, { x: 5, y: -1 }],
+    ['a la derecha', { x: 20, y: 2 }, { x: 25, y: 6 }],
+    ['debajo', { x: 2, y: 20 }, { x: 5, y: 30 }],
+  ])('devuelve null si el arrastre queda completamente fuera %s', (_nombre, from, to) => {
+    expect(drag(from, to)).toBeNull()
+  })
+
+  it.each<[string, Tool]>([
+    ['none', { kind: 'none' }],
+    ['build', { kind: 'build', buildingType: 'small', rotation: 0 }],
+    ['demolish', { kind: 'demolish' }],
+  ])('devuelve null con la herramienta %s, que no es de arrastre', (_nombre, tool) => {
+    expect(drag({ x: 1, y: 1 }, { x: 4, y: 4 }, tool)).toBeNull()
+  })
+})
+
+describe('isDragTool', () => {
+  it.each<[string, Tool, boolean]>([
+    ['paintFloor', { kind: 'paintFloor', floor: 'dirt' }, true],
+    ['none', { kind: 'none' }, false],
+    ['build', { kind: 'build', buildingType: 'small', rotation: 0 }, false],
+    ['demolish', { kind: 'demolish' }, false],
+  ])('%s', (_nombre, tool, esperado) => {
+    expect(isDragTool(tool)).toBe(esperado)
   })
 })

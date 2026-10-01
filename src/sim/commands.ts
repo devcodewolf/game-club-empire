@@ -6,15 +6,17 @@
  * comando inválido nunca deja el estado a medias. El resultado incluye un
  * evento que el render puede usar para animar (construir, demoler, etc.).
  */
-import type { BuildingCatalog, BuildingId, BuildingTypeId, PlacedBuilding } from './buildings'
-import { isInsideGrid, tilesInRect, type Rotation, type TileCoord } from './geometry'
+import type { BuildingId, BuildingTypeId, PlacedBuilding } from './buildings'
+import type { SimContent } from './content'
+import type { FloorId } from './floors'
+import { tilesInRect, type Rotation, type TileCoord, type TileRect } from './geometry'
 import {
   buildingFootprint,
   EMPTY_TILE,
-  isParcelOwned,
-  parcelGridSize,
   tileIndex,
+  validateFloorPaint,
   validatePlacement,
+  type FloorPaintError,
   type MapState,
   type PlacementError,
 } from './map'
@@ -29,17 +31,22 @@ export type Command =
       readonly rotation: Rotation
     }
   | { readonly type: 'demolishBuilding'; readonly buildingId: BuildingId }
-  | { readonly type: 'buyParcel'; readonly parcel: TileCoord }
+  | { readonly type: 'paintFloor'; readonly rect: TileRect; readonly floor: FloorId }
 
 // ── Resultados ───────────────────────────────────────────────────
 
 export type GameEvent =
   | { readonly type: 'buildingPlaced'; readonly building: PlacedBuilding }
   | { readonly type: 'buildingDemolished'; readonly building: PlacedBuilding }
-  | { readonly type: 'parcelBought'; readonly parcel: TileCoord }
+  | {
+      readonly type: 'floorPainted'
+      readonly rect: TileRect
+      readonly floor: FloorId
+      /** Casillas que cambiaron de verdad (las que ya tenían ese suelo no cuentan). */
+      readonly changed: number
+    }
 
-export type ParcelError = 'outOfBounds' | 'alreadyOwned' | 'notAdjacent'
-export type CommandError = PlacementError | ParcelError | 'buildingNotFound'
+export type CommandError = PlacementError | FloorPaintError | 'buildingNotFound'
 
 export type CommandResult =
   | { readonly ok: true; readonly event: GameEvent }
@@ -50,24 +57,24 @@ export type CommandResult =
 export function executeCommand(
   state: MapState,
   command: Command,
-  catalog: BuildingCatalog,
+  content: SimContent,
 ): CommandResult {
   switch (command.type) {
     case 'placeBuilding':
-      return placeBuilding(state, command, catalog)
+      return placeBuilding(state, command, content)
     case 'demolishBuilding':
-      return demolishBuilding(state, command.buildingId, catalog)
-    case 'buyParcel':
-      return buyParcel(state, command.parcel)
+      return demolishBuilding(state, command.buildingId, content)
+    case 'paintFloor':
+      return paintFloor(state, command, content)
   }
 }
 
 function placeBuilding(
   state: MapState,
   { buildingType, origin, rotation }: Extract<Command, { type: 'placeBuilding' }>,
-  catalog: BuildingCatalog,
+  content: SimContent,
 ): CommandResult {
-  const check = validatePlacement(state, catalog, buildingType, origin, rotation)
+  const check = validatePlacement(state, content.buildings, buildingType, origin, rotation)
   if (!check.ok) return { ok: false, reason: check.reason }
 
   const building: PlacedBuilding = {
@@ -88,10 +95,10 @@ function placeBuilding(
 function demolishBuilding(
   state: MapState,
   buildingId: BuildingId,
-  catalog: BuildingCatalog,
+  content: SimContent,
 ): CommandResult {
   const building = state.buildings[buildingId]
-  const def = building && catalog[building.type]
+  const def = building && content.buildings[building.type]
   if (!building || !def) return { ok: false, reason: 'buildingNotFound' }
 
   for (const tile of tilesInRect(buildingFootprint(building, def))) {
@@ -102,40 +109,17 @@ function demolishBuilding(
   return { ok: true, event: { type: 'buildingDemolished', building } }
 }
 
-function buyParcel(state: MapState, parcel: TileCoord): CommandResult {
-  const check = canBuyParcel(state, parcel)
-  if (!check.ok) return check
-
-  const grid = parcelGridSize(state)
-  state.ownedParcels[parcel.y * grid.width + parcel.x] = true
-
-  return { ok: true, event: { type: 'parcelBought', parcel } }
-}
-
-// ── Validación de compra de parcelas ─────────────────────────────
-
-const NEIGHBOURS: readonly TileCoord[] = [
-  { x: 0, y: -1 },
-  { x: 1, y: 0 },
-  { x: 0, y: 1 },
-  { x: -1, y: 0 },
-]
-
-/**
- * Una parcela se puede comprar si está en el mapa, no es tuya y toca por un
- * lado (no en diagonal) con otra que sí lo es: el club crece de forma contigua.
- */
-export function canBuyParcel(
+function paintFloor(
   state: MapState,
-  parcel: TileCoord,
-): { readonly ok: true } | { readonly ok: false; readonly reason: ParcelError } {
-  if (!isInsideGrid(parcel, parcelGridSize(state))) return { ok: false, reason: 'outOfBounds' }
-  if (isParcelOwned(state, parcel)) return { ok: false, reason: 'alreadyOwned' }
+  { rect, floor }: Extract<Command, { type: 'paintFloor' }>,
+  content: SimContent,
+): CommandResult {
+  const check = validateFloorPaint(state, content.floors, rect, floor)
+  if (!check.ok) return { ok: false, reason: check.reason }
 
-  const touchesOwned = NEIGHBOURS.some((d) =>
-    isParcelOwned(state, { x: parcel.x + d.x, y: parcel.y + d.y }),
-  )
-  if (!touchesOwned) return { ok: false, reason: 'notAdjacent' }
+  for (const tile of tilesInRect(rect)) {
+    state.floors[tileIndex(state, tile)] = floor
+  }
 
-  return { ok: true }
+  return { ok: true, event: { type: 'floorPainted', rect, floor, changed: check.changed } }
 }

@@ -39,8 +39,7 @@ export const palette = {
   // Feedback de interfaz sobre el mapa
   previewValid: 0x8fd16a,
   previewInvalid: 0xe0574a,
-  parcelLocked: 0x2e2a26,
-  parcelBuyable: 0xf2c46b,
+  lockedVeil: 0x2e2a26,
 } as const
 
 export type PaletteColor = keyof typeof palette
