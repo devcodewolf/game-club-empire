@@ -6,6 +6,7 @@
 import type { BuildingCatalog } from './buildings'
 import type { SimContent } from './content'
 import type { FloorCatalog } from './floors'
+import type { DoorCatalog, WallCatalog } from './structureTypes'
 import { createMapState, type MapConfig, type MapState } from './map'
 
 /** Catálogo de prueba: 1×1, 3×2 y 4×4. */
@@ -43,8 +44,40 @@ export const TEST_FLOORS: FloorCatalog = {
   stone: { id: 'stone', name: 'Piedra', costPerTile: 5, color: 0x9e9e9e, pattern: 'slabs' },
 }
 
+/** Muros de prueba: ladrillo (estructural) y valla (no estructural). */
+export const TEST_WALLS: WallCatalog = {
+  brick: {
+    id: 'brick',
+    name: 'Ladrillo',
+    costPerTile: 15,
+    pattern: 'brick',
+    capColor: 0xe6dccb,
+    faceColor: 0xb5643c,
+    structural: true,
+  },
+  fence: {
+    id: 'fence',
+    name: 'Valla',
+    costPerTile: 4,
+    pattern: 'fence',
+    capColor: 0x6d7275,
+    faceColor: 0x8f9496,
+    structural: false,
+  },
+}
+
+/** Puertas de prueba. */
+export const TEST_DOORS: DoorCatalog = {
+  door: { id: 'door', name: 'Puerta', cost: 150, color: 0xc98b3c, pattern: 'wood' },
+}
+
 /** Contenido de prueba completo, el que reciben `executeCommand` y `createGame`. */
-export const TEST_CONTENT: SimContent = { buildings: TEST_CATALOG, floors: TEST_FLOORS }
+export const TEST_CONTENT: SimContent = {
+  buildings: TEST_CATALOG,
+  floors: TEST_FLOORS,
+  walls: TEST_WALLS,
+  doors: TEST_DOORS,
+}
 
 /**
  * Configuración del mapa de prueba: 20×20 con una "carretera" reservada de

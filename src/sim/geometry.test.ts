@@ -4,7 +4,9 @@ import {
   footprint,
   isInsideGrid,
   isRectInsideGrid,
+  lineFromCorners,
   nextRotation,
+  perimeterTiles,
   rectFromCorners,
   rotateSize,
   tilesInRect,
@@ -199,5 +201,57 @@ describe('clipRectToGrid', () => {
     ['lejos en diagonal', { x: 50, y: 50, width: 2, height: 2 }],
   ])('devuelve null si está completamente fuera %s', (_nombre, rect) => {
     expect(clipRectToGrid(rect, grid)).toBeNull()
+  })
+})
+
+describe('lineFromCorners', () => {
+  it.each<[string, TileCoord, TileCoord, TileRect]>([
+    ['hacia la derecha', { x: 3, y: 4 }, { x: 7, y: 5 }, { x: 3, y: 4, width: 5, height: 1 }],
+    ['hacia la izquierda', { x: 7, y: 4 }, { x: 3, y: 5 }, { x: 3, y: 4, width: 5, height: 1 }],
+    ['hacia abajo', { x: 3, y: 4 }, { x: 4, y: 9 }, { x: 3, y: 4, width: 1, height: 6 }],
+    ['hacia arriba', { x: 3, y: 9 }, { x: 4, y: 4 }, { x: 3, y: 4, width: 1, height: 6 }],
+  ])('arrastrando %s da una línea que empieza en la fila o columna de a', (_n, a, b, esperado) => {
+    expect(lineFromCorners(a, b)).toEqual(esperado)
+  })
+
+  it('con |dx| = |dy| prefiere la horizontal', () => {
+    expect(lineFromCorners({ x: 2, y: 2 }, { x: 5, y: 5 })).toEqual({
+      x: 2,
+      y: 2,
+      width: 4,
+      height: 1,
+    })
+  })
+
+  it('con la misma casilla da una línea de 1×1', () => {
+    expect(lineFromCorners({ x: 2, y: 2 }, { x: 2, y: 2 })).toEqual({
+      x: 2,
+      y: 2,
+      width: 1,
+      height: 1,
+    })
+  })
+})
+
+describe('perimeterTiles', () => {
+  it.each<[number, number]>([
+    [3, 3],
+    [5, 4],
+    [2, 6],
+    [10, 7],
+  ])('un rectángulo %i×%i tiene 2w + 2h − 4 casillas sin duplicados', (width, height) => {
+    const tiles = [...perimeterTiles({ x: 1, y: 2, width, height })]
+    expect(tiles).toHaveLength(2 * width + 2 * height - 4)
+    expect(new Set(tiles.map((t) => `${t.x},${t.y}`)).size).toBe(tiles.length)
+  })
+
+  it('un rectángulo 1×1 da una única casilla', () => {
+    expect([...perimeterTiles({ x: 4, y: 4, width: 1, height: 1 })]).toEqual([{ x: 4, y: 4 }])
+  })
+
+  it('no incluye casillas del interior', () => {
+    const tiles = [...perimeterTiles({ x: 0, y: 0, width: 4, height: 4 })]
+    expect(tiles).not.toContainEqual({ x: 1, y: 1 })
+    expect(tiles).not.toContainEqual({ x: 2, y: 2 })
   })
 })

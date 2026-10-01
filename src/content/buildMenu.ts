@@ -8,7 +8,9 @@
  * muestre desde ya hacia dónde crece el juego.
  */
 import type { StarterBuildingId } from './buildings'
+import type { DoorTypeId } from './doors'
 import type { FloorTypeId } from './floors'
+import type { WallTypeId } from './walls'
 import type { IconName } from './icons'
 
 /** Color del botón por categoría (ver "plano de obra" en la guía de estilo). */
@@ -22,7 +24,12 @@ export type MenuItem =
       readonly label?: string
     }
   | { readonly kind: 'floor'; readonly id: FloorTypeId }
+  /** Cimientos con ese tipo de muro (suelo interior de hormigón). */
+  | { readonly kind: 'foundation'; readonly wall: WallTypeId }
+  | { readonly kind: 'wall'; readonly id: WallTypeId }
+  | { readonly kind: 'door'; readonly id: DoorTypeId }
   | { readonly kind: 'demolish' }
+  | { readonly kind: 'demolishStructures' }
   | {
       readonly kind: 'planned'
       readonly label: string
@@ -50,6 +57,9 @@ const building = (id: StarterBuildingId, label?: string): MenuItem => ({
   label,
 })
 const floor = (id: FloorTypeId): MenuItem => ({ kind: 'floor', id })
+const foundation = (wall: WallTypeId): MenuItem => ({ kind: 'foundation', wall })
+const wall = (id: WallTypeId): MenuItem => ({ kind: 'wall', id })
+const door = (id: DoorTypeId): MenuItem => ({ kind: 'door', id })
 const planned = (label: string, icon: IconName, arrives: string): MenuItem => ({
   kind: 'planned',
   label,
@@ -108,7 +118,17 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
     label: 'Cimientos',
     icon: 'blocks',
     color: 'blue',
-    tabs: [{ label: 'Cimientos', items: [planned('Cimientos', 'blocks', 'Fase 1B · hito 2')] }],
+    tabs: [
+      {
+        label: 'Cimientos',
+        items: [
+          foundation('brick'),
+          foundation('concrete'),
+          foundation('plaster'),
+          foundation('stone'),
+        ],
+      },
+    ],
   },
   {
     id: 'walls',
@@ -119,12 +139,18 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
       {
         label: 'Muros',
         items: [
-          planned('Muro de ladrillo', 'wall', 'Fase 1B · hito 2'),
-          planned('Muro de piedra', 'wall', 'Fase 1B · hito 2'),
-          planned('Valla', 'fence', 'Fase 1B · hito 2'),
+          wall('brick'),
+          wall('concrete'),
+          wall('plaster'),
+          wall('stone'),
+          wall('fence'),
+          wall('hedge'),
         ],
       },
-      { label: 'Puertas', items: [planned('Puerta', 'door', 'Fase 1B · hito 2')] },
+      {
+        label: 'Puertas',
+        items: [door('woodDoor'), door('staffDoor'), door('gate'), door('glassDoor')],
+      },
     ],
   },
   {
@@ -243,6 +269,6 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
     label: 'Demoler',
     icon: 'hammer',
     color: 'red',
-    tabs: [{ label: 'Demoler', items: [{ kind: 'demolish' }] }],
+    tabs: [{ label: 'Demoler', items: [{ kind: 'demolish' }, { kind: 'demolishStructures' }] }],
   },
 ]

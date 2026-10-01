@@ -2,7 +2,9 @@
 /** Traduce un `MenuItem` del catálogo a un `BlueprintButton`. */
 import { computed } from 'vue'
 import { getBuilding } from '@/content/buildings'
+import { getDoor } from '@/content/doors'
 import { getFloor } from '@/content/floors'
+import { getWall } from '@/content/walls'
 import type { MenuColor, MenuItem } from '@/content/buildMenu'
 import type { IconName } from '@/content/icons'
 import BlueprintButton from '@/ui/components/BlueprintButton.vue'
@@ -23,6 +25,9 @@ interface ButtonModel {
 }
 
 const props = defineProps<{ item: MenuItem; color: MenuColor }>()
+
+/** Importe con separador de miles y símbolo de euro. */
+const formatCost = (amount: number): string => `${amount.toLocaleString('es-ES')} €`
 
 const toolStore = useToolStore()
 const progression = useProgressionStore()
@@ -60,6 +65,65 @@ const model = computed<ButtonModel>(() => {
     }
   }
 
+  if (item.kind === 'foundation') {
+    const def = getWall(item.wall)
+    const reason = progression.lockReason(def.requires)
+    const info = `Cimientos de ${def.name.toLowerCase()} · ${formatCost(def.costPerTile)}/casilla · Arrastra un rectángulo (mín. 3×3)`
+    return {
+      label: `Cimientos de ${def.name.toLowerCase()}`,
+      icon: 'blocks',
+      color: props.color,
+      swatch: def.faceColor,
+      title: reason ? `${info} · ${reason}` : info,
+      locked: reason !== null,
+      active: toolStore.activeFoundation === item.wall,
+      select: () => toolStore.selectFoundation(item.wall),
+    }
+  }
+
+  if (item.kind === 'wall') {
+    const def = getWall(item.id)
+    const reason = progression.lockReason(def.requires)
+    const info = `${def.name} · ${formatCost(def.costPerTile)}/casilla · Arrastra una línea`
+    return {
+      label: def.name,
+      color: props.color,
+      swatch: def.faceColor,
+      title: reason ? `${info} · ${reason}` : info,
+      locked: reason !== null,
+      active: toolStore.activeWall === item.id,
+      select: () => toolStore.selectWall(item.id),
+    }
+  }
+
+  if (item.kind === 'door') {
+    const def = getDoor(item.id)
+    const reason = progression.lockReason(def.requires)
+    const info = `${def.name} · ${formatCost(def.cost)} · Clic sobre un muro recto`
+    return {
+      label: def.name,
+      icon: 'door',
+      color: props.color,
+      swatch: def.color,
+      title: reason ? `${info} · ${reason}` : info,
+      locked: reason !== null,
+      active: toolStore.activeDoor === item.id,
+      select: () => toolStore.selectDoor(item.id),
+    }
+  }
+
+  if (item.kind === 'demolishStructures') {
+    return {
+      label: 'Demoler muros',
+      icon: 'wall',
+      color: 'red',
+      title: 'Demoler muros, puertas y cimientos',
+      locked: false,
+      active: toolStore.tool.kind === 'demolishStructures',
+      select: () => toolStore.selectDemolishStructures(),
+    }
+  }
+
   if (item.kind === 'demolish') {
     return {
       label: 'Demoler',
@@ -88,7 +152,8 @@ const model = computed<ButtonModel>(() => {
 <template>
   <BlueprintButton
     :label="model.label"
-    :icon="model.icon"
+    :icon="model.swatch === undefined ? model.icon : undefined"
+    :swatch-icon="model.swatch === undefined ? undefined : model.icon"
     :color="model.color"
     :swatch="model.swatch"
     :badge="model.badge"

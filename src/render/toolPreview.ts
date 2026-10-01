@@ -9,8 +9,9 @@
  */
 import { Container, Graphics, Text } from 'pixi.js'
 import type { Game } from '@/sim/game'
-import { footprint, type TileCoord, type TileRect } from '@/sim/geometry'
+import { footprint, perimeterTiles, type TileCoord, type TileRect } from '@/sim/geometry'
 import { buildingAt, buildingFootprint, validateFloorPaint, validatePlacement } from '@/sim/map'
+import { doorAxis, validateDoor, validateFoundation, validateWalls } from '@/sim/structures'
 import { createBuildingMarker, destroyBuildingMarker } from './buildingMarker'
 import { TILE_SIZE } from './grid'
 import type { RenderAssets } from './renderAssets'
@@ -136,6 +137,79 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
         showSize(sizeLabel, command.rect, zoom)
         return
       }
+      case 'buildWalls': {
+        const check = validateWalls(game.state, game.content, command.rect, command.wall)
+        const valid = check.ok || check.reason === 'nothingToBuild'
+        const cap = game.content.walls[command.wall]?.capColor ?? palette.stone
+        drawRect(
+          highlight,
+          command.rect,
+          zoom,
+          valid ? palette.previewValid : palette.previewInvalid,
+          valid ? cap : palette.previewInvalid,
+          0.75,
+        )
+        showSize(sizeLabel, command.rect, zoom)
+        return
+      }
+      case 'buildFoundation': {
+        const check = validateFoundation(
+          game.state,
+          game.content,
+          command.rect,
+          command.wall,
+          command.floor,
+        )
+        const border = check.ok ? palette.previewValid : palette.previewInvalid
+        const cap = game.content.walls[command.wall]?.capColor ?? palette.stone
+        const floor = game.content.floors[command.floor]?.color ?? palette.stone
+        // Suelo interior y muros fantasma en el perímetro
+        drawRect(
+          highlight,
+          command.rect,
+          zoom,
+          border,
+          check.ok ? floor : palette.previewInvalid,
+          0.4,
+        )
+        for (const tile of perimeterTiles(command.rect)) {
+          highlight
+            .rect(tile.x * TILE_SIZE, tile.y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            .fill({ color: check.ok ? cap : palette.previewInvalid, alpha: 0.75 })
+        }
+        showSize(sizeLabel, command.rect, zoom)
+        return
+      }
+      case 'placeDoor': {
+        const check = validateDoor(game.state, game.content, command.tile, command.door)
+        const color = game.content.doors[command.door]?.color ?? palette.wood
+        const rect = { ...command.tile, width: 1, height: 1 }
+        drawRect(
+          highlight,
+          rect,
+          zoom,
+          check.ok ? palette.previewValid : palette.previewInvalid,
+          palette.previewInvalid,
+          check.ok ? 0 : 0.35,
+        )
+        if (check.ok) {
+          // Hoja fantasma orientada según el muro
+          const across = doorAxis(game.state, command.tile) !== 'horizontal'
+          const x = command.tile.x * TILE_SIZE
+          const y = command.tile.y * TILE_SIZE
+          const leaf = across
+            ? [x + 7, y + TILE_SIZE / 2 - 6, TILE_SIZE - 14, 12]
+            : [x + TILE_SIZE / 2 - 6, y + 7, 12, TILE_SIZE - 14]
+          highlight
+            .rect(leaf[0] ?? 0, leaf[1] ?? 0, leaf[2] ?? 0, leaf[3] ?? 0)
+            .fill({ color, alpha: 0.85 })
+        }
+        return
+      }
+      case 'demolishStructures':
+        drawRect(highlight, command.rect, zoom, palette.previewInvalid, palette.previewInvalid, 0.3)
+        showSize(sizeLabel, command.rect, zoom)
+        return
     }
   }
 

@@ -23,6 +23,8 @@ const props = withDefaults(
     badge?: string
     /** Color 0xRRGGBB: sustituye al icono por un cuadrado con juntas (suelos). */
     swatch?: number
+    /** Icono pequeño sobre el swatch (p. ej. puerta sobre su color). */
+    swatchIcon?: IconName
     /** Lado del cuadrado en px. */
     tileSize?: number
     /** Texto del `title` (tooltip nativo). */
@@ -33,6 +35,7 @@ const props = withDefaults(
     icon: undefined,
     badge: undefined,
     swatch: undefined,
+    swatchIcon: undefined,
     title: undefined,
   },
 )
@@ -80,6 +83,13 @@ function onClick(): void {
         v-if="swatchColor"
         class="blueprint__swatch"
         :style="{ backgroundColor: swatchColor }"
+      />
+      <AppIcon
+        v-if="swatchColor && swatchIcon"
+        :name="swatchIcon"
+        :size="Math.round(tileSize * 0.4)"
+        :stroke="2"
+        class="relative drop-shadow-[0_1px_0_#1d1a17]"
       />
       <AppIcon v-else-if="icon" :name="icon" :size="Math.round(tileSize * 0.5)" :stroke="1.75" />
       <AppIcon v-if="locked" name="lock" :size="14" class="absolute top-1 right-1" />

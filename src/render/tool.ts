@@ -7,16 +7,35 @@
 import type { BuildingTypeId } from '@/sim/buildings'
 import type { FloorId } from '@/sim/floors'
 import type { Rotation } from '@/sim/geometry'
+import type { DoorId, WallId } from '@/sim/structureTypes'
 
 export type Tool =
   | { readonly kind: 'none' }
   | { readonly kind: 'build'; readonly buildingType: BuildingTypeId; readonly rotation: Rotation }
   | { readonly kind: 'demolish' }
   | { readonly kind: 'paintFloor'; readonly floor: FloorId }
+  | { readonly kind: 'foundation'; readonly wall: WallId; readonly floor: FloorId }
+  | { readonly kind: 'wall'; readonly wall: WallId }
+  | { readonly kind: 'door'; readonly door: DoorId }
+  | { readonly kind: 'demolishStructures' }
 
 export const NO_TOOL: Tool = { kind: 'none' }
 
-/** Herramientas que se usan arrastrando un rectángulo (pulsar, arrastrar, soltar). */
+/** Herramientas que se usan arrastrando (pulsar, arrastrar, soltar). */
 export function isDragTool(tool: Tool): boolean {
-  return tool.kind === 'paintFloor'
+  return dragShape(tool) !== null
+}
+
+/** Forma del arrastre: rectángulo (suelos, cimientos, demoler) o línea recta (muros). */
+export function dragShape(tool: Tool): 'rect' | 'line' | null {
+  switch (tool.kind) {
+    case 'paintFloor':
+    case 'foundation':
+    case 'demolishStructures':
+      return 'rect'
+    case 'wall':
+      return 'line'
+    default:
+      return null
+  }
 }

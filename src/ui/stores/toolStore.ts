@@ -8,6 +8,10 @@ import type { BuildingTypeId } from '@/sim/buildings'
 import type { FloorId } from '@/sim/floors'
 import { nextRotation, type Rotation } from '@/sim/geometry'
 import { NO_TOOL, type Tool } from '@/render/tool'
+import type { DoorId, WallId } from '@/sim/structureTypes'
+
+/** Los cimientos siempre dejan hormigón dentro; el muro es lo único que se elige. */
+const FOUNDATION_FLOOR: FloorId = 'concrete'
 
 export const useToolStore = defineStore('tool', () => {
   const tool = ref<Tool>(NO_TOOL)
@@ -18,6 +22,11 @@ export const useToolStore = defineStore('tool', () => {
     tool.value.kind === 'build' ? tool.value.buildingType : null,
   )
   const activeFloor = computed(() => (tool.value.kind === 'paintFloor' ? tool.value.floor : null))
+  const activeFoundation = computed(() =>
+    tool.value.kind === 'foundation' ? tool.value.wall : null,
+  )
+  const activeWall = computed(() => (tool.value.kind === 'wall' ? tool.value.wall : null))
+  const activeDoor = computed(() => (tool.value.kind === 'door' ? tool.value.door : null))
 
   /** Elegir el mismo edificio otra vez lo suelta (como un interruptor). */
   function selectBuilding(buildingType: BuildingTypeId): void {
@@ -35,6 +44,26 @@ export const useToolStore = defineStore('tool', () => {
     tool.value = tool.value.kind === 'demolish' ? NO_TOOL : { kind: 'demolish' }
   }
 
+  /** Cimientos con ese muro; elegir los mismos otra vez los suelta. */
+  function selectFoundation(wall: WallId): void {
+    if (activeFoundation.value === wall) return clear()
+    tool.value = { kind: 'foundation', wall, floor: FOUNDATION_FLOOR }
+  }
+
+  function selectWall(wall: WallId): void {
+    if (activeWall.value === wall) return clear()
+    tool.value = { kind: 'wall', wall }
+  }
+
+  function selectDoor(door: DoorId): void {
+    if (activeDoor.value === door) return clear()
+    tool.value = { kind: 'door', door }
+  }
+
+  function selectDemolishStructures(): void {
+    tool.value = tool.value.kind === 'demolishStructures' ? NO_TOOL : { kind: 'demolishStructures' }
+  }
+
   function rotate(): void {
     rotation.value = nextRotation(rotation.value)
     if (tool.value.kind !== 'build') return
@@ -50,9 +79,16 @@ export const useToolStore = defineStore('tool', () => {
     rotation,
     activeBuilding,
     activeFloor,
+    activeFoundation,
+    activeWall,
+    activeDoor,
     selectBuilding,
     selectFloor,
     selectDemolish,
+    selectFoundation,
+    selectWall,
+    selectDoor,
+    selectDemolishStructures,
     rotate,
     clear,
   }

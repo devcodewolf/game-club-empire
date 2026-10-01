@@ -86,3 +86,27 @@ export function clipRectToGrid(rect: TileRect, grid: GridSize): TileRect | null 
   if (right <= x || bottom <= y) return null
   return { x, y, width: right - x, height: bottom - y }
 }
+
+/**
+ * Línea recta de casillas entre dos puntos de un arrastre: horizontal o
+ * vertical según el eje en el que más se haya movido (como los muros de
+ * Prison Architect). Empieza siempre en `a`.
+ */
+export function lineFromCorners(a: TileCoord, b: TileCoord): TileRect {
+  const horizontal = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y)
+  return horizontal
+    ? { x: Math.min(a.x, b.x), y: a.y, width: Math.abs(b.x - a.x) + 1, height: 1 }
+    : { x: a.x, y: Math.min(a.y, b.y), width: 1, height: Math.abs(b.y - a.y) + 1 }
+}
+
+/** Casillas del borde de un rectángulo (sin repetir esquinas). */
+export function* perimeterTiles(rect: TileRect): Generator<TileCoord> {
+  for (const tile of tilesInRect(rect)) {
+    const onEdge =
+      tile.x === rect.x ||
+      tile.y === rect.y ||
+      tile.x === rect.x + rect.width - 1 ||
+      tile.y === rect.y + rect.height - 1
+    if (onEdge) yield tile
+  }
+}

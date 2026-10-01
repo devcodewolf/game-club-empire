@@ -8,14 +8,12 @@
  * opuesto para que al repetirse no se vean costuras. Se usan con FillPattern
  * en espacio global, de modo que el dibujo queda alineado con la rejilla.
  */
-import { FillPattern, Graphics, Rectangle, type Renderer, type Texture } from 'pixi.js'
-import type { FloorCatalog, FloorDef, FloorId, FloorPattern } from '@/sim/floors'
+import type { FillPattern, Graphics, Renderer, Texture } from 'pixi.js'
+import type { FloorCatalog, FloorId, FloorPattern } from '@/sim/floors'
 import { shade } from './color'
 import { TILE_SIZE } from './grid'
-import { createRandom, seedFromText, type Random } from './random'
-
-/** Lado de la textura: 2×2 casillas. */
-const PATTERN = TILE_SIZE * 2
+import type { Random } from './random'
+import { bakePattern, drawRowPieces, PATTERN, speckles, wrapped } from './textureKit'
 
 type Painter = (g: Graphics, base: number, rnd: Random) => void
 
@@ -31,13 +29,11 @@ export function createFloorTextures(renderer: Renderer, floors: FloorCatalog): F
   const patterns = new Map<FloorId, FillPattern>()
 
   for (const def of Object.values(floors)) {
-    const texture = paintFloorTexture(renderer, def)
-    textures.set(def.id, texture)
-    patterns.set(def.id, new FillPattern({ texture, repetition: 'repeat', textureSpace: 'global' }))
-    // FillPattern cambia el modo de repetición del estilo pero no llama a update():
-    // sin esto la GPU sigue en 'clamp-to-edge' y fuera de los primeros 128 px se
-    // repite el píxel del borde (el suelo se ve liso). Pixi 8.21.
-    texture.source.style.update()
+    const baked = bakePattern(renderer, def.id, (g, rnd) =>
+      PAINTERS[def.pattern](g, def.color, rnd),
+    )
+    textures.set(def.id, baked.texture)
+    patterns.set(def.id, baked.pattern)
   }
 
   return {
@@ -46,54 +42,6 @@ export function createFloorTextures(renderer: Renderer, floors: FloorCatalog): F
     destroy() {
       for (const texture of textures.values()) texture.destroy(true)
     },
-  }
-}
-
-function paintFloorTexture(renderer: Renderer, def: FloorDef): Texture {
-  const g = new Graphics()
-  const rnd = createRandom(seedFromText(def.id))
-  PAINTERS[def.pattern](g, def.color, rnd)
-
-  const texture = renderer.generateTexture({
-    target: g,
-    frame: new Rectangle(0, 0, PATTERN, PATTERN),
-    antialias: true,
-  })
-  g.destroy()
-  return texture
-}
-
-// ── Utilidades ───────────────────────────────────────────────────
-
-/** Dibuja algo en (x, y) y, si queda cerca de un borde, también en el lado opuesto. */
-function wrapped(x: number, y: number, margin: number, draw: (x: number, y: number) => void): void {
-  const xs = [
-    x,
-    ...(x < margin ? [x + PATTERN] : []),
-    ...(x > PATTERN - margin ? [x - PATTERN] : []),
-  ]
-  const ys = [
-    y,
-    ...(y < margin ? [y + PATTERN] : []),
-    ...(y > PATTERN - margin ? [y - PATTERN] : []),
-  ]
-  for (const wx of xs) for (const wy of ys) draw(wx, wy)
-}
-
-/** Motas sueltas de uno o varios tonos. */
-function speckles(
-  g: Graphics,
-  rnd: Random,
-  count: number,
-  colors: number[],
-  radius: [number, number],
-): void {
-  for (let i = 0; i < count; i++) {
-    const r = rnd.range(radius[0], radius[1])
-    const color = rnd.pick(colors)
-    wrapped(rnd.range(0, PATTERN), rnd.range(0, PATTERN), r, (x, y) =>
-      g.circle(x, y, r).fill(color),
-    )
   }
 }
 
@@ -264,35 +212,5 @@ function drawMowingStripes(g: Graphics, base: number, contrast: number): void {
   for (let x = 0; x < PATTERN; x += band) {
     const light = (x / band) % 2 === 0
     g.rect(x, 0, band, PATTERN).fill(shade(base, light ? contrast : -contrast))
-  }
-}
-
-/**
- * Rellena una fila con piezas de largo aleatorio (losas, tablas) que cubren
- * exactamente un periodo de PATTERN px, empezando en un desplazamiento al azar.
- * Las piezas que se salen por la derecha se dibujan también por la izquierda,
- * así la fila es continua al repetirse. Cada pieza recibe su propio generador
- * para que sus dos copias tengan el mismo tono y los mismos detalles.
- */
-function drawRowPieces(
-  rnd: Random,
-  y: number,
-  height: number,
-  lengths: [number, number],
-  drawPiece: (x: number, y: number, width: number, height: number, piece: Random) => void,
-): void {
-  const start = rnd.range(0, lengths[0])
-  const end = start + PATTERN
-  let x = start
-
-  while (x < end - 0.5) {
-    let width = Math.round(rnd.range(lengths[0], lengths[1]))
-    // Si lo que sobraría es más corto que una pieza mínima, se absorbe aquí.
-    if (end - (x + width) < lengths[0]) width = end - x
-
-    const seed = rnd.int(0, 2 ** 31)
-    drawPiece(x, y, width, height, createRandom(seed))
-    if (x + width > PATTERN) drawPiece(x - PATTERN, y, width, height, createRandom(seed))
-    x += width
   }
 }

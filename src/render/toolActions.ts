@@ -8,6 +8,7 @@ import type { Command } from '@/sim/commands'
 import type { SimContent } from '@/sim/content'
 import {
   clipRectToGrid,
+  lineFromCorners,
   rectFromCorners,
   rotateSize,
   type GridSize,
@@ -15,7 +16,7 @@ import {
   type TileCoord,
 } from '@/sim/geometry'
 import { buildingAt, type MapState } from '@/sim/map'
-import type { Tool } from './tool'
+import { dragShape, type Tool } from './tool'
 
 /**
  * Origen del edificio para que quede centrado bajo el cursor. En tamaños
@@ -54,8 +55,13 @@ export function commandForTool(
       const building = buildingAt(state, cursor)
       return building ? { type: 'demolishBuilding', buildingId: building.id } : null
     }
+    case 'door':
+      return { type: 'placeDoor', tile: cursor, door: tool.door }
     case 'paintFloor':
-      // Un clic sin arrastrar pinta una sola casilla.
+    case 'wall':
+    case 'foundation':
+    case 'demolishStructures':
+      // Un clic sin arrastrar equivale a un arrastre de una sola casilla.
       return commandForDrag(tool, cursor, cursor, state)
   }
 }
@@ -71,8 +77,23 @@ export function commandForDrag(
   to: TileCoord,
   state: MapState,
 ): Command | null {
-  if (tool.kind !== 'paintFloor') return null
+  const shape = dragShape(tool)
+  if (!shape) return null
 
-  const rect = clipRectToGrid(rectFromCorners(from, to), state.size)
-  return rect ? { type: 'paintFloor', rect, floor: tool.floor } : null
+  const raw = shape === 'line' ? lineFromCorners(from, to) : rectFromCorners(from, to)
+  const rect = clipRectToGrid(raw, state.size)
+  if (!rect) return null
+
+  switch (tool.kind) {
+    case 'paintFloor':
+      return { type: 'paintFloor', rect, floor: tool.floor }
+    case 'wall':
+      return { type: 'buildWalls', rect, wall: tool.wall }
+    case 'foundation':
+      return { type: 'buildFoundation', rect, wall: tool.wall, floor: tool.floor }
+    case 'demolishStructures':
+      return { type: 'demolishStructures', rect }
+    default:
+      return null
+  }
 }

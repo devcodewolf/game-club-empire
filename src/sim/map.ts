@@ -13,6 +13,7 @@ import type {
   PlacedBuilding,
 } from './buildings'
 import { DEFAULT_FLOOR, type FloorCatalog, type FloorId } from './floors'
+import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
 import {
   footprint,
   isInsideGrid,
@@ -41,6 +42,12 @@ export interface MapState {
    * EMPTY_TILE. Es una caché derivada de `buildings` para consultas O(1).
    */
   readonly occupancy: BuildingId[]
+  /** Una entrada por casilla: tipo de muro o NO_WALL (''). */
+  readonly walls: WallId[]
+  /** Una entrada por casilla: tipo de puerta o NO_DOOR (''). Va en un hueco del muro. */
+  readonly doors: DoorId[]
+  /** Una entrada por casilla: true si es zona interior (con techo), creada por cimientos. */
+  readonly indoor: boolean[]
   readonly buildings: Record<BuildingId, PlacedBuilding>
   /** Siguiente id a asignar: ids deterministas, nunca reutilizados. */
   nextBuildingId: BuildingId
@@ -66,6 +73,9 @@ export function createMapState({ size, features }: MapConfig): MapState {
     floors: new Array<FloorId>(tileCount).fill(DEFAULT_FLOOR),
     reserved: new Array<boolean>(tileCount).fill(false),
     occupancy: new Array<BuildingId>(tileCount).fill(EMPTY_TILE),
+    walls: new Array<WallId>(tileCount).fill(NO_WALL),
+    doors: new Array<DoorId>(tileCount).fill(NO_DOOR),
+    indoor: new Array<boolean>(tileCount).fill(false),
     buildings: {},
     nextBuildingId: 1,
   }
@@ -117,7 +127,7 @@ export function buildingFootprint(building: PlacedBuilding, def: BuildingDef): T
 
 // ── Validación de colocación ─────────────────────────────────────
 
-export type PlacementError = 'unknownBuilding' | 'outOfBounds' | 'reserved' | 'occupied'
+export type PlacementError = 'unknownBuilding' | 'outOfBounds' | 'reserved' | 'occupied' | 'wall'
 
 export type PlacementCheck =
   | { readonly ok: true; readonly rect: TileRect }
@@ -145,6 +155,9 @@ export function validatePlacement(
     const index = tileIndex(state, tile)
     if (state.reserved[index]) return { ok: false, reason: 'reserved', rect }
     if (state.occupancy[index] !== EMPTY_TILE) return { ok: false, reason: 'occupied', rect }
+    if (state.walls[index] !== NO_WALL || state.doors[index] !== NO_DOOR) {
+      return { ok: false, reason: 'wall', rect }
+    }
   }
 
   return { ok: true, rect }

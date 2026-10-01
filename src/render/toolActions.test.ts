@@ -3,7 +3,7 @@ import { executeCommand } from '@/sim/commands'
 import { buildingAt, type MapState } from '@/sim/map'
 import type { Rotation, TileCoord } from '@/sim/geometry'
 import { createTestMap, TEST_CATALOG, TEST_CONTENT } from '@/sim/test-fixtures'
-import { isDragTool, type Tool } from './tool'
+import { dragShape, isDragTool, type Tool } from './tool'
 import { commandForDrag, commandForTool, placementOrigin } from './toolActions'
 
 const build = (buildingType: string, rotation: Rotation = 0): Tool => ({
@@ -138,6 +138,129 @@ describe('commandForTool', () => {
   })
 })
 
+describe('commandForTool: estructuras', () => {
+  it('door: un clic propone placeDoor en la casilla del cursor', () => {
+    expect(commandFor({ kind: 'door', door: 'door' }, { x: 5, y: 6 })).toEqual({
+      type: 'placeDoor',
+      tile: { x: 5, y: 6 },
+      door: 'door',
+    })
+  })
+
+  it('wall: un clic propone buildWalls de una casilla', () => {
+    expect(commandFor({ kind: 'wall', wall: 'brick' }, { x: 5, y: 6 })).toEqual({
+      type: 'buildWalls',
+      rect: { x: 5, y: 6, width: 1, height: 1 },
+      wall: 'brick',
+    })
+  })
+
+  it('foundation: un clic propone buildFoundation de una casilla', () => {
+    expect(
+      commandFor({ kind: 'foundation', wall: 'brick', floor: 'dirt' }, { x: 5, y: 6 }),
+    ).toEqual({
+      type: 'buildFoundation',
+      rect: { x: 5, y: 6, width: 1, height: 1 },
+      wall: 'brick',
+      floor: 'dirt',
+    })
+  })
+
+  it('demolishStructures: un clic propone demoler una casilla', () => {
+    expect(commandFor({ kind: 'demolishStructures' }, { x: 5, y: 6 })).toEqual({
+      type: 'demolishStructures',
+      rect: { x: 5, y: 6, width: 1, height: 1 },
+    })
+  })
+})
+
+describe('commandForDrag: estructuras', () => {
+  const state = createTestMap()
+  const wall: Tool = { kind: 'wall', wall: 'brick' }
+  const foundation: Tool = { kind: 'foundation', wall: 'brick', floor: 'dirt' }
+  const demolishStructures: Tool = { kind: 'demolishStructures' }
+
+  it('wall: arrastre mayormente horizontal da una línea horizontal desde la fila de inicio', () => {
+    expect(commandForDrag(wall, { x: 3, y: 4 }, { x: 7, y: 5 }, state)).toEqual({
+      type: 'buildWalls',
+      rect: { x: 3, y: 4, width: 5, height: 1 },
+      wall: 'brick',
+    })
+  })
+
+  it('wall: arrastre mayormente vertical da una línea vertical desde la columna de inicio', () => {
+    expect(commandForDrag(wall, { x: 3, y: 9 }, { x: 4, y: 4 }, state)).toEqual({
+      type: 'buildWalls',
+      rect: { x: 3, y: 4, width: 1, height: 6 },
+      wall: 'brick',
+    })
+  })
+
+  it('wall: la línea se recorta al mapa', () => {
+    expect(commandForDrag(wall, { x: 17, y: 2 }, { x: 30, y: 2 }, state)).toEqual({
+      type: 'buildWalls',
+      rect: { x: 17, y: 2, width: 3, height: 1 },
+      wall: 'brick',
+    })
+  })
+
+  it('wall: una línea completamente fuera del mapa da null', () => {
+    expect(commandForDrag(wall, { x: 25, y: 2 }, { x: 30, y: 2 }, state)).toBeNull()
+  })
+
+  it('foundation: el arrastre da un rectángulo en cualquier dirección', () => {
+    const esperado = {
+      type: 'buildFoundation',
+      rect: { x: 3, y: 4, width: 5, height: 4 },
+      wall: 'brick',
+      floor: 'dirt',
+    }
+    expect(commandForDrag(foundation, { x: 3, y: 4 }, { x: 7, y: 7 }, state)).toEqual(esperado)
+    expect(commandForDrag(foundation, { x: 7, y: 7 }, { x: 3, y: 4 }, state)).toEqual(esperado)
+  })
+
+  it('demolishStructures: el arrastre da un rectángulo', () => {
+    expect(commandForDrag(demolishStructures, { x: 6, y: 7 }, { x: 3, y: 4 }, state)).toEqual({
+      type: 'demolishStructures',
+      rect: { x: 3, y: 4, width: 4, height: 4 },
+    })
+  })
+
+  it('door no es herramienta de arrastre: devuelve null', () => {
+    expect(
+      commandForDrag({ kind: 'door', door: 'door' }, { x: 1, y: 1 }, { x: 4, y: 4 }, state),
+    ).toBeNull()
+  })
+
+  it('los comandos de estructuras propuestos se pueden ejecutar', () => {
+    const live = createTestMap()
+    const comandos = [
+      commandForDrag(foundation, { x: 2, y: 2 }, { x: 6, y: 6 }, live),
+      commandForTool({ kind: 'door', door: 'door' }, { x: 4, y: 2 }, live, TEST_CONTENT),
+      commandForDrag(demolishStructures, { x: 2, y: 2 }, { x: 6, y: 6 }, live),
+    ]
+    for (const comando of comandos) {
+      expect(comando).not.toBeNull()
+      expect(executeCommand(live, comando!, TEST_CONTENT).ok).toBe(true)
+    }
+  })
+})
+
+describe('dragShape', () => {
+  it.each<[string, Tool, 'rect' | 'line' | null]>([
+    ['paintFloor', { kind: 'paintFloor', floor: 'dirt' }, 'rect'],
+    ['foundation', { kind: 'foundation', wall: 'brick', floor: 'dirt' }, 'rect'],
+    ['demolishStructures', { kind: 'demolishStructures' }, 'rect'],
+    ['wall', { kind: 'wall', wall: 'brick' }, 'line'],
+    ['door', { kind: 'door', door: 'door' }, null],
+    ['none', { kind: 'none' }, null],
+    ['build', { kind: 'build', buildingType: 'small', rotation: 0 }, null],
+    ['demolish', { kind: 'demolish' }, null],
+  ])('%s', (_nombre, tool, esperada) => {
+    expect(dragShape(tool)).toBe(esperada)
+  })
+})
+
 describe('commandForDrag', () => {
   const paint: Tool = { kind: 'paintFloor', floor: 'stone' }
   const state = createTestMap()
@@ -205,6 +328,10 @@ describe('isDragTool', () => {
     ['none', { kind: 'none' }, false],
     ['build', { kind: 'build', buildingType: 'small', rotation: 0 }, false],
     ['demolish', { kind: 'demolish' }, false],
+    ['foundation', { kind: 'foundation', wall: 'brick', floor: 'dirt' }, true],
+    ['wall', { kind: 'wall', wall: 'brick' }, true],
+    ['demolishStructures', { kind: 'demolishStructures' }, true],
+    ['door', { kind: 'door', door: 'door' }, false],
   ])('%s', (_nombre, tool, esperado) => {
     expect(isDragTool(tool)).toBe(esperado)
   })
