@@ -13,9 +13,8 @@ import { createPitchMarker } from './pitchMarker'
 import { createRandom, seedFromText } from './random'
 import { palette } from './palette'
 import type { RenderAssets } from './renderAssets'
-
-/** Desplazamiento de la sombra plana (hacia abajo a la derecha), en px. */
-const SHADOW_OFFSET = 4
+import { paintStandRoof, standShadowOffset } from './standArt'
+import { SHADOW_ALPHA, SHADOW_OFFSET } from './style'
 /** Radio de las esquinas del cuerpo, en px. */
 const CORNER_RADIUS = 4
 /** Margen del borde interior respecto al cuerpo, en px. */
@@ -182,17 +181,19 @@ function createArtMarker(
   const rh = rotated.height * TILE_SIZE
 
   const marker = new Container({ label: `building:${def.id}` })
-  const shadowInset = def.symmetric ? 14 : 6
+  // Las gradas proyectan una sombra más larga cuanto más altas son.
+  const shadowInset = def.stand ? 0 : def.symmetric ? 14 : 6
+  const shadowOffset = def.stand ? standShadowOffset(tier) : SHADOW_OFFSET
   marker.addChild(
     new Graphics()
       .roundRect(
-        shadowInset + SHADOW_OFFSET,
-        shadowInset + SHADOW_OFFSET,
+        shadowInset + shadowOffset,
+        shadowInset + shadowOffset,
         rw - shadowInset * 2,
         rh - shadowInset * 2,
-        6,
+        def.stand ? 2 : 6,
       )
-      .fill({ color: palette.outline, alpha: 0.28 }),
+      .fill({ color: palette.outline, alpha: SHADOW_ALPHA }),
   )
 
   const art = new Graphics()
@@ -201,8 +202,24 @@ function createArtMarker(
   art.position.set(rw / 2, rh / 2)
   art.rotation = (rotation * Math.PI) / 2
   marker.addChild(art)
+
+  // Visera de las gradas altas: aparte, para desvanecerla con el ratón encima.
+  if (def.stand) {
+    const roof = new Graphics({ label: STAND_ROOF_LABEL })
+    if (!paintStandRoof(roof, w, tier)) {
+      roof.destroy()
+      return marker
+    }
+    roof.pivot.set(w / 2, h / 2)
+    roof.position.set(rw / 2, rh / 2)
+    roof.rotation = art.rotation
+    marker.addChild(roof)
+  }
   return marker
 }
+
+/** Etiqueta del Graphics de la visera dentro del marcador de una grada. */
+export const STAND_ROOF_LABEL = 'roof'
 
 /** Libera el marcador y sus hijos (los `Text` liberan su textura al destruirse). */
 export function destroyBuildingMarker(marker: Container): void {

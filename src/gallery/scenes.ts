@@ -104,7 +104,32 @@ const STADIUM: GalleryScene = {
   ],
 }
 
-export const GALLERY_SCENES: readonly GalleryScene[] = [CHANGING_ROOM, OFFICE, STADIUM]
+/** Sube una grada `times` niveles. */
+const upgradeTimes = (buildingId: number, times: number): Command[] =>
+  Array.from({ length: times }, () => upgrade(buildingId))
+
+/**
+ * Estadio grande: niveles 4-6 (norte y oeste gran tribuna, este grada de
+ * estadio, sur tribuna cubierta). Mismos ids que el estadio pequeño.
+ */
+const BIG_STADIUM: GalleryScene = {
+  name: 'estadio-alto',
+  size: { width: 88, height: 70 },
+  pieces: [],
+  commands: [
+    place('pitch11', 16, 16),
+    stand('north'),
+    stand('south'),
+    stand('east'),
+    stand('west'),
+    ...upgradeTimes(2, 5),
+    ...upgradeTimes(3, 3),
+    ...upgradeTimes(4, 4),
+    ...upgradeTimes(5, 5),
+  ],
+}
+
+export const GALLERY_SCENES: readonly GalleryScene[] = [CHANGING_ROOM, OFFICE, STADIUM, BIG_STADIUM]
 
 export function sceneFor(assetId: string): GalleryScene | undefined {
   return GALLERY_SCENES.find((scene) => scene.pieces.includes(assetId))

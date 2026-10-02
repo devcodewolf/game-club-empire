@@ -155,7 +155,10 @@ export async function createGameRenderer(
     onWheel: (point, factor) => motion.zoomBy(point, factor),
     hasTool: () => tool.kind !== 'none',
     isDragTool: () => isDragTool(tool),
-    onHover: (tile) => preview.setHover(tile),
+    onHover: (tile) => {
+      preview.setHover(tile)
+      buildings.setHover(tile)
+    },
     onPrimaryClick: (tile) => {
       const side = expansionAt(tile, grid)
       if (side) return onExpansionClick(side)

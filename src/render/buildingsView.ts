@@ -9,14 +9,31 @@ import type { Container } from 'pixi.js'
 import { placedSize, type BuildingId, type PlacedBuilding } from '@/sim/buildings'
 import type { Game } from '@/sim/game'
 import { rotateSize } from '@/sim/geometry'
-import { createBuildingMarker, destroyBuildingMarker } from './buildingMarker'
-import { playBuild, playDemolish, playUpgrade, stopEffects, type PxRect } from './effects'
+import { gsap } from 'gsap'
+import { buildingAt } from '@/sim/map'
+import type { TileCoord } from '@/sim/geometry'
+import { createBuildingMarker, destroyBuildingMarker, STAND_ROOF_LABEL } from './buildingMarker'
+import {
+  playBuild,
+  playDemolish,
+  playUpgrade,
+  prefersReducedMotion,
+  stopEffects,
+  type PxRect,
+} from './effects'
 import { TILE_SIZE, tileToWorld } from './grid'
 import type { RenderAssets } from './renderAssets'
 
 export interface BuildingsView {
+  /** Casilla bajo el ratón: desvanece la visera de la grada que haya ahí. */
+  setHover(tile: TileCoord | null): void
   destroy(): void
 }
+
+/** Opacidad de la visera con el ratón encima: se ve el graderío de debajo. */
+const ROOF_FADED_ALPHA = 0.15
+/** Duración del fundido de la visera, en segundos. */
+const ROOF_FADE_TIME = 0.25
 
 export function createBuildingsView(
   layer: Container,
@@ -53,10 +70,17 @@ export function createBuildingsView(
     else if (animate) playBuild(marker, rect, effects)
   }
 
+  /** Visera desvanecida ahora mismo (la de la grada bajo el ratón). */
+  let fadedId: BuildingId | null = null
+
   const remove = (buildingId: BuildingId, animate: boolean): void => {
     const entry = markers.get(buildingId)
     if (!entry) return
     markers.delete(buildingId)
+    // Su visera no debe seguir animándose ni contar como desvanecida
+    const roof = entry.marker.getChildByLabel(STAND_ROOF_LABEL)
+    if (roof) gsap.killTweensOf(roof)
+    if (buildingId === fadedId) fadedId = null
 
     const finish = (): void => {
       stopEffects(entry.marker)
@@ -68,6 +92,23 @@ export function createBuildingsView(
   }
 
   for (const building of Object.values(game.state.buildings)) add(building, false)
+
+  const fadeRoof = (buildingId: BuildingId | null, alpha: number): void => {
+    const roof =
+      buildingId === null ? null : markers.get(buildingId)?.marker.getChildByLabel(STAND_ROOF_LABEL)
+    if (!roof) return
+    gsap.killTweensOf(roof)
+    if (prefersReducedMotion()) roof.alpha = alpha
+    else gsap.to(roof, { alpha, duration: ROOF_FADE_TIME, ease: 'power1.out' })
+  }
+
+  const setHover = (tile: TileCoord | null): void => {
+    const hovered = tile ? (buildingAt(game.state, tile)?.id ?? null) : null
+    if (hovered === fadedId) return
+    fadeRoof(fadedId, 1)
+    fadeRoof(hovered, ROOF_FADED_ALPHA)
+    fadedId = hovered
+  }
 
   const unsubscribe = game.subscribe((event) => {
     if (event.type === 'buildingPlaced') add(event.building, true)
@@ -95,6 +136,7 @@ export function createBuildingsView(
   })
 
   return {
+    setHover,
     destroy() {
       unsubscribe()
       for (const id of [...markers.keys()]) remove(id, false)

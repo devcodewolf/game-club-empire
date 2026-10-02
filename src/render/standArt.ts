@@ -6,8 +6,9 @@
  * para laterales y fondos de cualquier campo. Las filas van paralelas al
  * frente; los pasillos de escalera cortan las filas cada ~8 casillas.
  *
- * Entrega a: niveles 1-3 (talud, bancos, asientos). Los niveles 4-6 usan de
- * momento un dibujo provisional con cubierta, que se rehace en la entrega b.
+ * Niveles 1-3: talud, bancos y asientos. Niveles 4-6: anillos escalonados
+ * separados por pasillos con vomitorios (y palcos en la gran tribuna), con la
+ * altura fingida por tono, la cara del desnivel y una sombra más larga.
  */
 import type { Graphics } from 'pixi.js'
 import { DEFAULT_CLUB_COLORS, type ClubColors } from './clubColors'
@@ -16,7 +17,7 @@ import { TILE_SIZE } from './grid'
 import type { ObjectPainter } from './objectArt'
 import { palette } from './palette'
 import type { Random } from './random'
-import { MIN_DETAIL, OUTLINE, OUTLINE_DETAIL } from './style'
+import { MIN_DETAIL, OUTLINE, OUTLINE_DETAIL, SHADOW_OFFSET } from './style'
 
 const O = palette.outline
 
@@ -197,8 +198,22 @@ const SEAT_GAP = 5
 
 function drawSeats(g: Graphics, w: number, h: number, rnd: Random, club: ClubColors): void {
   const { rows, aisles } = drawTerraces(g, w, h, rnd)
-  // Asientos individuales con el color del club; respaldo (arriba) más oscuro.
-  // Se acumulan todos los rectángulos de un color y se rellenan de una vez.
+  drawSeatRows(g, w, rows, aisles, club)
+  drawBackWall(g, w)
+  g.rect(0, 0, w, h).stroke({ color: O, width: OUTLINE })
+}
+
+/**
+ * Asientos individuales con el color del club; respaldo (arriba) más oscuro.
+ * Se acumulan todos los rectángulos de un color y se rellenan de una vez.
+ */
+function drawSeatRows(
+  g: Graphics,
+  w: number,
+  rows: readonly number[],
+  aisles: readonly number[],
+  club: ClubColors,
+): void {
   const seat = club.primary
   const back = shade(club.primary, -0.3)
   for (const y of rows) {
@@ -215,28 +230,181 @@ function drawSeats(g: Graphics, w: number, h: number, rnd: Random, club: ClubCol
     }
   }
   g.fill(back)
-  // Muro trasero de hormigón con barandilla metálica
+}
+
+/** Muro trasero de hormigón con barandilla metálica. */
+function drawBackWall(g: Graphics, w: number): void {
   g.rect(0, 0, w, BACK).fill(S.concreteStep).stroke({ color: O, width: OUTLINE_DETAIL })
   g.rect(0, 5, w, 3).fill(shade(palette.stone, 0.3))
   for (let x = 16; x < w; x += TILE_SIZE) g.rect(x - 2, 3, 4, 7).fill(shade(S.concreteStep, -0.3))
-  g.rect(0, 0, w, h).stroke({ color: O, width: OUTLINE })
 }
 
-// ── Niveles 4-6 · provisional (se rehace en la entrega b) ────────
+// ── Niveles 4-6 · anillos escalonados ────────────────────────────
 
-function drawCoveredPlaceholder(
+/**
+ * Reparto del fondo en anillos, de delante (campo) hacia atrás, en casillas.
+ * El último anillo se queda con lo que sobra. Entre anillo y anillo hay un
+ * pasillo de acceso ('concourse') o una fila de palcos ('boxes').
+ */
+const RING_LAYOUT: Readonly<Record<number, readonly ('ring' | 'concourse' | 'boxes')[]>> = {
+  3: ['ring'],
+  4: ['ring', 'concourse', 'ring'],
+  5: ['ring', 'concourse', 'ring', 'boxes', 'ring'],
+}
+/** Fondo de cada anillo salvo el último, y de pasillos y palcos, en px. */
+const RING_DEPTH = TILE_SIZE * 4
+const CONCOURSE_DEPTH = TILE_SIZE
+const BOXES_DEPTH = TILE_SIZE
+/** Cara vertical del frente de un anillo alto: lo que "levanta" el anillo. */
+const RISER = 12
+/** Cuánto más claro es cada anillo que el de delante (está más alto). */
+const RING_LIFT = 0.12
+
+/**
+ * Un anillo de asientos entre y0 (atrás) e y1 (delante). Los anillos altos
+ * llevan delante un antepecho blanco y la cara vertical del desnivel.
+ */
+function drawRing(
+  g: Graphics,
+  w: number,
+  y0: number,
+  y1: number,
+  level: number,
+  rnd: Random,
+  club: ClubColors,
+): void {
+  const front = level === 0 ? FRONT : RISER + 6
+  const base = shade(S.concrete, RING_LIFT * level)
+  g.rect(0, y0, w, y1 - y0).fill(base)
+  const rows: number[] = []
+  for (let y = y0; y + ROW_H <= y1 - front + 1; y += ROW_H) rows.push(y)
+  rows.forEach((y, i) => {
+    g.rect(0, y, w, ROW_H).fill(shade(base, 0.06 - (0.1 * i) / Math.max(1, rows.length)))
+    g.rect(0, y + ROW_H - 4, w, 4).fill(shade(S.concreteStep, 0.05 + RING_LIFT * level))
+  })
+  for (let i = 0; i < w / 120; i++) {
+    g.ellipse(rnd.range(0, w), rnd.range(y0, y1 - front), rnd.range(8, 22), rnd.range(3, 6))
+  }
+  g.fill({ color: S.concreteStep, alpha: 0.15 })
+  const aisles = aisleCenters(w)
+  for (const cx of aisles) drawAisle(g, cx, y0, y1 - front, ROW_H, shade(base, 0.1))
+  drawSeatRows(g, w, rows, aisles, club)
+
+  if (level === 0) {
+    // Murete blanco junto al campo
+    g.rect(0, y1 - FRONT, w, FRONT)
+      .fill(S.barrier)
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+    g.rect(0, y1 - FRONT, w, 3).fill(shade(S.barrier, -0.12))
+    return
+  }
+  // Antepecho blanco y, debajo, la cara del desnivel en sombra
+  g.rect(0, y1 - front, w, 6)
+    .fill(S.barrier)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.rect(0, y1 - RISER, w, RISER).fill(shade(S.concreteStep, -0.25))
+}
+
+/** Pasillo de acceso entre anillos con las bocas (vomitorios) que suben al de atrás. */
+function drawConcourse(g: Graphics, w: number, y0: number, y1: number, level: number): void {
+  g.rect(0, y0, w, y1 - y0).fill(shade(S.concreteStep, 0.12 + RING_LIFT * level))
+  const aisles = aisleCenters(w)
+  // Una boca en el centro de cada tramo entre pasillos
+  const bounds = [0, ...aisles, w]
+  const centers = bounds.slice(1).map((x, i) => ((bounds[i] ?? 0) + x) / 2)
+  for (const cx of centers) {
+    g.rect(cx - 26, y0, 52, (y1 - y0) * 0.6)
+      .fill(shade(S.concreteStep, -0.15))
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+    g.rect(cx - 18, y0, 36, (y1 - y0) * 0.6 - 6).fill(O)
+  }
+}
+
+/** Fila de palcos acristalados con luz cálida dentro (solo la gran tribuna). */
+function drawBoxes(g: Graphics, w: number, y0: number, y1: number): void {
+  g.rect(0, y0, w, y1 - y0).fill(S.concreteStep)
+  const boxW = TILE_SIZE * 2
+  for (let x = 6; x + boxW - 6 <= w; x += boxW) {
+    g.rect(x, y0 + 6, boxW - 10, y1 - y0 - 18)
+      .fill(shade(palette.waterShine, -0.1))
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+    g.rect(x + 6, y0 + 10, boxW - 22, 10).fill({ color: palette.warmLight, alpha: 0.7 })
+  }
+  // Cristalera frontal: un brillo continuo a lo largo de la fila
+  g.rect(0, y1 - 12, w, 4).fill(shade(palette.waterShine, 0.25))
+}
+
+/** Gradas de estadio: anillos de delante hacia atrás con su separador. */
+function drawRings(
   g: Graphics,
   w: number,
   h: number,
-  rnd: Random,
   tier: number,
+  rnd: Random,
   club: ClubColors,
 ): void {
-  drawSeats(g, w, h, rnd, club)
-  const roof = h * ([0.5, 0.62, 0.8][tier - 3] ?? 0.5)
-  g.rect(0, 0, w, roof).fill(palette.slate).stroke({ color: O, width: OUTLINE })
-  for (let x = 12; x < w; x += 24) g.rect(x - 1, 2, 2, roof - 4).fill(palette.slateRows)
-  g.rect(0, roof - 6, w, 6).fill(palette.stoneDark)
+  const layout = RING_LAYOUT[tier] ?? ['ring']
+  const rings = layout.filter((part) => part === 'ring').length
+  let y1 = h
+  let level = 0
+  layout.forEach((part, i) => {
+    const last = i === layout.length - 1
+    const depth = last
+      ? y1 - BACK
+      : part === 'ring'
+        ? RING_DEPTH
+        : part === 'boxes'
+          ? BOXES_DEPTH
+          : CONCOURSE_DEPTH
+    const y0 = y1 - depth
+    if (part === 'ring') drawRing(g, w, y0, y1, Math.min(level, rings - 1), rnd, club)
+    else if (part === 'boxes') drawBoxes(g, w, y0, y1)
+    else drawConcourse(g, w, y0, y1, level)
+    if (part === 'ring') level += 1
+    y1 = y0
+  })
+  drawBackWall(g, w)
+  g.rect(0, 0, w, h).stroke({ color: O, width: OUTLINE })
+}
+
+/** Fondo de la visera por nivel, en casillas (los niveles bajos no tienen). */
+const ROOF_TILES: Readonly<Record<number, number>> = { 3: 1, 4: 1.25, 5: 1.5 }
+
+/**
+ * Visera: una cubierta estrecha sobre las últimas filas. Va en su propio
+ * Graphics para poder desvanecerla al pasar el ratón (como los techos).
+ * Devuelve false si el nivel no tiene visera.
+ */
+export function paintStandRoof(
+  g: Graphics,
+  w: number,
+  tier: number,
+  club: ClubColors = DEFAULT_CLUB_COLORS,
+): boolean {
+  const tiles = ROOF_TILES[tier]
+  if (!tiles) return false
+  const depth = tiles * TILE_SIZE
+  g.rect(0, 0, w, depth).fill(palette.slate).stroke({ color: O, width: OUTLINE })
+  for (let x = 12; x < w; x += 24) g.rect(x - 1, 2, 2, depth - 10).fill(palette.slateRows)
+  // Canto delantero con una franja del club y las cerchas que la sujetan
+  g.rect(0, depth - 8, w, 8)
+    .fill(palette.stoneDark)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.rect(0, depth - 8, w, 3).fill(club.primary)
+  for (let x = TILE_SIZE * 2; x < w - TILE_SIZE; x += TILE_SIZE * 4) {
+    g.rect(x - 3, 0, 6, depth - 8).fill(shade(palette.slate, -0.25))
+  }
+  return true
+}
+
+/**
+ * Desplazamiento de la sombra proyectada por nivel, en px: cuanto más alta la
+ * grada, más larga la sombra. Es lo que da sensación de altura vista desde arriba.
+ */
+const STAND_SHADOW = [SHADOW_OFFSET, SHADOW_OFFSET + 2, SHADOW_OFFSET + 4, 16, 28, 44] as const
+
+export function standShadowOffset(tier: number): number {
+  return STAND_SHADOW[Math.min(tier, STAND_SHADOW.length - 1)] ?? SHADOW_OFFSET
 }
 
 /** Pintor de la grada: elige el dibujo según el nivel. */
@@ -249,6 +417,6 @@ export const standPainter: ObjectPainter = (g, w, h, rnd, tier = 0, club = DEFAU
     case 2:
       return drawSeats(g, w, h, rnd, club)
     default:
-      return drawCoveredPlaceholder(g, w, h, rnd, tier, club)
+      return drawRings(g, w, h, tier, rnd, club)
   }
 }

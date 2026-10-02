@@ -103,8 +103,8 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [x] 🧠 Campos mejorables en el sitio (tierra → artificial → natural → híbrido) con uso principal / filial / entrenamiento
 - [ ] 🧠 Estadio modular (`docs/DISENO-ESTADIO-Y-NIVELES.md`): gradas ligadas a los huecos del campo, que crecen hacia fuera con el nivel; a) laterales y fondos 1-3, b) niveles 4-6 con cubiertas unidas, c) esquinas
   - [x] a) Laterales y fondos, niveles 1-3 (talud, bancos, asientos); aforo por casilla de largo con tope de 100 000; galería `?scene=estadio`
-  - [ ] b) Niveles 4-6 con cubiertas que se unen
-  - [ ] c) Esquinas (se desbloquean con los dos lados vecinos en nivel 4)
+  - [x] b) Niveles 4-6 en anillos escalonados (pasillos con vomitorios, palcos en la gran tribuna), visera que se desvanece con el ratón y sombra según la altura; galería `?scene=estadio-alto`
+  - [ ] c) Córners: botón propio en el menú, se colocan y mejoran a mano; necesitan las dos gradas vecinas y no pasan del nivel de la más baja
 - [ ] 🧠 Sombra de objetos que sigue la silueta (en lugar del rectángulo genérico)
 
 ✅ **Validar:** un vestuario y un campo montados a mano se ven coherentes con la guía de estilo.
