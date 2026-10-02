@@ -97,7 +97,31 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] ⚡ Cargador de atlas con fallback al marcador de color
 - [ ] ⚡ Crear `docs/ASSETS-LICENSES.md` y registrar cada asset
 
+**Skill de arte (`.claude/skills/pixi-artist/`)**
+- [x] 🧠 `src/render/style.ts`, validador de colores con baseline, galería `/gallery.html` (solo desarrollo) y `tools/capture.mjs`
+- [x] 🧠 Niveles de objetos: `tiers` en `BuildingDef`, comando `upgradeBuilding`, ficha de objeto con mejora, calidad de sala y modo `?dev`; piloto en taquilla, banco y ducha (3 niveles)
+- [x] 🧠 Campos mejorables en el sitio (tierra → artificial → natural → híbrido) con uso principal / filial / entrenamiento
+- [ ] 🧠 Estadio modular (`docs/DISENO-ESTADIO-Y-NIVELES.md`): gradas ligadas a los huecos del campo, que crecen hacia fuera con el nivel; a) laterales y fondos 1-3, b) niveles 4-6 con cubiertas unidas, c) esquinas
+  - [x] a) Laterales y fondos, niveles 1-3 (talud, bancos, asientos); aforo por casilla de largo con tope de 100 000; galería `?scene=estadio`
+  - [ ] b) Niveles 4-6 con cubiertas que se unen
+  - [ ] c) Esquinas (se desbloquean con los dos lados vecinos en nivel 4)
+- [ ] 🧠 Sombra de objetos que sigue la silueta (en lugar del rectángulo genérico)
+
 ✅ **Validar:** un vestuario y un campo montados a mano se ven coherentes con la guía de estilo.
+
+---
+
+## Fase 1D — Herramientas de edición
+**Resultado visible:** se puede mover un objeto o un bloque entero (edificio con sus salas y objetos) sin demoler y reconstruir.
+
+- [ ] 🧠 Mover un elemento: herramienta "Mover", clic sobre un objeto, campo o grada → fantasma en el cursor, R para girar, clic para soltar (verde/rojo). Mover un campo se lleva sus gradas
+- [ ] 🧠 Mover un bloque: arrastrar un rectángulo (como Demoler) selecciona muros, puertas, suelos, objetos y salas; se mueve en fantasma y se suelta. Un único comando atómico, destino validado entero, salas recalculadas, objetos con su nivel y uso
+- [ ] ⚡ Tests de mover (objeto, bloque, destino inválido sin cambios, salas y niveles conservados)
+- [ ] ⚡ Animación al soltar (polvo y rebote) y vista previa del bloque completo
+
+> En la Fase 2 se decide si mover cuesta dinero; con obreros (Fase 4/6), mover dejará de ser instantáneo, como en Prison Architect. PA solo mueve objetos: mover bloques es una mejora sobre el original.
+
+✅ **Validar:** mover una taquilla, un vestuario completo y el campo principal con su estadio, sin dejar nada a medias.
 
 ---
 

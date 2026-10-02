@@ -16,6 +16,7 @@ import {
   type TileCoord,
 } from '@/sim/geometry'
 import type { MapState } from '@/sim/map'
+import { standTargetAt } from '@/sim/stands'
 import { dragShape, type Tool } from './tool'
 
 /**
@@ -50,6 +51,11 @@ export function commandForTool(
         origin,
         rotation: tool.rotation,
       }
+    }
+    case 'stand': {
+      const depths = content.buildings[tool.buildingType]?.stand?.depths ?? []
+      const target = standTargetAt(state, content, cursor, depths[depths.length - 1] ?? 0)
+      return target && { type: 'placeStand', buildingType: tool.buildingType, ...target }
     }
     case 'demolish':
       return { type: 'demolishAt', tile: cursor }

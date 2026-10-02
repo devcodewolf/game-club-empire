@@ -14,6 +14,7 @@ import { buildingAt, buildingFootprint, validateFloorPaint, validatePlacement } 
 import { doorAxis, validateDoor, validateFoundation, validateWalls } from '@/sim/structures'
 import { regionFrom, roomAt, validateDesignateRoom } from '@/sim/rooms'
 import { demolishTargetAt } from '@/sim/demolish'
+import { checkStandArea, maxStandRect, placementRect, validatePlaceStand } from '@/sim/stands'
 import { createBuildingMarker, destroyBuildingMarker } from './buildingMarker'
 import { TILE_SIZE } from './grid'
 import type { RenderAssets } from './renderAssets'
@@ -60,6 +61,19 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
   let ghost: Container | null = null
   let ghostKey = ''
   let zoom = 1
+  /** Fantasma de grada: cambia con el campo y el lado, no con la herramienta. */
+  let standGhost: Container | null = null
+  let standGhostKey = ''
+
+  const syncStandGhost = (key: string, create: () => Container | null): void => {
+    if (key === standGhostKey) return
+    if (standGhost) destroyBuildingMarker(standGhost)
+    standGhost = create()
+    standGhostKey = key
+    if (!standGhost) return
+    standGhost.alpha = GHOST_ALPHA
+    root.addChildAt(standGhost, 0)
+  }
 
   /** El fantasma solo se recrea si cambia el edificio o el giro. */
   const syncGhost = (): void => {
@@ -83,6 +97,7 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
     highlight.clear()
     sizeLabel.visible = false
     if (ghost) ghost.visible = false
+    if (standGhost) standGhost.visible = false
     if (!hover) return
 
     const command = dragStart
@@ -105,6 +120,40 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
         if (ghost) {
           ghost.visible = true
           ghost.position.set(rect.x * TILE_SIZE, rect.y * TILE_SIZE)
+        }
+        drawRect(highlight, rect, zoom, check.ok ? palette.previewValid : palette.previewInvalid)
+        return
+      }
+      case 'placeStand': {
+        const def = game.content.buildings[command.buildingType]
+        const check = validatePlaceStand(
+          game.state,
+          game.content,
+          command.buildingType,
+          command.pitchId,
+          command.slot,
+        )
+        const placement = check.placement
+        if (!def || !placement) return
+        const rect = placementRect(placement)
+        syncStandGhost(`${command.pitchId}:${command.slot}`, () =>
+          createBuildingMarker(def, placement.rotation, assets, { size: placement.size }),
+        )
+        if (standGhost && check.ok) {
+          standGhost.visible = true
+          standGhost.position.set(rect.x * TILE_SIZE, rect.y * TILE_SIZE)
+        }
+        // Huella máxima (nivel más alto): avisa en ámbar si ya hay algo que le impedirá crecer.
+        const max = maxStandRect(
+          game.state,
+          game.content,
+          command.buildingType,
+          command.pitchId,
+          command.slot,
+        )
+        if (check.ok && max) {
+          const blocked = checkStandArea(game.state, max) !== null
+          drawDashedRect(highlight, max, zoom, blocked ? palette.warmLight : palette.chalk)
         }
         drawRect(highlight, rect, zoom, check.ok ? palette.previewValid : palette.previewInvalid)
         return
@@ -316,6 +365,35 @@ function drawRect(
     .rect(rect.x * TILE_SIZE, rect.y * TILE_SIZE, rect.width * TILE_SIZE, rect.height * TILE_SIZE)
     .fill({ color: fillColor, alpha: fillAlpha })
     .stroke({ color: borderColor, width: BORDER_PX / zoom, alignment: 1 })
+}
+
+/** Largo de cada trazo y de cada hueco del borde discontinuo, en px de PANTALLA. */
+const DASH_PX = 10
+
+/** Borde discontinuo (Pixi no tiene trazo discontinuo: se dibujan los tramos). */
+function drawDashedRect(graphics: Graphics, rect: TileRect, zoom: number, color: number): void {
+  const x0 = rect.x * TILE_SIZE
+  const y0 = rect.y * TILE_SIZE
+  const x1 = x0 + rect.width * TILE_SIZE
+  const y1 = y0 + rect.height * TILE_SIZE
+  const dash = DASH_PX / zoom
+  const sides: [number, number, number, number][] = [
+    [x0, y0, x1, y0],
+    [x1, y0, x1, y1],
+    [x1, y1, x0, y1],
+    [x0, y1, x0, y0],
+  ]
+  for (const [ax, ay, bx, by] of sides) {
+    const length = Math.hypot(bx - ax, by - ay)
+    for (let d = 0; d < length; d += dash * 2) {
+      const from = d / length
+      const to = Math.min(d + dash, length) / length
+      graphics
+        .moveTo(ax + (bx - ax) * from, ay + (by - ay) * from)
+        .lineTo(ax + (bx - ax) * to, ay + (by - ay) * to)
+    }
+  }
+  graphics.stroke({ color, width: BORDER_PX / zoom, alpha: 0.9 })
 }
 
 /** Rótulo "ancho×alto" encima del rectángulo (solo si es mayor de 1×1). */

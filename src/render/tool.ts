@@ -13,6 +13,8 @@ import type { DoorId, WallId } from '@/sim/structureTypes'
 export type Tool =
   | { readonly kind: 'none' }
   | { readonly kind: 'build'; readonly buildingType: BuildingTypeId; readonly rotation: Rotation }
+  /** Grada: se pega al lado del campo bajo el cursor; no se gira. */
+  | { readonly kind: 'stand'; readonly buildingType: BuildingTypeId }
   | { readonly kind: 'demolish' }
   | { readonly kind: 'paintFloor'; readonly floor: FloorId }
   | { readonly kind: 'foundation'; readonly wall: WallId; readonly floor: FloorId }

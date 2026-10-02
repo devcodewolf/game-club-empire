@@ -12,7 +12,16 @@ import {
   type BuildingTypeId,
   type PitchRole,
   type PlacedBuilding,
+  type StandSlot,
 } from './buildings'
+import {
+  occupy,
+  placementRect,
+  release,
+  validatePlaceStand,
+  validateStandUpgrade,
+  type StandError,
+} from './stands'
 import type { SimContent } from './content'
 import type { FloorId } from './floors'
 import {
@@ -41,12 +50,11 @@ import {
   applyDemolishArea,
   applyDemolishAt,
   demolishTargetAt,
+  removeBuilding,
   validateDemolishArea,
 } from './demolish'
 import { tilesInRect, type Rotation, type TileCoord, type TileRect } from './geometry'
 import {
-  buildingFootprint,
-  EMPTY_TILE,
   tileIndex,
   validateFloorPaint,
   validatePlacement,
@@ -65,6 +73,13 @@ export type Command =
       readonly rotation: Rotation
     }
   | { readonly type: 'demolishBuilding'; readonly buildingId: BuildingId }
+  /** Construir una grada (nivel 1) en un hueco de un campo. */
+  | {
+      readonly type: 'placeStand'
+      readonly buildingType: BuildingTypeId
+      readonly pitchId: BuildingId
+      readonly slot: StandSlot
+    }
   /** Subir un objeto al siguiente nivel, en el sitio. */
   | { readonly type: 'upgradeBuilding'; readonly buildingId: BuildingId }
   /** Cambiar el uso de un campo (principal, filial, entrenamiento). */
@@ -103,7 +118,12 @@ export type GameEvent =
       /** Campo que dejó de ser el principal al elegir otro, si lo había. */
       readonly demotedId?: BuildingId
     }
-  | { readonly type: 'buildingDemolished'; readonly building: PlacedBuilding }
+  | {
+      readonly type: 'buildingDemolished'
+      readonly building: PlacedBuilding
+      /** Gradas que cayeron con el campo derribado. */
+      readonly attached?: readonly PlacedBuilding[]
+    }
   | {
       readonly type: 'floorPainted'
       readonly rect: TileRect
@@ -131,6 +151,8 @@ export type CommandError =
   | FloorPaintError
   | StructureError
   | RoomError
+  | StandError
+  | 'needsPitch'
   | 'buildingNotFound'
   | 'notUpgradable'
   | 'maxTier'
@@ -156,6 +178,8 @@ export function executeCommand(
       return upgradeBuilding(state, command.buildingId, content)
     case 'setPitchRole':
       return setPitchRole(state, command, content)
+    case 'placeStand':
+      return placeStand(state, command, content)
     case 'demolishBuilding':
       return demolishBuilding(state, command.buildingId, content)
     case 'paintFloor':
@@ -227,11 +251,11 @@ function demolishAt(state: MapState, tile: TileCoord, content: SimContent): Comm
   const target = demolishTargetAt(state, tile)
   if (!target) return { ok: false, reason: 'nothingToDemolish' }
 
-  applyDemolishAt(state, content, tile, target)
+  const attached = applyDemolishAt(state, content, tile, target)
   const rect = { ...tile, width: 1, height: 1 }
   switch (target.kind) {
     case 'building':
-      return { ok: true, event: { type: 'buildingDemolished', building: target.building } }
+      return { ok: true, event: demolishedEvent(target.building, attached) }
     case 'door':
     case 'wall':
       return { ok: true, event: { type: 'structuresChanged', rect, cause: 'demolish' } }
@@ -250,6 +274,8 @@ function placeBuilding(
   { buildingType, origin, rotation }: Extract<Command, { type: 'placeBuilding' }>,
   content: SimContent,
 ): CommandResult {
+  // Las gradas no se colocan sueltas: van pegadas a un campo (placeStand).
+  if (content.buildings[buildingType]?.stand) return { ok: false, reason: 'needsPitch' }
   const check = validatePlacement(state, content.buildings, buildingType, origin, rotation)
   if (!check.ok) return { ok: false, reason: check.reason }
 
@@ -286,7 +312,16 @@ function upgradeBuilding(
   if (!def.tiers || def.tiers.length < 2) return { ok: false, reason: 'notUpgradable' }
   if (building.tier >= maxTier(def)) return { ok: false, reason: 'maxTier' }
 
-  const upgraded: PlacedBuilding = { ...building, tier: building.tier + 1 }
+  const tier = building.tier + 1
+  let upgraded: PlacedBuilding = { ...building, tier }
+  // Las gradas crecen hacia fuera: la franja nueva tiene que estar libre.
+  if (def.stand) {
+    const check = validateStandUpgrade(state, content, building, tier)
+    if (!check.ok) return { ok: false, reason: check.reason }
+    upgraded = { ...upgraded, ...check.placement }
+    release(state, building, def)
+    occupy(state, placementRect(check.placement), buildingId)
+  }
   state.buildings[buildingId] = upgraded
   return {
     ok: true,
@@ -340,12 +375,35 @@ function demolishBuilding(
   const def = building && content.buildings[building.type]
   if (!building || !def) return { ok: false, reason: 'buildingNotFound' }
 
-  for (const tile of tilesInRect(buildingFootprint(building, def))) {
-    state.occupancy[tileIndex(state, tile)] = EMPTY_TILE
-  }
-  delete state.buildings[buildingId]
+  const attached = removeBuilding(state, content, building)
+  return { ok: true, event: demolishedEvent(building, attached) }
+}
 
-  return { ok: true, event: { type: 'buildingDemolished', building } }
+/** Evento de derribo, con las gradas arrastradas si las hay. */
+function demolishedEvent(building: PlacedBuilding, attached: readonly PlacedBuilding[]): GameEvent {
+  return { type: 'buildingDemolished', building, ...(attached.length ? { attached } : {}) }
+}
+
+/** Construye una grada de nivel 1 pegada a un lado del campo. */
+function placeStand(
+  state: MapState,
+  { buildingType, pitchId, slot }: Extract<Command, { type: 'placeStand' }>,
+  content: SimContent,
+): CommandResult {
+  const check = validatePlaceStand(state, content, buildingType, pitchId, slot)
+  if (!check.ok) return { ok: false, reason: check.reason }
+
+  const building: PlacedBuilding = {
+    id: state.nextBuildingId,
+    type: buildingType,
+    tier: 0,
+    attach: { pitchId, slot },
+    ...check.placement,
+  }
+  state.nextBuildingId += 1
+  state.buildings[building.id] = building
+  occupy(state, placementRect(check.placement), building.id)
+  return { ok: true, event: { type: 'buildingPlaced', building } }
 }
 
 function paintFloor(

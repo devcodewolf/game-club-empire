@@ -5,12 +5,13 @@
  * guardarlo en IndexedDB tal cual y compararlo fácilmente en los tests.
  * Solo los comandos (`commands.ts`) lo modifican; aquí solo hay lecturas.
  */
-import type {
-  BuildingCatalog,
-  BuildingDef,
-  BuildingId,
-  BuildingTypeId,
-  PlacedBuilding,
+import {
+  placedSize,
+  type BuildingCatalog,
+  type BuildingDef,
+  type BuildingId,
+  type BuildingTypeId,
+  type PlacedBuilding,
 } from './buildings'
 import { DEFAULT_FLOOR, type FloorCatalog, type FloorId } from './floors'
 import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
@@ -131,7 +132,7 @@ export function buildingAt(state: MapState, tile: TileCoord): PlacedBuilding | u
 
 /** Huella en el mapa de un edificio colocado. */
 export function buildingFootprint(building: PlacedBuilding, def: BuildingDef): TileRect {
-  return footprint(building.origin, def.size, building.rotation)
+  return footprint(building.origin, placedSize(building, def), building.rotation)
 }
 
 // ── Validación de colocación ─────────────────────────────────────

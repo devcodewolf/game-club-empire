@@ -6,6 +6,7 @@
  */
 import { computed, watch } from 'vue'
 import { maxTier, tierQuality, type PitchRole } from '@/sim/buildings'
+import { standCapacity, validateStandUpgrade } from '@/sim/stands'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
 import { findBuilding } from '@/ui/composables/contentLookup'
@@ -29,6 +30,37 @@ const building = computed(() => {
 
 const def = computed(() => (building.value ? findBuilding(building.value.type) : undefined))
 
+/** Motivo por el que no se puede ampliar una grada (franja nueva ocupada o fuera del terreno). */
+function standUpgradeBlock(tier: number): string | null {
+  const b = building.value
+  if (!b) return null
+  const check = validateStandUpgrade(game.state, game.content, b, tier)
+  if (check.ok) return null
+  if (check.reason === 'occupied' || check.reason === 'wall') {
+    return 'Hay algo construido detrás de la grada'
+  }
+  if (check.reason === 'outOfBounds' || check.reason === 'reserved') {
+    return 'La grada no cabe: llega al borde del terreno'
+  }
+  return null
+}
+
+/** Aforo actual y del siguiente nivel, solo para gradas. */
+const standInfo = computed(() => {
+  const b = building.value
+  const d = def.value
+  if (!b || !d?.stand) return undefined
+  const next = b.tier + 1
+  const fmt = (n: number) => n.toLocaleString('es-ES')
+  return {
+    capacity: fmt(standCapacity(d, b)),
+    nextCapacity:
+      d.stand.capacityPerTile[next] === undefined
+        ? null
+        : fmt(standCapacity(d, { ...b, tier: next })),
+  }
+})
+
 /** Datos derivados del nivel actual y del siguiente. */
 const info = computed(() => {
   const b = building.value
@@ -37,6 +69,9 @@ const info = computed(() => {
   const total = maxTier(d) + 1
   const hasTiers = (d.tiers?.length ?? 0) > 1
   const next = hasTiers ? d.tiers?.[b.tier + 1] : undefined
+  const divisionLock = next ? progression.lockReason(next.requires) : null
+  // Las gradas además necesitan sitio detrás para crecer.
+  const lockReason = divisionLock ?? (next && d.stand ? standUpgradeBlock(b.tier + 1) : null)
   return {
     title: d.tiers?.[b.tier]?.name ?? d.name,
     hasTiers,
@@ -47,7 +82,7 @@ const info = computed(() => {
       name: next.name,
       cost: next.cost.toLocaleString('es-ES'),
       quality: next.quality,
-      lockReason: progression.lockReason(next.requires),
+      lockReason,
     },
   }
 })
@@ -134,6 +169,9 @@ function upgrade(): void {
         </p>
       </template>
       <p class="font-hand text-[18px] leading-6 text-ink-blue">Calidad: {{ info.quality }}</p>
+      <p v-if="standInfo" class="font-hand text-[18px] leading-6 text-ink-blue">
+        Aforo: {{ standInfo.capacity }} espectadores
+      </p>
 
       <section v-if="currentRole" class="mt-2">
         <p
@@ -171,6 +209,9 @@ function upgrade(): void {
         <p class="font-hand text-[18px] leading-6 text-ink-blue">Coste: {{ info.next.cost }} €</p>
         <p class="font-hand text-[18px] leading-6 text-ink-blue">
           Calidad: {{ info.next.quality }}
+        </p>
+        <p v-if="standInfo?.nextCapacity" class="font-hand text-[18px] leading-6 text-ink-blue">
+          Aforo: {{ standInfo.nextCapacity }} espectadores
         </p>
 
         <button

@@ -22,7 +22,7 @@ import { createRoomsView } from '@/render/roomsView'
 import { createWallsView } from '@/render/wallsView'
 import type { BuildingDef } from '@/sim/buildings'
 import { createGame } from '@/sim/game'
-import { rotateSize, type Rotation } from '@/sim/geometry'
+import { rotateSize, type GridSize, type Rotation } from '@/sim/geometry'
 import { GALLERY_SCENES, sceneFor, type GalleryScene } from './scenes'
 
 const T = TILE_SIZE
@@ -57,13 +57,20 @@ async function main(): Promise<void> {
 
   const def = assetId ? GAME_CONTENT.buildings[assetId] : undefined
   const tierIds = params.get('tiers')?.split(',').filter(Boolean)
-  const page = tierIds
-    ? tiersPage(tierIds, assets)
-    : def
-      ? detailPage(def, assets)
-      : overviewPage(assets)
+  const scene = GALLERY_SCENES.find((item) => item.name === params.get('scene'))
+  const page = scene
+    ? scenePage(scene, assets)
+    : tierIds
+      ? tiersPage(tierIds, assets)
+      : def
+        ? detailPage(def, assets)
+        : overviewPage(assets)
   app.stage.addChild(page.node)
-  app.renderer.resize(PAGE_WIDTH, Math.ceil(page.height + GAP))
+  // Las escenas grandes (estadio) pueden ser más anchas que la página: se ensancha.
+  app.renderer.resize(
+    Math.max(PAGE_WIDTH, Math.ceil(page.node.width + GAP)),
+    Math.ceil(page.height + GAP),
+  )
   // Señal para las capturas automáticas: la galería ya está dibujada.
   document.body.dataset.ready = 'true'
 }
@@ -107,6 +114,13 @@ function detailPage(def: BuildingDef, assets: RenderAssets): Placed {
     }
   }
   return { node: page, height: y }
+}
+
+/** `?scene=nombre`: solo una escena de vecinos a ×0,5 (p. ej. el estadio entero). */
+function scenePage(scene: GalleryScene, assets: RenderAssets): Placed {
+  const view = sceneView(scene, 0.5, assets)
+  view.node.position.set(GAP, GAP)
+  return { node: view.node, height: view.height + GAP }
 }
 
 /** `?tiers=a,b,c`: solo las filas de niveles de varias piezas, a ×0,5 y ×1. */
@@ -226,7 +240,8 @@ function pieceCell(
   side?: number,
   tier = 0,
 ): Placed & { readonly width: number } {
-  const rotated = rotateSize(def.size, rotation)
+  const size = pieceSize(def, tier)
+  const rotated = rotateSize(size, rotation)
   const cellW = (side ?? rotated.width + 2) * T
   const cellH = (side ?? rotated.height + 2) * T
   const cell = new Container()
@@ -242,7 +257,7 @@ function pieceCell(
   ground.rect(0, 0, cellW, cellH).stroke({ color: palette.outline, width: 2 })
   cell.addChild(ground)
 
-  const marker = createBuildingMarker(def, rotation, assets, tier)
+  const marker = createBuildingMarker(def, rotation, assets, { tier, size })
   marker.position.set(
     Math.floor((cellW / T - rotated.width) / 2) * T,
     Math.floor((cellH / T - rotated.height) / 2) * T,
@@ -250,6 +265,12 @@ function pieceCell(
   cell.addChild(marker)
 
   return { node: cell, width: cellW * scale, height: cellH * scale }
+}
+
+/** Tamaño de la pieza en un nivel: las gradas ganan fondo al subir de nivel. */
+function pieceSize(def: BuildingDef, tier: number): GridSize {
+  const depth = def.stand?.depths[tier]
+  return depth === undefined ? def.size : { width: def.size.width, height: depth }
 }
 
 /** Escena de vecinos: una partida en miniatura dibujada con las vistas del juego. */

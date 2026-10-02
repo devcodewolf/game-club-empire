@@ -51,6 +51,21 @@ export const TEST_CATALOG: BuildingCatalog = {
       { name: 'Piedra', cost: 200, quality: 4 },
     ],
   },
+  /** Grada modular de prueba: fondo 1/2/3 y aforo 10/20/30 por casilla de largo. */
+  stand: {
+    id: 'stand',
+    name: 'Grada',
+    size: { width: 1, height: 1 },
+    cost: 100,
+    markerColor: 0xaa5500,
+    icon: 'G',
+    stand: { depths: [1, 2, 3], capacityPerTile: [10, 20, 30] },
+    tiers: [
+      { name: 'Grada básica', cost: 100, quality: 1 },
+      { name: 'Grada media', cost: 200, quality: 2 },
+      { name: 'Grada alta', cost: 400, quality: 4 },
+    ],
+  },
   /** 1×1 con 3 niveles, para probar las mejoras. */
   tiered: {
     id: 'tiered',

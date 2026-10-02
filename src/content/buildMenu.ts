@@ -95,14 +95,7 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
     tabs: [
       {
         label: 'Gradas',
-        items: [
-          building('standEarthBank', 'Talud'),
-          building('standWoodBenches', 'Bancos de madera'),
-          building('standMetalSeats', 'Con asientos'),
-          building('standCovered', 'Tribuna cubierta'),
-          building('standStadium', 'De estadio'),
-          building('standGrand', 'Gran tribuna'),
-        ],
+        items: [building('stand')],
       },
     ],
   },

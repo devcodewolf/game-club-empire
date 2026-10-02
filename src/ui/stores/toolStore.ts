@@ -20,7 +20,7 @@ export const useToolStore = defineStore('tool', () => {
   const rotation = ref<Rotation>(0)
 
   const activeBuilding = computed(() =>
-    tool.value.kind === 'build' ? tool.value.buildingType : null,
+    tool.value.kind === 'build' || tool.value.kind === 'stand' ? tool.value.buildingType : null,
   )
   const activeFloor = computed(() => (tool.value.kind === 'paintFloor' ? tool.value.floor : null))
   const activeFoundation = computed(() =>
@@ -35,6 +35,12 @@ export const useToolStore = defineStore('tool', () => {
   function selectBuilding(buildingType: BuildingTypeId): void {
     if (activeBuilding.value === buildingType) return clear()
     tool.value = { kind: 'build', buildingType, rotation: rotation.value }
+  }
+
+  /** Gradas: se colocan en el lado de un campo, sin giro. */
+  function selectStand(buildingType: BuildingTypeId): void {
+    if (activeBuilding.value === buildingType) return clear()
+    tool.value = { kind: 'stand', buildingType }
   }
 
   /** Elegir el mismo suelo otra vez lo suelta. */
@@ -93,6 +99,7 @@ export const useToolStore = defineStore('tool', () => {
     activeDoor,
     activeRoom,
     selectBuilding,
+    selectStand,
     selectFloor,
     selectDemolish,
     selectFoundation,

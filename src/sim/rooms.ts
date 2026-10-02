@@ -8,8 +8,8 @@
  */
 import { tierQuality, type BuildingTypeId } from './buildings'
 import type { SimContent } from './content'
-import { footprint, isInsideGrid, type TileCoord, type TileRect } from './geometry'
-import { tileIndex, type MapState } from './map'
+import { isInsideGrid, type TileCoord, type TileRect } from './geometry'
+import { buildingFootprint, tileIndex, type MapState } from './map'
 import { NO_ROOM, type RoomId, type RoomTypeId } from './roomTypes'
 import { isEnclosure } from './structures'
 import { NO_DOOR } from './structureTypes'
@@ -213,7 +213,7 @@ export function evaluateRoom(
   for (const building of Object.values(state.buildings)) {
     const bdef = content.buildings[building.type]
     if (!bdef) continue
-    const rect = footprint(building.origin, bdef.size, building.rotation)
+    const rect = buildingFootprint(building, bdef)
     let inside = false
     for (let y = rect.y; y < rect.y + rect.height && !inside; y++) {
       for (let x = rect.x; x < rect.x + rect.width && !inside; x++) {

@@ -4,7 +4,7 @@
  * Chrome), vía el protocolo de depuración. Sin dependencias: sustituye a
  * `npx playwright screenshot` en la skill pixi-artist.
  *
- *   node tools/capture.mjs <url> <salida.png> [--viewport=1400,900] [--wait=800] [--full]
+ *   node tools/capture.mjs <url> <salida.png> [--viewport=1400,900] [--wait=800] [--full] [--clip=x,y,w,h]
  *
  * Espera a que la página marque `document.body.dataset.ready` (la galería lo
  * hace al terminar de dibujar) o, si no lo hace, el tiempo de --wait.
@@ -25,7 +25,7 @@ const flag = (name, fallback) =>
 const full = process.argv.includes('--full')
 if (!url || !out) {
   console.error(
-    'Uso: node tools/capture.mjs <url> <salida.png> [--viewport=1400,900] [--wait=800] [--full]',
+    'Uso: node tools/capture.mjs <url> <salida.png> [--viewport=1400,900] [--wait=800] [--full] [--clip=x,y,w,h]',
   )
   process.exit(2)
 }
@@ -117,9 +117,15 @@ try {
     const size = metrics.result.cssContentSize ?? metrics.result.contentSize
     clip = { x: 0, y: 0, width: Math.ceil(size.width), height: Math.ceil(size.height), scale: 1 }
   }
+  // --clip=x,y,ancho,alto: solo esa zona de la página (en px CSS)
+  const zone = flag('clip', '')
+  if (zone) {
+    const [x, y, width, height] = zone.split(',').map(Number)
+    clip = { x, y, width, height, scale: 1 }
+  }
   const shot = await send('Page.captureScreenshot', {
     format: 'png',
-    captureBeyondViewport: full,
+    captureBeyondViewport: full || Boolean(zone),
     ...(clip ? { clip } : {}),
   })
   mkdirSync(dirname(out), { recursive: true })

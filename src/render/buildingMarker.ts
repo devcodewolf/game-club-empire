@@ -6,7 +6,7 @@
  */
 import { Container, Graphics, Sprite, Text } from 'pixi.js'
 import { pitchSurface, type BuildingDef, type PitchRole } from '@/sim/buildings'
-import { rotateSize, type Rotation } from '@/sim/geometry'
+import { rotateSize, type GridSize, type Rotation } from '@/sim/geometry'
 import { TILE_SIZE } from './grid'
 import { OBJECT_ART, type ObjectPainter } from './objectArt'
 import { createPitchMarker } from './pitchMarker'
@@ -25,6 +25,16 @@ const ICON_MAX_SIZE = 48
 /** Huella mínima (en casillas) para mostrar el nombre. */
 const NAME_MIN_TILES = { width: 3, height: 2 } as const
 
+/** Datos del objeto colocado que cambian su dibujo. */
+export interface MarkerOptions {
+  /** Nivel (0 = nivel 1). */
+  readonly tier?: number
+  /** Solo campos: rótulo de uso. */
+  readonly role?: PitchRole
+  /** Tamaño sin girar si no es el del catálogo (gradas). */
+  readonly size?: GridSize
+}
+
 /**
  * Crea el marcador de un edificio. El origen (0,0) del contenedor es la
  * esquina superior izquierda de la huella ya girada.
@@ -33,8 +43,7 @@ export function createBuildingMarker(
   def: BuildingDef,
   rotation: Rotation,
   assets?: RenderAssets,
-  tier = 0,
-  role?: PitchRole,
+  { tier = 0, role, size = def.size }: MarkerOptions = {},
 ): Container {
   // Los terrenos de juego tienen su propio dibujo (superficie + líneas de cal).
   if (def.pitch) {
@@ -47,9 +56,9 @@ export function createBuildingMarker(
   }
   // Objetos con dibujo propio (taquilla, ducha, mesa…)
   const painter = OBJECT_ART[def.id]
-  if (painter) return createArtMarker(def, rotation, painter, tier)
+  if (painter) return createArtMarker(def, rotation, painter, tier, size)
 
-  const tiles = rotateSize(def.size, rotation)
+  const tiles = rotateSize(size, rotation)
   const width = tiles.width * TILE_SIZE
   const height = tiles.height * TILE_SIZE
 
@@ -164,10 +173,11 @@ function createArtMarker(
   rotation: Rotation,
   painter: ObjectPainter,
   tier: number,
+  size: GridSize,
 ): Container {
-  const w = def.size.width * TILE_SIZE
-  const h = def.size.height * TILE_SIZE
-  const rotated = rotateSize(def.size, rotation)
+  const w = size.width * TILE_SIZE
+  const h = size.height * TILE_SIZE
+  const rotated = rotateSize(size, rotation)
   const rw = rotated.width * TILE_SIZE
   const rh = rotated.height * TILE_SIZE
 

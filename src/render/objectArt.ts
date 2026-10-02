@@ -15,6 +15,7 @@ import { shade } from './color'
 import { palette } from './palette'
 import { DEFAULT_CLUB_COLORS, type ClubColors } from './clubColors'
 import type { Random } from './random'
+import { standPainter } from './standArt'
 import { MIN_DETAIL, OUTLINE, OUTLINE_DETAIL, OUTLINE_WALL } from './style'
 
 /**
@@ -602,48 +603,6 @@ const fountain: ObjectPainter = (g, w, h) => {
     .stroke({ color: O, width: 1 })
 }
 
-/** Grada: filas paralelas al frente (abajo), con estilo según el tipo. */
-function stand(kind: 'earth' | 'wood' | 'seats' | 'covered' | 'stadium' | 'grand'): ObjectPainter {
-  return (g, w, h) => {
-    const rows = Math.max(2, Math.floor(h / 22))
-    const rowH = (h - 8) / rows
-    // Base: talud de hierba, hormigón o estructura
-    const base = kind === 'earth' ? palette.grassVariation : palette.stone
-    box(g, 2, 2, w - 4, h - 4, base, 3)
-    for (let r = 0; r < rows; r++) {
-      const y = 4 + r * rowH
-      // Escalón: borde de sombra en cada fila
-      g.rect(4, y + rowH - 3, w - 8, 3).fill({ color: O, alpha: kind === 'earth' ? 0.2 : 0.3 })
-      if (kind === 'earth') continue
-      if (kind === 'wood') {
-        g.rect(6, y + 4, w - 12, rowH - 9)
-          .fill(C.woodLight)
-          .stroke({ color: O, width: 1 })
-        continue
-      }
-      // Asientos individuales con los colores del club
-      const seatW = 12
-      for (let x = 8; x + seatW < w - 8; x += seatW + 3) {
-        const aisle = Math.floor((x - 8) / (seatW + 3)) % 12 === 11
-        if (aisle) continue
-        g.roundRect(x, y + 4, seatW, rowH - 9, 2).fill(
-          r % 2 === 0 ? C.clubRed : shade(C.clubRed, 0.15),
-        )
-      }
-    }
-    // Cubierta: tribuna (mitad trasera), estadio (2/3) o gran tribuna (casi entera)
-    const roof = kind === 'covered' ? 0.5 : kind === 'stadium' ? 0.62 : kind === 'grand' ? 0.8 : 0
-    if (roof > 0) {
-      g.rect(0, 0, w, h * roof)
-        .fill(palette.slate)
-        .stroke({ color: O, width: LINE })
-      for (let x = 12; x < w; x += 24) line(g, x, 2, x, h * roof - 2, palette.slateRows, 2)
-      g.rect(0, h * roof - 6, w, 6).fill(palette.stoneDark)
-      for (let x = 20; x < w - 10; x += Math.max(80, w / 6)) g.rect(x, h * roof - 4, 6, 8).fill(O)
-    }
-  }
-}
-
 // ── Salud, gimnasio y cafetería ──────────────────────────────────
 
 const physioTable: ObjectPainter = (g, w, h) => {
@@ -774,10 +733,5 @@ export const OBJECT_ART: Readonly<Record<string, ObjectPainter>> = {
   barCounter,
   vendingMachine,
   cafeTable,
-  standEarthBank: stand('earth'),
-  standWoodBenches: stand('wood'),
-  standMetalSeats: stand('seats'),
-  standCovered: stand('covered'),
-  standStadium: stand('stadium'),
-  standGrand: stand('grand'),
+  stand: standPainter,
 }

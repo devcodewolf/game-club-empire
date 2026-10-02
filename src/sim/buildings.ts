@@ -34,6 +34,16 @@ export interface BuildingDef {
     /** Superficie por nivel (índice = tier): tierra → césped artificial → natural → híbrido. */
     readonly surfaces: readonly FloorId[]
   }
+  /**
+   * Si es una grada modular: se pega a un lado de un campo y crece hacia
+   * fuera. Índice = tier. Su tamaño real lo da el campo (largo) y el nivel (fondo).
+   */
+  readonly stand?: {
+    /** Fondo en casillas por nivel. */
+    readonly depths: readonly number[]
+    /** Espectadores por casilla de largo, por nivel. */
+    readonly capacityPerTile: readonly number[]
+  }
   /** Sin orientación (árbol, farola…): no se dibuja la flecha de frente. */
   readonly symmetric?: boolean
   /** Aforo, para gradas (espectadores). */
@@ -83,6 +93,10 @@ export function pitchSurface(def: BuildingDef, tier: number): FloorId | undefine
   return surfaces?.[Math.min(tier, surfaces.length - 1)]
 }
 
+/** Hueco de un campo donde va una grada: lados y esquinas. */
+export type StandSlot =
+  'north' | 'south' | 'east' | 'west' | 'northEast' | 'northWest' | 'southEast' | 'southWest'
+
 /** Edificio colocado en el mapa. */
 export interface PlacedBuilding {
   readonly id: BuildingId
@@ -93,4 +107,16 @@ export interface PlacedBuilding {
   readonly tier: number
   /** Solo campos: para qué se usa. */
   readonly role?: PitchRole
+  /** Solo gradas: campo y hueco al que está pegada. */
+  readonly attach?: { readonly pitchId: BuildingId; readonly slot: StandSlot }
+  /**
+   * Tamaño sin girar cuando no es el del catálogo (gradas: largo del lado del
+   * campo × fondo del nivel). Usar siempre `placedSize()`.
+   */
+  readonly size?: GridSize
+}
+
+/** Tamaño sin girar de un objeto colocado (el suyo propio o el del catálogo). */
+export function placedSize(building: PlacedBuilding, def: BuildingDef): GridSize {
+  return building.size ?? def.size
 }

@@ -6,7 +6,7 @@
  * aparece con andamio y rebote, lo demolido se va con polvo. Solo lee el estado.
  */
 import type { Container } from 'pixi.js'
-import type { BuildingId, PlacedBuilding } from '@/sim/buildings'
+import { placedSize, type BuildingId, type PlacedBuilding } from '@/sim/buildings'
 import type { Game } from '@/sim/game'
 import { rotateSize } from '@/sim/geometry'
 import { createBuildingMarker, destroyBuildingMarker } from './buildingMarker'
@@ -30,16 +30,20 @@ export function createBuildingsView(
     const def = game.content.buildings[building.type]
     if (!def) return
 
-    const marker = createBuildingMarker(
-      def,
-      building.rotation,
-      assets,
-      building.tier,
-      building.role,
-    )
+    const size = placedSize(building, def)
+    const marker = createBuildingMarker(def, building.rotation, assets, {
+      tier: building.tier,
+      role: building.role,
+      size,
+    })
     const origin = tileToWorld(building.origin)
-    const size = rotateSize(def.size, building.rotation)
-    const rect = { x: origin.x, y: origin.y, w: size.width * TILE_SIZE, h: size.height * TILE_SIZE }
+    const rotated = rotateSize(size, building.rotation)
+    const rect = {
+      x: origin.x,
+      y: origin.y,
+      w: rotated.width * TILE_SIZE,
+      h: rotated.height * TILE_SIZE,
+    }
     // Pivote en el centro: las animaciones de escala salen desde el centro del objeto.
     marker.pivot.set(rect.w / 2, rect.h / 2)
     marker.position.set(rect.x + rect.w / 2, rect.y + rect.h / 2)
@@ -81,7 +85,11 @@ export function createBuildingsView(
       remove(event.building.id, false)
       add(event.building, 'upgrade')
     }
-    if (event.type === 'buildingDemolished') remove(event.building.id, true)
+    if (event.type === 'buildingDemolished') {
+      remove(event.building.id, true)
+      // Las gradas caen con su campo
+      for (const stand of event.attached ?? []) remove(stand.id, true)
+    }
     if (event.type === 'areaDemolished')
       for (const building of event.buildings) remove(building.id, true)
   })

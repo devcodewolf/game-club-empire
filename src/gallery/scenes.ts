@@ -75,7 +75,36 @@ const OFFICE: GalleryScene = {
   ],
 }
 
-export const GALLERY_SCENES: readonly GalleryScene[] = [CHANGING_ROOM, OFFICE]
+const stand = (slot: 'north' | 'south' | 'east' | 'west'): Command => ({
+  type: 'placeStand',
+  buildingType: 'stand',
+  pitchId: 1,
+  slot,
+})
+const upgrade = (buildingId: number): Command => ({ type: 'upgradeBuilding', buildingId })
+
+/**
+ * Estadio: campo de fútbol 11 con gradas de niveles mezclados (norte nivel 3,
+ * sur y oeste nivel 2, este nivel 1). Ids: campo 1; gradas 2 (N), 3 (S), 4 (E), 5 (O).
+ */
+const STADIUM: GalleryScene = {
+  name: 'estadio',
+  size: { width: 68, height: 50 },
+  pieces: ['stand', 'pitch11'],
+  commands: [
+    place('pitch11', 6, 6),
+    stand('north'),
+    stand('south'),
+    stand('east'),
+    stand('west'),
+    upgrade(2),
+    upgrade(2),
+    upgrade(3),
+    upgrade(5),
+  ],
+}
+
+export const GALLERY_SCENES: readonly GalleryScene[] = [CHANGING_ROOM, OFFICE, STADIUM]
 
 export function sceneFor(assetId: string): GalleryScene | undefined {
   return GALLERY_SCENES.find((scene) => scene.pieces.includes(assetId))

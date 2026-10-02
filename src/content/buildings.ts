@@ -76,6 +76,27 @@ function pitch<const Id extends string>(
   }
 }
 
+/**
+ * Niveles de la grada: fondo en casillas y espectadores por casilla de largo.
+ * Con los 4 lados de un campo de fútbol 11 al máximo salen ~83 000; las
+ * esquinas (entrega c) completan hasta MAX_STADIUM_CAPACITY. Provisional
+ * hasta equilibrar la economía en la Fase 3.
+ */
+const STAND_TIERS = [
+  { name: 'Talud', depth: 3, perTile: 15, cost: 200, requires: undefined },
+  { name: 'Bancos de madera', depth: 4, perTile: 25, cost: 1500, requires: undefined },
+  { name: 'Asientos', depth: 5, perTile: 45, cost: 8000, requires: 'regional' },
+  { name: 'Tribuna cubierta', depth: 7, perTile: 80, cost: 30000, requires: 'autonomica' },
+  { name: 'Grada de estadio', depth: 10, perTile: 200, cost: 150000, requires: 'nacionalA' },
+  { name: 'Gran tribuna', depth: 14, perTile: 440, cost: 600000, requires: 'elite' },
+] as const satisfies readonly {
+  name: string
+  depth: number
+  perTile: number
+  cost: number
+  requires: DivisionId | undefined
+}[]
+
 export const BUILDINGS = defineBuildings({
   // Campos de fútbol: tamaño reglamentario fijo, no se arrastran. Se mejoran en
   // el sitio subiendo de superficie (tierra → artificial → natural → híbrido).
@@ -92,64 +113,26 @@ export const BUILDINGS = defineBuildings({
     ['regional', 'autonomica', 'nacionalB', 'elite'],
   ),
 
-  // Gradas: el aforo crece con el tamaño y la división.
-  standEarthBank: {
-    id: 'standEarthBank',
-    name: 'Talud de tierra',
+  // Grada modular: se pega a un lado de un campo y crece hacia fuera al
+  // mejorarla. Su largo lo da el lado del campo y su fondo, el nivel
+  // (docs/DISENO-ESTADIO-Y-NIVELES.md). `size` es solo la muestra del menú.
+  stand: {
+    id: 'stand',
+    name: 'Grada',
     size: { width: 14, height: 3 },
-    cost: 200,
+    cost: STAND_TIERS[0].cost,
     markerColor: 0x8a6a48,
-    icon: 'stairs',
-    capacity: 200,
-  },
-  standWoodBenches: {
-    id: 'standWoodBenches',
-    name: 'Grada de bancos de madera',
-    size: { width: 14, height: 4 },
-    cost: 1500,
-    markerColor: 0x9a6b3f,
     icon: 'building-stadium',
-    capacity: 350,
-  },
-  standMetalSeats: {
-    id: 'standMetalSeats',
-    name: 'Grada metálica con asientos',
-    size: { width: 20, height: 5 },
-    cost: 8000,
-    markerColor: 0x8b9298,
-    icon: 'building-stadium',
-    capacity: 800,
-    requires: 'regional',
-  },
-  standCovered: {
-    id: 'standCovered',
-    name: 'Tribuna cubierta',
-    size: { width: 28, height: 7 },
-    cost: 30000,
-    markerColor: 0xb5523b,
-    icon: 'building-stadium',
-    capacity: 2000,
-    requires: 'autonomica',
-  },
-  standStadium: {
-    id: 'standStadium',
-    name: 'Grada de estadio',
-    size: { width: 40, height: 10 },
-    cost: 150000,
-    markerColor: 0xa04632,
-    icon: 'building-stadium',
-    capacity: 6000,
-    requires: 'nacionalA',
-  },
-  standGrand: {
-    id: 'standGrand',
-    name: 'Gran tribuna',
-    size: { width: 56, height: 14 },
-    cost: 600000,
-    markerColor: 0x7d3a2b,
-    icon: 'building-stadium',
-    capacity: 18000,
-    requires: 'elite',
+    stand: {
+      depths: STAND_TIERS.map((t) => t.depth),
+      capacityPerTile: STAND_TIERS.map((t) => t.perTile),
+    },
+    tiers: STAND_TIERS.map(({ name, cost, requires }, i) => ({
+      name,
+      cost,
+      quality: i + 1,
+      requires,
+    })),
   },
 
   // Vestuario

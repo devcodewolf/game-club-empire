@@ -52,6 +52,7 @@ Nunca des una pieza por terminada sin verla renderizada.
    node tools/capture.mjs "http://localhost:5199/gallery.html?asset=<id>" <scratchpad>/arte-<id>.png --full
    ```
    `capture.mjs` usa el Edge/Chrome instalado, espera a que la galería termine de dibujar (`data-ready`) y con `--full` captura la página entera. Guarda las capturas en el scratchpad, no en el repo. Alternativa: Raul tiene instalado el CLI de Playwright (`playwright screenshot --full-page --wait-for-timeout=800 <url> <png>`), pero hay que ajustar la espera a mano.
+   Para revisar de cerca, `--clip=x,y,ancho,alto` captura solo esa zona (px CSS). `?scene=<nombre>` (vestuario, oficina, estadio) dibuja solo esa escena a ×0,5: es la forma cómoda de ver el estadio entero.
    La galería muestra la pieza a ×0,5 y ×1, sobre césped, madera, baldosa y hormigón, girada en las 4 orientaciones, todos sus niveles en fila y al lado de sus vecinos habituales (un vestuario completo, una grada junto a su campo).
 5. **Mira la captura** y revísala con la lista de abajo, fijándote primero en la vista ×0,5.
 6. **Corrige y repite** 3-5. Máximo 4 vueltas; si no convence, para y explícale a Raul el problema.

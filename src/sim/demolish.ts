@@ -9,14 +9,13 @@ import type { PlacedBuilding } from './buildings'
 import type { SimContent } from './content'
 import { DEFAULT_FLOOR } from './floors'
 import {
-  footprint,
   isInsideGrid,
   isRectInsideGrid,
   tilesInRect,
   type TileCoord,
   type TileRect,
 } from './geometry'
-import { buildingAt, EMPTY_TILE, tileIndex, type MapState } from './map'
+import { buildingAt, buildingFootprint, EMPTY_TILE, tileIndex, type MapState } from './map'
 import { removeEmptyRooms } from './rooms'
 import { NO_ROOM } from './roomTypes'
 import { NO_DOOR, NO_WALL } from './structureTypes'
@@ -42,19 +41,34 @@ export function demolishTargetAt(state: MapState, tile: TileCoord): DemolishTarg
   return null
 }
 
-/** Quita un objeto (sin validar): libera sus casillas y lo borra. */
+/** Gradas pegadas a un objeto (solo los campos tienen). */
+export function attachedTo(state: MapState, building: PlacedBuilding): PlacedBuilding[] {
+  return Object.values(state.buildings).filter((b) => b.attach?.pitchId === building.id)
+}
+
+/**
+ * Quita un objeto (sin validar): libera sus casillas y lo borra. Si es un
+ * campo, sus gradas caen con él. Devuelve esas gradas arrastradas.
+ */
 export function removeBuilding(
   state: MapState,
   content: SimContent,
   building: PlacedBuilding,
-): void {
+): PlacedBuilding[] {
+  if (!state.buildings[building.id]) return []
   const def = content.buildings[building.type]
   if (def) {
-    for (const tile of tilesInRect(footprint(building.origin, def.size, building.rotation))) {
-      if (isInsideGrid(tile, state.size)) state.occupancy[tileIndex(state, tile)] = EMPTY_TILE
+    for (const tile of tilesInRect(buildingFootprint(building, def))) {
+      if (!isInsideGrid(tile, state.size)) continue
+      const index = tileIndex(state, tile)
+      if (state.occupancy[index] === building.id) state.occupancy[index] = EMPTY_TILE
     }
   }
   delete state.buildings[building.id]
+
+  const attached = attachedTo(state, building)
+  for (const stand of attached) removeBuilding(state, content, stand)
+  return attached
 }
 
 /** Vuelve una casilla a terreno: sin muro, sin puerta, hierba, exterior y sin sala. */
@@ -72,23 +86,22 @@ export function applyDemolishAt(
   content: SimContent,
   tile: TileCoord,
   target: DemolishTarget,
-): void {
+): PlacedBuilding[] {
   const index = tileIndex(state, tile)
   switch (target.kind) {
     case 'building':
-      removeBuilding(state, content, target.building)
-      return
+      return removeBuilding(state, content, target.building)
     case 'door':
       state.doors[index] = NO_DOOR
-      return
+      return []
     case 'wall':
       state.walls[index] = NO_WALL
-      return
+      return []
     case 'floor':
       // Quitar el suelo de una casilla interior la saca del edificio y de su sala.
       clearTile(state, index)
       removeEmptyRooms(state)
-      return
+      return []
   }
 }
 
@@ -108,7 +121,10 @@ export function validateDemolishArea(state: MapState, rect: TileRect): DemolishA
     const index = tileIndex(state, tile)
     if (state.reserved[index]) continue
     const building = buildingAt(state, tile)
-    if (building) buildings.set(building.id, building)
+    if (building) {
+      buildings.set(building.id, building)
+      for (const stand of attachedTo(state, building)) buildings.set(stand.id, stand)
+    }
     const dirty =
       state.walls[index] !== NO_WALL ||
       state.doors[index] !== NO_DOOR ||

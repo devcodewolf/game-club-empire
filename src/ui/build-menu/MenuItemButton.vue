@@ -40,7 +40,10 @@ const model = computed<ButtonModel>(() => {
   if (item.kind === 'building') {
     const def = getBuilding(item.id)
     const reason = progression.lockReason(def.requires)
-    const info = `${def.name} · ${def.size.width}×${def.size.height} · ${def.cost.toLocaleString('es-ES')} €`
+    const where = def.stand
+      ? 'se pega a un lado de un campo y crece al mejorarla'
+      : `${def.size.width}×${def.size.height}`
+    const info = `${def.name} · ${where} · ${def.cost.toLocaleString('es-ES')} €`
     return {
       label: item.label ?? def.name,
       icon: def.icon,
@@ -49,7 +52,8 @@ const model = computed<ButtonModel>(() => {
       title: reason ? `${info} · ${reason}` : info,
       locked: reason !== null,
       active: toolStore.activeBuilding === item.id,
-      select: () => toolStore.selectBuilding(item.id),
+      select: () =>
+        def.stand ? toolStore.selectStand(item.id) : toolStore.selectBuilding(item.id),
     }
   }
 

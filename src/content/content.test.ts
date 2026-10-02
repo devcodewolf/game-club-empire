@@ -12,6 +12,7 @@ import { ICON_NAMES } from './icons'
 import { DIVISIONS } from './progression'
 import { ROOMS } from './rooms'
 import { WALLS } from './walls'
+import { MAX_STADIUM_CAPACITY } from '@/sim/stands'
 
 const iconNames: readonly string[] = ICON_NAMES
 const divisionIds: readonly string[] = DIVISIONS.map((division) => division.id)
@@ -109,17 +110,22 @@ describe('contenido', () => {
     }
   })
 
-  it('las gradas tienen aforo positivo y creciente en el orden del menú', () => {
-    const standsCategory = BUILD_CATEGORIES.find((category) => category.id === 'stands')
-    const ids = (standsCategory?.tabs ?? []).flatMap((tab) =>
-      tab.items.flatMap((item) => (item.kind === 'building' ? [item.id] : [])),
-    )
-    expect(ids.length).toBeGreaterThan(0)
-    const capacities = ids.map((id) => buildings.find((b) => b.id === id)?.capacity ?? 0)
-    for (const capacity of capacities) expect(capacity).toBeGreaterThan(0)
-    capacities
-      .slice(1)
-      .forEach((capacity, i) => expect(capacity).toBeGreaterThan(capacities[i] ?? 0))
+  it('la grada tiene fondo y aforo por nivel, ambos crecientes', () => {
+    const { stand } = BUILDINGS
+    const tiers = stand.tiers.length
+    expect(stand.stand.depths).toHaveLength(tiers)
+    expect(stand.stand.capacityPerTile).toHaveLength(tiers)
+    for (const list of [stand.stand.depths, stand.stand.capacityPerTile]) {
+      expect(list[0]).toBeGreaterThan(0)
+      list.slice(1).forEach((value, i) => expect(value).toBeGreaterThan(list[i] ?? 0))
+    }
+  })
+
+  it('un estadio de fútbol 11 con los 4 lados al máximo no pasa del aforo máximo', () => {
+    const { stand, pitch11 } = BUILDINGS
+    const perimeter = 2 * (pitch11.size.width + pitch11.size.height)
+    const top = stand.stand.capacityPerTile[stand.stand.capacityPerTile.length - 1] ?? 0
+    expect(top * perimeter).toBeLessThanOrEqual(MAX_STADIUM_CAPACITY)
   })
 
   it('cada sala del menú existe en ROOMS y cada sala de ROOMS está en el menú', () => {
