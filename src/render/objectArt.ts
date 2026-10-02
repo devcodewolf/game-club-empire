@@ -16,6 +16,7 @@ import { palette } from './palette'
 import { DEFAULT_CLUB_COLORS, type ClubColors } from './clubColors'
 import type { Random } from './random'
 import { standPainter } from './standArt'
+import { standCornerPainter } from './standCornerArt'
 import { MIN_DETAIL, OUTLINE, OUTLINE_DETAIL, OUTLINE_WALL } from './style'
 
 /**
@@ -734,4 +735,5 @@ export const OBJECT_ART: Readonly<Record<string, ObjectPainter>> = {
   vendingMachine,
   cafeTable,
   stand: standPainter,
+  standCorner: standCornerPainter,
 }

@@ -22,7 +22,7 @@ import { MIN_DETAIL, OUTLINE, OUTLINE_DETAIL, SHADOW_OFFSET } from './style'
 const O = palette.outline
 
 /** Materiales de la grada, todos derivados de la paleta. */
-const S = {
+export const S = {
   grassTop: shade(palette.grassVariation, 0.12),
   grassLow: palette.grassShadow,
   earth: palette.mud,
@@ -38,9 +38,9 @@ const S = {
 /** Separación aproximada entre pasillos de escalera, en px. */
 const AISLE_EVERY = TILE_SIZE * 8
 /** Ancho de un pasillo de escalera, en px. */
-const AISLE_W = 28
+export const AISLE_W = 28
 /** Fondo de una fila de bancos o asientos, en px (2 filas por casilla). */
-const ROW_H = TILE_SIZE / 2
+export const ROW_H = TILE_SIZE / 2
 
 /** Centros de los pasillos: repartidos a partes iguales, nunca en los extremos. */
 function aisleCenters(w: number): number[] {
@@ -120,8 +120,8 @@ function drawEarthBank(g: Graphics, w: number, h: number, rnd: Random): void {
 // ── Base común de las gradas de obra (niveles 2 y 3) ─────────────
 
 /** Margen trasero (valla o muro) y delantero (murete), en px. */
-const BACK = 14
-const FRONT = 12
+export const BACK = 14
+export const FRONT = 12
 
 /**
  * Escalones de hormigón: una franja por fila con su sombra al pie, el murete
@@ -193,8 +193,8 @@ function drawBenches(g: Graphics, w: number, h: number, rnd: Random): void {
 // ── Nivel 3 · Asientos ───────────────────────────────────────────
 
 /** Ancho de un asiento y hueco entre asientos, en px. */
-const SEAT_W = 20
-const SEAT_GAP = 5
+export const SEAT_W = 20
+export const SEAT_GAP = 5
 
 function drawSeats(g: Graphics, w: number, h: number, rnd: Random, club: ClubColors): void {
   const { rows, aisles } = drawTerraces(g, w, h, rnd)
@@ -256,9 +256,9 @@ const RING_DEPTH = TILE_SIZE * 4
 const CONCOURSE_DEPTH = TILE_SIZE
 const BOXES_DEPTH = TILE_SIZE
 /** Cara vertical del frente de un anillo alto: lo que "levanta" el anillo. */
-const RISER = 12
+export const RISER = 12
 /** Cuánto más claro es cada anillo que el de delante (está más alto). */
-const RING_LIFT = 0.12
+export const RING_LIFT = 0.12
 
 /**
  * Un anillo de asientos entre y0 (atrás) e y1 (delante). Los anillos altos
@@ -334,6 +334,41 @@ function drawBoxes(g: Graphics, w: number, y0: number, y1: number): void {
   g.rect(0, y1 - 12, w, 4).fill(shade(palette.waterShine, 0.25))
 }
 
+/** Banda de una grada de estadio, medida como distancia al campo (px). */
+export interface RingBand {
+  readonly kind: 'ring' | 'concourse' | 'boxes'
+  /** Distancia al campo del borde delantero y del trasero. */
+  readonly from: number
+  readonly to: number
+  /** Anillo (0 = el más bajo) al que pertenece o que precede. */
+  readonly level: number
+}
+
+/**
+ * Bandas de delante (campo) hacia atrás para un nivel y un fondo dados. Lados
+ * y córners usan este mismo reparto, así filas y pasillos empalman.
+ */
+export function ringBands(tier: number, depth: number): RingBand[] {
+  const layout = RING_LAYOUT[tier] ?? ['ring']
+  const bands: RingBand[] = []
+  let from = 0
+  let level = 0
+  layout.forEach((kind, i) => {
+    const last = i === layout.length - 1
+    const size = last
+      ? depth - BACK - from
+      : kind === 'ring'
+        ? RING_DEPTH
+        : kind === 'boxes'
+          ? BOXES_DEPTH
+          : CONCOURSE_DEPTH
+    bands.push({ kind, from, to: from + size, level })
+    if (kind === 'ring') level += 1
+    from += size
+  })
+  return bands
+}
+
 /** Gradas de estadio: anillos de delante hacia atrás con su separador. */
 function drawRings(
   g: Graphics,
@@ -343,32 +378,19 @@ function drawRings(
   rnd: Random,
   club: ClubColors,
 ): void {
-  const layout = RING_LAYOUT[tier] ?? ['ring']
-  const rings = layout.filter((part) => part === 'ring').length
-  let y1 = h
-  let level = 0
-  layout.forEach((part, i) => {
-    const last = i === layout.length - 1
-    const depth = last
-      ? y1 - BACK
-      : part === 'ring'
-        ? RING_DEPTH
-        : part === 'boxes'
-          ? BOXES_DEPTH
-          : CONCOURSE_DEPTH
-    const y0 = y1 - depth
-    if (part === 'ring') drawRing(g, w, y0, y1, Math.min(level, rings - 1), rnd, club)
-    else if (part === 'boxes') drawBoxes(g, w, y0, y1)
-    else drawConcourse(g, w, y0, y1, level)
-    if (part === 'ring') level += 1
-    y1 = y0
-  })
+  for (const band of ringBands(tier, h)) {
+    const y0 = h - band.to
+    const y1 = h - band.from
+    if (band.kind === 'ring') drawRing(g, w, y0, y1, band.level, rnd, club)
+    else if (band.kind === 'boxes') drawBoxes(g, w, y0, y1)
+    else drawConcourse(g, w, y0, y1, band.level)
+  }
   drawBackWall(g, w)
   g.rect(0, 0, w, h).stroke({ color: O, width: OUTLINE })
 }
 
 /** Fondo de la visera por nivel, en casillas (los niveles bajos no tienen). */
-const ROOF_TILES: Readonly<Record<number, number>> = { 3: 1, 4: 1.25, 5: 1.5 }
+export const ROOF_TILES: Readonly<Record<number, number>> = { 3: 1, 4: 1.25, 5: 1.5 }
 
 /**
  * Visera: una cubierta estrecha sobre las últimas filas. Va en su propio

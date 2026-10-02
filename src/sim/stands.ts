@@ -27,8 +27,37 @@ import { NO_DOOR, NO_WALL } from './structureTypes'
  */
 export const MAX_STADIUM_CAPACITY = 100_000
 
-/** Huecos de lado (laterales y fondos). Las esquinas llegan en la entrega c. */
+/** Huecos de lado (laterales y fondos). */
 export const SIDE_SLOTS: readonly StandSlot[] = ['north', 'south', 'east', 'west']
+
+/** Huecos de esquina (córners). */
+export const CORNER_SLOTS: readonly StandSlot[] = [
+  'northEast',
+  'southEast',
+  'southWest',
+  'northWest',
+]
+
+/** Lados vecinos de cada córner: el córner no puede pasar del nivel del más bajo. */
+export const CORNER_NEIGHBOURS: Readonly<
+  Partial<Record<StandSlot, readonly [StandSlot, StandSlot]>>
+> = {
+  northEast: ['north', 'east'],
+  southEast: ['south', 'east'],
+  southWest: ['south', 'west'],
+  northWest: ['north', 'west'],
+}
+
+/**
+ * Largo equivalente de un córner por casilla de fondo: sus filas son cuartos
+ * de arco (≈ 0,785 × fondo a media altura) menos los pasillos; ajustado para
+ * que un estadio completo de fútbol 11 se quede por debajo de MAX_STADIUM_CAPACITY.
+ */
+export const CORNER_LENGTH_PER_DEPTH = 0.65
+
+export function isCornerSlot(slot: StandSlot): boolean {
+  return CORNER_SLOTS.includes(slot)
+}
 
 /** Colocación calculada de una grada: lo que se guarda en el PlacedBuilding. */
 export interface StandPlacement {
@@ -72,9 +101,21 @@ export function standPlacement(
         rotation: 3,
         size: { width: pitch.height, height: depth },
       }
-    default:
-      return null // esquinas: entrega c
+    // Córners: cuadrado de lado `depth` pegado al vértice del campo. Sin girar,
+    // el vértice del campo queda abajo a la izquierda (como el córner noreste).
+    case 'northEast':
+      return corner(pitch.x + pitch.width, pitch.y - depth, 0, depth)
+    case 'southEast':
+      return corner(pitch.x + pitch.width, pitch.y + pitch.height, 1, depth)
+    case 'southWest':
+      return corner(pitch.x - depth, pitch.y + pitch.height, 2, depth)
+    case 'northWest':
+      return corner(pitch.x - depth, pitch.y - depth, 3, depth)
   }
+}
+
+function corner(x: number, y: number, rotation: Rotation, depth: number): StandPlacement {
+  return { origin: { x, y }, rotation, size: { width: depth, height: depth } }
 }
 
 /** Rectángulo que ocupa una colocación. */
@@ -87,10 +128,15 @@ export function standDepth(def: BuildingDef, tier: number): number | undefined {
   return def.stand?.depths[tier]
 }
 
-/** Aforo de una grada colocada: aforo por casilla de largo × largo del lado. */
+/**
+ * Aforo de una grada colocada: aforo por casilla de largo × largo. En los
+ * córners el largo equivale a una fracción del fondo (filas en arco).
+ */
 export function standCapacity(def: BuildingDef, building: PlacedBuilding): number {
   const perTile = def.stand?.capacityPerTile[building.tier] ?? 0
-  return perTile * (building.size?.width ?? 0)
+  const width = building.size?.width ?? 0
+  const corner = building.attach && isCornerSlot(building.attach.slot)
+  return perTile * (corner ? Math.round(width * CORNER_LENGTH_PER_DEPTH) : width)
 }
 
 /** Grada que ya ocupa un hueco de un campo, si la hay. */
@@ -127,6 +173,40 @@ export type StandError =
   | 'reserved'
   | 'occupied'
   | 'wall'
+  /** El córner necesita las dos gradas de los lados vecinos. */
+  | 'needsNeighbours'
+  /** El córner no puede pasar del nivel de la grada vecina más baja. */
+  | 'cornerAboveNeighbours'
+
+/**
+ * Nivel máximo que admite un córner (el de su vecina más baja), o null si
+ * le falta alguna de las dos gradas vecinas.
+ */
+export function cornerTierLimit(
+  state: MapState,
+  pitchId: BuildingId,
+  slot: StandSlot,
+): number | null {
+  const neighbours = CORNER_NEIGHBOURS[slot]
+  if (!neighbours) return null
+  const tiers = neighbours.map((side) => standAt(state, pitchId, side)?.tier)
+  if (tiers.some((tier) => tier === undefined)) return null
+  return Math.min(...(tiers as number[]))
+}
+
+/** Vecina más baja de un córner (para decir cuál hay que mejorar antes). */
+export function lowestNeighbour(
+  state: MapState,
+  pitchId: BuildingId,
+  slot: StandSlot,
+): StandSlot | undefined {
+  const neighbours = CORNER_NEIGHBOURS[slot]
+  if (!neighbours) return undefined
+  const [a, b] = neighbours
+  const tierA = standAt(state, pitchId, a)?.tier ?? -1
+  const tierB = standAt(state, pitchId, b)?.tier ?? -1
+  return tierA <= tierB ? a : b
+}
 
 /**
  * ¿Está libre la zona para una grada? Ignora las casillas del propio objeto
@@ -177,12 +257,16 @@ export function validatePlaceStand(
   if (!def?.stand) return { ok: false, reason: 'unknownBuilding' }
   const pitch = pitchFor(state, content, pitchId)
   if (typeof pitch === 'string') return { ok: false, reason: pitch }
-  if (!SIDE_SLOTS.includes(slot)) return { ok: false, reason: 'slotLocked' }
+  // Cada pieza va en su tipo de hueco: gradas en los lados, córners en las esquinas.
+  if (isCornerSlot(slot) !== Boolean(def.stand.corner)) return { ok: false, reason: 'slotLocked' }
   if (standAt(state, pitchId, slot)) return { ok: false, reason: 'slotTaken' }
-
   const depth = standDepth(def, 0) ?? 1
   const placement = standPlacement(pitch, slot, depth)
   if (!placement) return { ok: false, reason: 'slotLocked' }
+  // Con la colocación, para que la vista previa marque en rojo dónde iría
+  if (def.stand.corner && cornerTierLimit(state, pitchId, slot) === null) {
+    return { ok: false, reason: 'needsNeighbours', placement }
+  }
   const error = checkStandArea(state, placementRect(placement))
   return error ? { ok: false, reason: error, placement } : { ok: true, placement }
 }
@@ -201,6 +285,11 @@ export function validateStandUpgrade(
   if (!def?.stand || !building.attach) return { ok: false, reason: 'notAStand' }
   const pitch = pitchFor(state, content, building.attach.pitchId)
   if (typeof pitch === 'string') return { ok: false, reason: pitch }
+  if (isCornerSlot(building.attach.slot)) {
+    const limit = cornerTierLimit(state, building.attach.pitchId, building.attach.slot)
+    if (limit === null) return { ok: false, reason: 'needsNeighbours' }
+    if (tier > limit) return { ok: false, reason: 'cornerAboveNeighbours' }
+  }
 
   const depth = standDepth(def, tier)
   const placement = depth === undefined ? null : standPlacement(pitch, building.attach.slot, depth)
@@ -235,22 +324,47 @@ export interface StandTarget {
 }
 
 /**
- * Hueco al que apunta el cursor: sobre el campo, el lado más cercano; fuera,
- * el lado en cuya franja (hasta el fondo máximo de grada) cae la casilla.
- * Así se puede apuntar tanto sobre el césped como donde irá la grada.
+ * Hueco al que apunta el cursor: sobre el campo, el lado (o la esquina, si
+ * `corner`) más cercano; fuera, el hueco en cuya zona (hasta el fondo máximo
+ * de grada) cae la casilla. Se puede apuntar sobre el césped o donde irá.
  */
 export function standTargetAt(
   state: MapState,
   content: SimContent,
   tile: TileCoord,
   maxDepth: number,
+  corner = false,
 ): StandTarget | null {
   for (const building of Object.values(state.buildings)) {
     const def = content.buildings[building.type]
     if (!def?.pitch) continue
-    const slot = sideSlotFor(buildingFootprint(building, def), tile, maxDepth)
+    const rect = buildingFootprint(building, def)
+    const slot = corner ? cornerSlotFor(rect, tile, maxDepth) : sideSlotFor(rect, tile, maxDepth)
     if (slot) return { pitchId: building.id, slot }
   }
+  return null
+}
+
+/** Esquina: sobre el campo, la del cuadrante; fuera, la zona de esquina en la que cae. */
+function cornerSlotFor(r: TileRect, t: TileCoord, maxDepth: number): StandSlot | null {
+  const right = r.x + r.width
+  const bottom = r.y + r.height
+  const inX = t.x >= r.x && t.x < right
+  const inY = t.y >= r.y && t.y < bottom
+  if (inX && inY) {
+    const east = t.x >= r.x + r.width / 2
+    const south = t.y >= r.y + r.height / 2
+    if (south) return east ? 'southEast' : 'southWest'
+    return east ? 'northEast' : 'northWest'
+  }
+  const eastZone = t.x >= right && t.x < right + maxDepth
+  const westZone = t.x < r.x && t.x >= r.x - maxDepth
+  const northZone = t.y < r.y && t.y >= r.y - maxDepth
+  const southZone = t.y >= bottom && t.y < bottom + maxDepth
+  if (northZone && eastZone) return 'northEast'
+  if (southZone && eastZone) return 'southEast'
+  if (southZone && westZone) return 'southWest'
+  if (northZone && westZone) return 'northWest'
   return null
 }
 

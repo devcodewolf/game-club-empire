@@ -43,6 +43,8 @@ export interface BuildingDef {
     readonly depths: readonly number[]
     /** Espectadores por casilla de largo, por nivel. */
     readonly capacityPerTile: readonly number[]
+    /** Córner: va en una esquina del campo, con las filas en arco. */
+    readonly corner?: boolean
   }
   /** Sin orientación (árbol, farola…): no se dibuja la flecha de frente. */
   readonly symmetric?: boolean

@@ -26,16 +26,19 @@ Entre la línea del campo y la primera fila hay un **pasillo perimetral** fijo (
 | 1 | Talud | 3 | Terraplén de hierba con escalones de tierra, gente de pie |
 | 2 | Bancos de madera | 4 | Tablones corridos sobre estructura de madera |
 | 3 | Asientos | 5 | Gradas de hormigón con asientos del color del club |
-| 4 | Tribuna cubierta | 7 | Cubierta de pizarra sobre la mitad trasera, pilares |
-| 5 | Grada de estadio | 10 | Segundo anfiteatro, escaleras (vomitorios), cubierta 2/3 |
-| 6 | Gran tribuna | 14 | Palcos, cubierta casi entera, fachada trasera con accesos |
+| 4 | Tribuna cubierta | 7 | Un anillo de asientos y visera estrecha sobre las últimas filas |
+| 5 | Grada de estadio | 10 | Dos anillos separados por un pasillo con vomitorios |
+| 6 | Gran tribuna | 14 | Tres anillos, fila de palcos acristalados entre el segundo y el tercero |
+
+La altura se finge, sin perspectiva: cada anillo es más claro que el de delante, lleva antepecho blanco y la cara del desnivel en sombra, y la sombra proyectada crece con el nivel. La visera se desvanece al pasar el ratón por encima.
 
 Los niveles pueden mezclarse: tribuna principal en nivel 4 y fondos en nivel 1 es lo típico de un club modesto, y debe verse con encanto, no como algo roto.
 
-### Esquinas
-- Se desbloquean cuando los dos lados contiguos llegan al nivel 4.
-- Su nivel máximo es el menor de sus dos vecinos.
-- Rellenan el hueco con filas en curva o en chaflán que continúan las de los lados.
+### Esquinas (córners)
+- Pieza propia en el menú ("Córner", junto a "Lateral / Fondo"), con los mismos 6 niveles a mitad de precio. El jugador la coloca y la mejora a mano.
+- Necesita las dos gradas de los lados contiguos, y su nivel no puede pasar del de la más baja (la ficha dice cuál mejorar antes).
+- Es un cuadrado de lado = fondo de su nivel pegado al vértice del campo; las filas son cuartos de arco a la misma distancia del campo que las de los lados, así que empalman. La punta exterior queda vacía: el estadio se ve redondeado.
+- Aforo: cuenta como 0,65 casillas de largo por casilla de fondo. Con todo al máximo, un estadio de fútbol 11 llega a 98 560 (tope: 100 000).
 - Con las cuatro esquinas, el estadio queda cerrado.
 
 ### Reglas visuales para que se lea como un estadio

@@ -134,6 +134,27 @@ export const BUILDINGS = defineBuildings({
       requires,
     })),
   },
+  // Córner: cierra la esquina entre dos gradas con las filas en arco. Mismos
+  // niveles que la grada, a mitad de precio; no pasa del nivel de su vecina más baja.
+  standCorner: {
+    id: 'standCorner',
+    name: 'Córner',
+    size: { width: 3, height: 3 },
+    cost: STAND_TIERS[0].cost / 2,
+    markerColor: 0x8a6a48,
+    icon: 'building-stadium',
+    stand: {
+      depths: STAND_TIERS.map((t) => t.depth),
+      capacityPerTile: STAND_TIERS.map((t) => t.perTile),
+      corner: true,
+    },
+    tiers: STAND_TIERS.map(({ name, cost, requires }, i) => ({
+      name: `Córner · ${name}`,
+      cost: cost / 2,
+      quality: i + 1,
+      requires,
+    })),
+  },
 
   // Vestuario
   locker: {

@@ -12,7 +12,7 @@ import { ICON_NAMES } from './icons'
 import { DIVISIONS } from './progression'
 import { ROOMS } from './rooms'
 import { WALLS } from './walls'
-import { MAX_STADIUM_CAPACITY } from '@/sim/stands'
+import { CORNER_LENGTH_PER_DEPTH, MAX_STADIUM_CAPACITY } from '@/sim/stands'
 
 const iconNames: readonly string[] = ICON_NAMES
 const divisionIds: readonly string[] = DIVISIONS.map((division) => division.id)
@@ -121,11 +121,21 @@ describe('contenido', () => {
     }
   })
 
-  it('un estadio de fútbol 11 con los 4 lados al máximo no pasa del aforo máximo', () => {
-    const { stand, pitch11 } = BUILDINGS
+  it('el córner tiene los mismos fondos y aforos por nivel que la grada', () => {
+    const { stand, standCorner } = BUILDINGS
+    expect(standCorner.stand.depths).toEqual(stand.stand.depths)
+    expect(standCorner.stand.capacityPerTile).toEqual(stand.stand.capacityPerTile)
+  })
+
+  it('un estadio de fútbol 11 con 4 lados y 4 córners al máximo no pasa del aforo máximo', () => {
+    const { stand, standCorner, pitch11 } = BUILDINGS
     const perimeter = 2 * (pitch11.size.width + pitch11.size.height)
     const top = stand.stand.capacityPerTile[stand.stand.capacityPerTile.length - 1] ?? 0
-    expect(top * perimeter).toBeLessThanOrEqual(MAX_STADIUM_CAPACITY)
+    const cornerTop =
+      standCorner.stand.capacityPerTile[standCorner.stand.capacityPerTile.length - 1] ?? 0
+    const cornerDepth = standCorner.stand.depths[standCorner.stand.depths.length - 1] ?? 0
+    const cornerLength = Math.round(cornerDepth * CORNER_LENGTH_PER_DEPTH)
+    expect(top * perimeter + 4 * cornerTop * cornerLength).toBeLessThanOrEqual(MAX_STADIUM_CAPACITY)
   })
 
   it('cada sala del menú existe en ROOMS y cada sala de ROOMS está en el menú', () => {

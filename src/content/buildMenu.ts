@@ -95,7 +95,7 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
     tabs: [
       {
         label: 'Gradas',
-        items: [building('stand')],
+        items: [building('stand', 'Lateral / Fondo'), building('standCorner', 'Córner')],
       },
     ],
   },

@@ -40,9 +40,11 @@ const model = computed<ButtonModel>(() => {
   if (item.kind === 'building') {
     const def = getBuilding(item.id)
     const reason = progression.lockReason(def.requires)
-    const where = def.stand
-      ? 'se pega a un lado de un campo y crece al mejorarla'
-      : `${def.size.width}×${def.size.height}`
+    const where = def.stand?.corner
+      ? 'cierra una esquina entre dos gradas; no pasa del nivel de la más baja'
+      : def.stand
+        ? 'se pega a un lado de un campo y crece al mejorarla'
+        : `${def.size.width}×${def.size.height}`
     const info = `${def.name} · ${where} · ${def.cost.toLocaleString('es-ES')} €`
     return {
       label: item.label ?? def.name,

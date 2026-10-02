@@ -14,6 +14,7 @@ import { createRandom, seedFromText } from './random'
 import { palette } from './palette'
 import type { RenderAssets } from './renderAssets'
 import { paintStandRoof, standShadowOffset } from './standArt'
+import { paintCornerRoof, paintCornerSilhouette } from './standCornerArt'
 import { SHADOW_ALPHA, SHADOW_OFFSET } from './style'
 /** Radio de las esquinas del cuerpo, en px. */
 const CORNER_RADIUS = 4
@@ -184,29 +185,43 @@ function createArtMarker(
   // Las gradas proyectan una sombra más larga cuanto más altas son.
   const shadowInset = def.stand ? 0 : def.symmetric ? 14 : 6
   const shadowOffset = def.stand ? standShadowOffset(tier) : SHADOW_OFFSET
-  marker.addChild(
-    new Graphics()
-      .roundRect(
-        shadowInset + shadowOffset,
-        shadowInset + shadowOffset,
-        rw - shadowInset * 2,
-        rh - shadowInset * 2,
-        def.stand ? 2 : 6,
-      )
-      .fill({ color: palette.outline, alpha: SHADOW_ALPHA }),
-  )
+  const corner = def.stand?.corner === true
+  const angle = (rotation * Math.PI) / 2
+  if (corner) {
+    // Sombra con la silueta del córner (cuarto de círculo), girada como el dibujo
+    // y desplazada sin girar para que caiga siempre abajo a la derecha.
+    const shadow = new Graphics({ label: SHADOW_LABEL })
+    paintCornerSilhouette(shadow, w, palette.outline, SHADOW_ALPHA)
+    shadow.pivot.set(w / 2, h / 2)
+    shadow.position.set(rw / 2 + shadowOffset, rh / 2 + shadowOffset)
+    shadow.rotation = angle
+    marker.addChild(shadow)
+  } else {
+    marker.addChild(
+      new Graphics({ label: SHADOW_LABEL })
+        .roundRect(
+          shadowInset + shadowOffset,
+          shadowInset + shadowOffset,
+          rw - shadowInset * 2,
+          rh - shadowInset * 2,
+          def.stand ? 2 : 6,
+        )
+        .fill({ color: palette.outline, alpha: SHADOW_ALPHA }),
+    )
+  }
 
   const art = new Graphics()
   painter(art, w, h, createRandom(seedFromText(def.id)), tier)
   art.pivot.set(w / 2, h / 2)
   art.position.set(rw / 2, rh / 2)
-  art.rotation = (rotation * Math.PI) / 2
+  art.rotation = angle
   marker.addChild(art)
 
   // Visera de las gradas altas: aparte, para desvanecerla con el ratón encima.
   if (def.stand) {
     const roof = new Graphics({ label: STAND_ROOF_LABEL })
-    if (!paintStandRoof(roof, w, tier)) {
+    const painted = corner ? paintCornerRoof(roof, w, tier) : paintStandRoof(roof, w, tier)
+    if (!painted) {
       roof.destroy()
       return marker
     }
@@ -217,6 +232,13 @@ function createArtMarker(
   }
   return marker
 }
+
+/**
+ * Etiqueta de la sombra proyectada de un objeto con dibujo propio. La vista de
+ * objetos la pasa a una capa de sombras bajo todos los objetos, para que la
+ * sombra de uno nunca oscurezca al vecino.
+ */
+export const SHADOW_LABEL = 'shadow'
 
 /** Etiqueta del Graphics de la visera dentro del marcador de una grada. */
 export const STAND_ROOF_LABEL = 'roof'

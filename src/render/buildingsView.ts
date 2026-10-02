@@ -5,14 +5,19 @@
  * animación) y después se actualiza con los eventos de la partida: lo nuevo
  * aparece con andamio y rebote, lo demolido se va con polvo. Solo lee el estado.
  */
-import type { Container } from 'pixi.js'
+import { RenderLayer, type Container } from 'pixi.js'
 import { placedSize, type BuildingId, type PlacedBuilding } from '@/sim/buildings'
 import type { Game } from '@/sim/game'
 import { rotateSize } from '@/sim/geometry'
 import { gsap } from 'gsap'
 import { buildingAt } from '@/sim/map'
 import type { TileCoord } from '@/sim/geometry'
-import { createBuildingMarker, destroyBuildingMarker, STAND_ROOF_LABEL } from './buildingMarker'
+import {
+  createBuildingMarker,
+  destroyBuildingMarker,
+  SHADOW_LABEL,
+  STAND_ROOF_LABEL,
+} from './buildingMarker'
 import {
   playBuild,
   playDemolish,
@@ -42,6 +47,11 @@ export function createBuildingsView(
   assets: RenderAssets,
 ): BuildingsView {
   const markers = new Map<BuildingId, { marker: Container; rect: PxRect }>()
+  // Capa de sombras bajo todos los objetos: cada sombra sigue a su objeto
+  // (posición y animaciones) pero se dibuja antes que cualquier objeto, así
+  // la sombra de una grada nunca oscurece la grada o el córner de al lado.
+  const shadows = new RenderLayer()
+  layer.addChildAt(shadows, 0)
 
   const add = (building: PlacedBuilding, animate: boolean | 'upgrade'): void => {
     const def = game.content.buildings[building.type]
@@ -65,6 +75,8 @@ export function createBuildingsView(
     marker.pivot.set(rect.w / 2, rect.h / 2)
     marker.position.set(rect.x + rect.w / 2, rect.y + rect.h / 2)
     layer.addChild(marker)
+    const shadow = marker.getChildByLabel(SHADOW_LABEL)
+    if (shadow) shadows.attach(shadow)
     markers.set(building.id, { marker, rect })
     if (animate === 'upgrade') playUpgrade(marker, rect, effects)
     else if (animate) playBuild(marker, rect, effects)
@@ -84,6 +96,8 @@ export function createBuildingsView(
 
     const finish = (): void => {
       stopEffects(entry.marker)
+      const shadow = entry.marker.getChildByLabel(SHADOW_LABEL)
+      if (shadow) shadows.detach(shadow)
       destroyBuildingMarker(entry.marker)
     }
     stopEffects(entry.marker)
@@ -140,6 +154,7 @@ export function createBuildingsView(
     destroy() {
       unsubscribe()
       for (const id of [...markers.keys()]) remove(id, false)
+      shadows.destroy()
     },
   }
 }

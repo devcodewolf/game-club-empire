@@ -81,6 +81,13 @@ const stand = (slot: 'north' | 'south' | 'east' | 'west'): Command => ({
   pitchId: 1,
   slot,
 })
+/** Córner en una esquina del campo 1. */
+const corner = (slot: 'northEast' | 'southEast' | 'southWest' | 'northWest'): Command => ({
+  type: 'placeStand',
+  buildingType: 'standCorner',
+  pitchId: 1,
+  slot,
+})
 const upgrade = (buildingId: number): Command => ({ type: 'upgradeBuilding', buildingId })
 
 /**
@@ -101,6 +108,13 @@ const STADIUM: GalleryScene = {
     upgrade(2),
     upgrade(3),
     upgrade(5),
+    // Córners (ids 6-9): cada uno al nivel de su vecina más baja
+    corner('northEast'),
+    corner('southEast'),
+    corner('southWest'),
+    corner('northWest'),
+    upgrade(8),
+    upgrade(9),
   ],
 }
 
@@ -126,6 +140,14 @@ const BIG_STADIUM: GalleryScene = {
     ...upgradeTimes(3, 3),
     ...upgradeTimes(4, 4),
     ...upgradeTimes(5, 5),
+    corner('northEast'),
+    corner('southEast'),
+    corner('southWest'),
+    corner('northWest'),
+    ...upgradeTimes(6, 4),
+    ...upgradeTimes(7, 3),
+    ...upgradeTimes(8, 3),
+    ...upgradeTimes(9, 5),
   ],
 }
 

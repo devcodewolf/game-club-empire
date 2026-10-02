@@ -4,7 +4,13 @@ import { executeCommand, type Command } from './commands'
 import type { PlacedBuilding, StandSlot } from './buildings'
 import type { Rotation, TileCoord } from './geometry'
 import { buildingAt, type MapState } from './map'
-import { pitchCapacity, standCapacity, standTargetAt } from './stands'
+import {
+  CORNER_LENGTH_PER_DEPTH,
+  lowestNeighbour,
+  pitchCapacity,
+  standCapacity,
+  standTargetAt,
+} from './stands'
 import { createTestMap, TEST_CONTENT } from './test-fixtures'
 
 const run = (state: MapState, command: Command) => executeCommand(state, command, TEST_CONTENT)
@@ -234,6 +240,186 @@ describe('standTargetAt', () => {
     expect(target(state, 4, 4)).toBeNull()
     expect(target(state, 9, 8)).toBeNull()
     expect(target(state, 15, 15)).toBeNull()
+  })
+})
+
+describe('córners', () => {
+  const cornerCmd = (pitchId: number, slot: StandSlot): Command => ({
+    type: 'placeStand',
+    buildingType: 'standCorner',
+    pitchId,
+    slot,
+  })
+  const SIDES: readonly StandSlot[] = ['north', 'south', 'east', 'west']
+
+  /** Campo con sus cuatro gradas de lado (nivel 0). */
+  function mapWithSides(): MapState {
+    const state = mapWithPitch()
+    for (const slot of SIDES) placeStand(state, slot)
+    return state
+  }
+
+  /** Córner colocado con éxito (falla el test si no se pudo). */
+  function placeCorner(state: MapState, slot: StandSlot): PlacedBuilding {
+    const result = run(state, cornerCmd(1, slot))
+    if (!result.ok || result.event.type !== 'buildingPlaced') throw new Error('no se colocó')
+    return result.event.building
+  }
+
+  /** Mejora un objeto o falla el test. */
+  function upgrade(state: MapState, id: number): void {
+    expect(run(state, upgradeCmd(id)).ok).toBe(true)
+  }
+
+  const standOf = (state: MapState, slot: StandSlot): PlacedBuilding => {
+    const found = Object.values(state.buildings).find((b) => b.attach?.slot === slot)
+    if (!found) throw new Error(`falta la grada ${slot}`)
+    return found
+  }
+
+  it.each<[StandSlot, TileCoord, Rotation]>([
+    ['northEast', { x: 9, y: 4 }, 0],
+    ['southEast', { x: 9, y: 8 }, 1],
+    ['southWest', { x: 4, y: 8 }, 2],
+    ['northWest', { x: 4, y: 4 }, 3],
+  ])('%s: origen, giro y tamaño', (slot, origin, rotation) => {
+    const state = mapWithSides()
+    const corner = placeCorner(state, slot)
+
+    expect(corner.origin).toEqual(origin)
+    expect(corner.rotation).toBe(rotation)
+    expect(corner.size).toEqual({ width: 1, height: 1 })
+    expect(corner.tier).toBe(0)
+    expect(corner.attach).toEqual({ pitchId: 1, slot })
+    expect(countTiles(state, corner.id)).toBe(1)
+    expect(buildingAt(state, origin)?.id).toBe(corner.id)
+  })
+
+  it("sin alguna de las dos vecinas: 'needsNeighbours'", () => {
+    const state = mapWithPitch()
+    expect(run(state, cornerCmd(1, 'northEast'))).toEqual({ ok: false, reason: 'needsNeighbours' })
+    placeStand(state, 'north')
+    expect(run(state, cornerCmd(1, 'northEast'))).toEqual({ ok: false, reason: 'needsNeighbours' })
+    placeStand(state, 'east')
+    expect(run(state, cornerCmd(1, 'northEast')).ok).toBe(true)
+  })
+
+  it("grada de lado en hueco de esquina y córner en hueco de lado: 'slotLocked'", () => {
+    const state = mapWithSides()
+    expect(run(state, standCmd(1, 'northEast'))).toEqual({ ok: false, reason: 'slotLocked' })
+    expect(run(state, cornerCmd(1, 'north'))).toEqual({ ok: false, reason: 'slotLocked' })
+  })
+
+  it("hueco de esquina ocupado: 'slotTaken'", () => {
+    const state = mapWithSides()
+    placeCorner(state, 'northEast')
+    expect(run(state, cornerCmd(1, 'northEast'))).toEqual({ ok: false, reason: 'slotTaken' })
+  })
+
+  it("mejorar por encima de la vecina más baja: 'cornerAboveNeighbours' y estado intacto", () => {
+    const state = mapWithSides()
+    const corner = placeCorner(state, 'northEast')
+    const antes = structuredClone(state)
+
+    expect(run(state, upgradeCmd(corner.id))).toEqual({
+      ok: false,
+      reason: 'cornerAboveNeighbours',
+    })
+    expect(state).toEqual(antes)
+
+    // Con una sola vecina mejorada sigue sin poder subir.
+    upgrade(state, standOf(state, 'north').id)
+    expect(run(state, upgradeCmd(corner.id))).toEqual({
+      ok: false,
+      reason: 'cornerAboveNeighbours',
+    })
+  })
+
+  it('al subir ambas vecinas, el córner puede subir y crece hacia fuera', () => {
+    const state = mapWithSides()
+    const corner = placeCorner(state, 'northEast')
+    upgrade(state, standOf(state, 'north').id)
+    upgrade(state, standOf(state, 'east').id)
+    upgrade(state, corner.id)
+
+    const upgraded = state.buildings[corner.id]
+    expect(upgraded?.tier).toBe(1)
+    // El vértice del campo (9,4) sigue siendo suyo y crece hacia arriba/derecha.
+    expect(upgraded?.origin).toEqual({ x: 9, y: 3 })
+    expect(upgraded?.size).toEqual({ width: 2, height: 2 })
+    expect(countTiles(state, corner.id)).toBe(4)
+    expect(buildingAt(state, { x: 9, y: 4 })?.id).toBe(corner.id)
+    expect(buildingAt(state, { x: 10, y: 3 })?.id).toBe(corner.id)
+  })
+
+  it('lowestNeighbour devuelve la vecina de menor nivel', () => {
+    const state = mapWithSides()
+    upgrade(state, standOf(state, 'east').id)
+    expect(lowestNeighbour(state, 1, 'northEast')).toBe('north')
+
+    upgrade(state, standOf(state, 'north').id)
+    upgrade(state, standOf(state, 'north').id)
+    expect(lowestNeighbour(state, 1, 'northEast')).toBe('east')
+    // Un hueco de lado no tiene vecinas.
+    expect(lowestNeighbour(state, 1, 'north')).toBeUndefined()
+  })
+
+  it('standCapacity de un córner usa round(fondo × CORNER_LENGTH_PER_DEPTH) como largo', () => {
+    const state = mapWithSides()
+    const def = TEST_CONTENT.buildings['standCorner']
+    if (!def) throw new Error('falta el córner de prueba')
+    const corner = placeCorner(state, 'northEast')
+    expect(standCapacity(def, corner)).toBe(10 * Math.round(1 * CORNER_LENGTH_PER_DEPTH))
+
+    upgrade(state, standOf(state, 'north').id)
+    upgrade(state, standOf(state, 'east').id)
+    upgrade(state, corner.id)
+    const upgraded = state.buildings[corner.id]
+    if (!upgraded) throw new Error('córner desaparecido')
+    expect(standCapacity(def, upgraded)).toBe(20 * Math.round(2 * CORNER_LENGTH_PER_DEPTH))
+  })
+
+  it('derribar el campo arrastra también los córners', () => {
+    const state = mapWithSides()
+    const corner = placeCorner(state, 'northEast')
+    const result = run(state, { type: 'demolishBuilding', buildingId: 1 })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok || result.event.type !== 'buildingDemolished') throw new Error('evento')
+    expect(result.event.attached?.map((b) => b.id)).toContain(corner.id)
+    expect(result.event.attached).toHaveLength(5)
+    expect(Object.keys(state.buildings)).toHaveLength(0)
+    expect(countTiles(state, corner.id)).toBe(0)
+  })
+
+  describe('standTargetAt con corner = true', () => {
+    const target = (state: MapState, x: number, y: number) =>
+      standTargetAt(state, TEST_CONTENT, { x, y }, 3, true)
+
+    it('sobre el campo devuelve la esquina del cuadrante', () => {
+      const state = mapWithPitch()
+      expect(target(state, 5, 5)).toEqual({ pitchId: 1, slot: 'northWest' })
+      expect(target(state, 8, 5)).toEqual({ pitchId: 1, slot: 'northEast' })
+      expect(target(state, 5, 7)).toEqual({ pitchId: 1, slot: 'southWest' })
+      expect(target(state, 8, 7)).toEqual({ pitchId: 1, slot: 'southEast' })
+    })
+
+    it('fuera del campo devuelve la esquina de esa zona', () => {
+      const state = mapWithPitch()
+      expect(target(state, 9, 4)).toEqual({ pitchId: 1, slot: 'northEast' })
+      expect(target(state, 11, 2)).toEqual({ pitchId: 1, slot: 'northEast' })
+      expect(target(state, 9, 8)).toEqual({ pitchId: 1, slot: 'southEast' })
+      expect(target(state, 4, 8)).toEqual({ pitchId: 1, slot: 'southWest' })
+      expect(target(state, 4, 4)).toEqual({ pitchId: 1, slot: 'northWest' })
+    })
+
+    it('fuera de las zonas de esquina devuelve null', () => {
+      const state = mapWithPitch()
+      expect(target(state, 7, 3)).toBeNull() // franja de un lado, no de una esquina
+      expect(target(state, 10, 6)).toBeNull()
+      expect(target(state, 15, 15)).toBeNull()
+      expect(target(state, 12, 4)).toBeNull() // más allá del fondo máximo
+    })
   })
 })
 

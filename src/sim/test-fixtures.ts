@@ -66,6 +66,21 @@ export const TEST_CATALOG: BuildingCatalog = {
       { name: 'Grada alta', cost: 400, quality: 4 },
     ],
   },
+  /** Córner de prueba: mismos fondos y aforos que la grada, pero en las esquinas del campo. */
+  standCorner: {
+    id: 'standCorner',
+    name: 'Córner',
+    size: { width: 1, height: 1 },
+    cost: 100,
+    markerColor: 0xaa5500,
+    icon: 'C',
+    stand: { depths: [1, 2, 3], capacityPerTile: [10, 20, 30], corner: true },
+    tiers: [
+      { name: 'Córner básico', cost: 100, quality: 1 },
+      { name: 'Córner medio', cost: 200, quality: 2 },
+      { name: 'Córner alto', cost: 400, quality: 4 },
+    ],
+  },
   /** 1×1 con 3 niveles, para probar las mejoras. */
   tiered: {
     id: 'tiered',

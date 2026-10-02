@@ -53,8 +53,10 @@ export function commandForTool(
       }
     }
     case 'stand': {
-      const depths = content.buildings[tool.buildingType]?.stand?.depths ?? []
-      const target = standTargetAt(state, content, cursor, depths[depths.length - 1] ?? 0)
+      const def = content.buildings[tool.buildingType]
+      const depths = def?.stand?.depths ?? []
+      const maxDepth = depths[depths.length - 1] ?? 0
+      const target = standTargetAt(state, content, cursor, maxDepth, def?.stand?.corner)
       return target && { type: 'placeStand', buildingType: tool.buildingType, ...target }
     }
     case 'demolish':
