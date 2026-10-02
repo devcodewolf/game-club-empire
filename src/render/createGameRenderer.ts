@@ -13,6 +13,8 @@ import type { TileCoord } from '@/sim/geometry'
 import { createBuildingsView } from './buildingsView'
 import { gridLineAlpha } from './camera'
 import { createCameraController } from './cameraController'
+import { createCameraMotion } from './cameraMotion'
+import { dustPuff } from './effects'
 import { drawGridLines, drawGround } from './drawGrid'
 import { expansionAt } from './expansions'
 import { createExpansionsView } from './expansionsView'
@@ -99,7 +101,7 @@ export async function createGameRenderer(
   const expansions = createExpansionsView(layers.outside, grid)
   const rooms = createRoomsView(layers.roomLabels, game)
   const walls = createWallsView(layers.structures, game, assets.walls)
-  const buildings = createBuildingsView(layers.buildings, game, assets)
+  const buildings = createBuildingsView(layers.buildings, layers.effects, game, assets)
   const preview = createToolPreview(layers.overlay, game, assets)
 
   let tool: Tool = NO_TOOL
@@ -126,7 +128,31 @@ export async function createGameRenderer(
     },
   })
 
+  const motion = createCameraMotion(camera, () => ({
+    width: app.screen.width,
+    height: app.screen.height,
+  }))
+
+  // Polvo al levantar o derribar muros y cimientos, o al arrasar una zona
+  const unsubscribeDust = game.subscribe((event) => {
+    if (event.type !== 'structuresChanged' && event.type !== 'areaDemolished') return
+    const { rect } = event
+    dustPuff(
+      layers.effects,
+      {
+        x: rect.x * TILE_SIZE,
+        y: rect.y * TILE_SIZE,
+        w: rect.width * TILE_SIZE,
+        h: rect.height * TILE_SIZE,
+      },
+      0.7,
+    )
+  })
+
   const unbindInput = bindMapInput(app.canvas, camera, {
+    onPanStart: () => motion.stop(),
+    onPanRelease: (vx, vy) => motion.fling(vx, vy),
+    onWheel: (point, factor) => motion.zoomBy(point, factor),
     hasTool: () => tool.kind !== 'none',
     isDragTool: () => isDragTool(tool),
     onHover: (tile) => preview.setHover(tile),
@@ -170,6 +196,8 @@ export async function createGameRenderer(
     },
     destroy(): void {
       unbindInput()
+      unsubscribeDust()
+      motion.destroy()
       app.renderer.off('resize', onResize)
       preview.destroy()
       buildings.destroy()

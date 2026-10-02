@@ -3,6 +3,7 @@
  * Lista de avisos breves, centrada arriba. Cada aviso es una tarjeta de
  * papel que se cierra al hacer clic (o sola, desde el store).
  */
+import NotebookSheet from '@/ui/components/NotebookSheet.vue'
 import { useNoticeStore } from '@/ui/stores/noticeStore'
 
 const noticeStore = useNoticeStore()
@@ -23,11 +24,15 @@ const noticeStore = useNoticeStore()
       v-for="notice in noticeStore.notices"
       :key="notice.id"
       type="button"
-      class="pointer-events-auto flex cursor-pointer items-center gap-2 rounded-md border-2 border-[#2e2a26] bg-[#f2e6c9] px-3 py-2 text-left text-[14px] text-[#2e2a26] shadow-[4px_4px_0_rgba(0,0,0,0.35)]"
+      class="pointer-events-auto cursor-pointer text-left focus-visible:outline-2 focus-visible:outline-white"
       @click="noticeStore.dismiss(notice.id)"
     >
-      <span aria-hidden="true">{{ notice.icon }}</span>
-      <span>{{ notice.text }}</span>
+      <NotebookSheet
+        class="flex items-center gap-2 py-1 pr-4 pl-10 font-hand text-[18px] leading-6"
+      >
+        <span aria-hidden="true">{{ notice.icon }}</span>
+        <span>{{ notice.text }}</span>
+      </NotebookSheet>
     </button>
   </TransitionGroup>
 </template>

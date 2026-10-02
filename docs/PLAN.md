@@ -75,9 +75,9 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [x] ⚡ Elementos bloqueados en gris con el requisito al pasar el ratón (p. ej. "Se desbloquea en 3.ª División"), con los desbloqueos como datos en `content/`
 
 **Pulido de la construcción**
-- [ ] ⚡ Panel de construcción: pestañas en vertical a la DERECHA del panel (como Prison Architect), en lugar de arriba
-- [ ] ⚡ Animación de construcción: andamio → sala o objeto con rebote + polvo; demolición que se desvanece con polvo
-- [ ] ⚡ Cámara con inercia y zoom suave (GSAP)
+- [x] ⚡ Panel de construcción: pestañas en vertical a la DERECHA del panel (como Prison Architect), en lugar de arriba
+- [x] ⚡ Animación de construcción: andamio → sala o objeto con rebote + polvo; demolición que se desvanece con polvo
+- [x] ⚡ Cámara con inercia y zoom suave (GSAP), más teclado: WASD/flechas para mover y Q/E para el zoom
 
 ✅ **Validar:** se puede montar a mano un vestuario cerrado con puerta, taquillas y duchas, y un campo de fútbol 11 de tierra con porterías. El juego dice qué le falta a cada sala.
 

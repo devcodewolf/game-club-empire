@@ -1,14 +1,17 @@
 /**
  * Vista de edificios: mantiene un marcador por edificio colocado.
  *
- * Al crearse dibuja lo que ya hay en el estado (p. ej. al cargar partida) y
- * después se actualiza con los eventos de la partida. Solo lee el estado.
+ * Al crearse dibuja lo que ya hay en el estado (p. ej. al cargar partida, sin
+ * animación) y después se actualiza con los eventos de la partida: lo nuevo
+ * aparece con andamio y rebote, lo demolido se va con polvo. Solo lee el estado.
  */
 import type { Container } from 'pixi.js'
 import type { BuildingId, PlacedBuilding } from '@/sim/buildings'
 import type { Game } from '@/sim/game'
+import { rotateSize } from '@/sim/geometry'
 import { createBuildingMarker, destroyBuildingMarker } from './buildingMarker'
-import { tileToWorld } from './grid'
+import { playBuild, playDemolish, stopEffects, type PxRect } from './effects'
+import { TILE_SIZE, tileToWorld } from './grid'
 import type { RenderAssets } from './renderAssets'
 
 export interface BuildingsView {
@@ -17,42 +20,55 @@ export interface BuildingsView {
 
 export function createBuildingsView(
   layer: Container,
+  effects: Container,
   game: Game,
   assets: RenderAssets,
 ): BuildingsView {
-  const markers = new Map<BuildingId, Container>()
+  const markers = new Map<BuildingId, { marker: Container; rect: PxRect }>()
 
-  const add = (building: PlacedBuilding): void => {
+  const add = (building: PlacedBuilding, animate: boolean): void => {
     const def = game.content.buildings[building.type]
     if (!def) return
 
     const marker = createBuildingMarker(def, building.rotation, assets)
-    const position = tileToWorld(building.origin)
-    marker.position.set(position.x, position.y)
+    const origin = tileToWorld(building.origin)
+    const size = rotateSize(def.size, building.rotation)
+    const rect = { x: origin.x, y: origin.y, w: size.width * TILE_SIZE, h: size.height * TILE_SIZE }
+    // Pivote en el centro: las animaciones de escala salen desde el centro del objeto.
+    marker.pivot.set(rect.w / 2, rect.h / 2)
+    marker.position.set(rect.x + rect.w / 2, rect.y + rect.h / 2)
     layer.addChild(marker)
-    markers.set(building.id, marker)
+    markers.set(building.id, { marker, rect })
+    if (animate) playBuild(marker, rect, effects)
   }
 
-  const remove = (buildingId: BuildingId): void => {
-    const marker = markers.get(buildingId)
-    if (!marker) return
-
-    destroyBuildingMarker(marker)
+  const remove = (buildingId: BuildingId, animate: boolean): void => {
+    const entry = markers.get(buildingId)
+    if (!entry) return
     markers.delete(buildingId)
+
+    const finish = (): void => {
+      stopEffects(entry.marker)
+      destroyBuildingMarker(entry.marker)
+    }
+    stopEffects(entry.marker)
+    if (animate) playDemolish(entry.marker, entry.rect, effects, finish)
+    else finish()
   }
 
-  Object.values(game.state.buildings).forEach(add)
+  for (const building of Object.values(game.state.buildings)) add(building, false)
 
   const unsubscribe = game.subscribe((event) => {
-    if (event.type === 'buildingPlaced') add(event.building)
-    if (event.type === 'buildingDemolished') remove(event.building.id)
-    if (event.type === 'areaDemolished') for (const building of event.buildings) remove(building.id)
+    if (event.type === 'buildingPlaced') add(event.building, true)
+    if (event.type === 'buildingDemolished') remove(event.building.id, true)
+    if (event.type === 'areaDemolished')
+      for (const building of event.buildings) remove(building.id, true)
   })
 
   return {
     destroy() {
       unsubscribe()
-      for (const id of [...markers.keys()]) remove(id)
+      for (const id of [...markers.keys()]) remove(id, false)
     },
   }
 }

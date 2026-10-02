@@ -6,6 +6,7 @@
 import { computed, watch } from 'vue'
 import { evaluateRoom } from '@/sim/rooms'
 import AppIcon from '@/ui/components/AppIcon.vue'
+import NotebookSheet from '@/ui/components/NotebookSheet.vue'
 import { buildingName, findRoom } from '@/ui/composables/contentLookup'
 import { useGame } from '@/ui/composables/useGame'
 import { useGameVersion } from '@/ui/composables/useGameVersion'
@@ -78,43 +79,51 @@ function removeRoom(): void {
     leave-active-class="motion-safe:transition motion-safe:duration-150 motion-safe:ease-in"
     leave-to-class="motion-safe:translate-x-4 motion-safe:opacity-0"
   >
-    <section
+    <NotebookSheet
       v-if="exists && status && def"
       role="dialog"
       :aria-label="`Sala: ${def.name}`"
-      class="flex w-70 flex-col gap-3 border-2 border-[#2e2a26] bg-[#f2e6c9] p-3 text-[#2e2a26] shadow-[4px_4px_0_rgba(0,0,0,0.35)]"
+      class="w-76 pt-2 pr-3 pb-4 pl-10"
     >
-      <header class="flex items-center gap-2">
-        <AppIcon :name="def.icon" :size="22" />
-        <h2 class="flex-1 text-base font-bold">{{ def.name }}</h2>
+      <!-- Título manuscrito subrayado, como las notas de Prison Architect -->
+      <header class="flex items-start gap-2">
+        <h2
+          class="flex-1 font-hand text-[30px] leading-[48px] underline decoration-2 underline-offset-4"
+        >
+          {{ def.name }}
+        </h2>
+        <AppIcon :name="def.icon" :size="22" class="mt-3 text-ink-blue" />
         <button
           type="button"
-          class="cursor-pointer rounded p-1 hover:bg-black/10 focus-visible:outline-2"
+          class="mt-2 cursor-pointer rounded px-1.5 py-0.5 font-bold hover:bg-black/10 focus-visible:outline-2"
           aria-label="Cerrar ficha de sala"
           @click="selection.clear()"
         >
-          <span aria-hidden="true" class="block px-1 leading-none font-bold">✕</span>
+          <span aria-hidden="true">✕</span>
         </button>
       </header>
 
-      <span
-        class="w-fit rounded border-2 px-2 py-0.5 text-xs font-bold text-white"
-        :class="status.ok ? 'border-green-900 bg-green-700' : 'border-red-900 bg-red-700'"
+      <!-- Sello de estado, ligeramente torcido -->
+      <p
+        class="my-1 w-fit -rotate-2 border-2 px-2 font-hand text-[18px] leading-[22px] tracking-wide uppercase"
+        :class="status.ok ? 'border-green-700 text-green-700' : 'border-red-700 text-red-700'"
       >
         {{ status.ok ? 'Operativa' : 'Incompleta' }}
-      </span>
+      </p>
 
       <RoomChecklist :entries="entries" />
 
-      <p v-if="capacityText" class="text-sm font-bold">{{ capacityText }}</p>
+      <p v-if="capacityText" class="font-hand text-[18px] leading-6 text-ink-blue">
+        {{ capacityText }}
+      </p>
 
       <button
         type="button"
-        class="w-fit cursor-pointer rounded border-2 border-red-900 bg-red-700 px-2 py-1 text-xs font-bold text-white hover:bg-red-600 focus-visible:outline-2"
+        class="mt-3 w-full cursor-pointer border-2 border-[#3b2d6b] bg-[#5a4a9a] px-2 py-1 font-hand text-[17px] text-white shadow-[3px_3px_0_rgba(0,0,0,0.35)] hover:bg-[#6b5ab0] focus-visible:outline-2 focus-visible:outline-ink"
         @click="removeRoom"
       >
         Quitar sala
       </button>
-    </section>
+    </NotebookSheet>
   </Transition>
 </template>

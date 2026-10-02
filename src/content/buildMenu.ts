@@ -217,7 +217,7 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
         ],
       },
       {
-        label: 'Recepción y almacén',
+        label: 'Recepción',
         items: [building('receptionDesk'), building('storageShelf')],
       },
       {

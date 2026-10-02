@@ -37,6 +37,12 @@ export interface MapInputHandlers {
   readonly onDragEnd: (tile: TileCoord) => void
   /** Clic derecho sin arrastrar: soltar herramienta o cancelar el arrastre en curso. */
   readonly onCancel: () => void
+  /** Empieza a mover la cámara arrastrando (para frenar la inercia anterior). */
+  readonly onPanStart: () => void
+  /** Se suelta un arrastre de cámara con esta velocidad (px de pantalla por segundo). */
+  readonly onPanRelease: (vx: number, vy: number) => void
+  /** Rueda: zoom con este factor anclado en el punto de pantalla. */
+  readonly onWheel: (point: Point, factor: number) => void
 }
 
 /** Qué está haciendo el gesto en curso ('cancelled': ignorar hasta soltar). */
@@ -48,6 +54,20 @@ interface PointerGesture {
   readonly start: Point
   last: Point
   mode: GestureMode
+  /** Últimas posiciones con su instante, para calcular la velocidad al soltar. */
+  samples: Array<{ readonly t: number; readonly x: number; readonly y: number }>
+}
+
+/** Ventana de tiempo (ms) para medir la velocidad del arrastre al soltar. */
+const VELOCITY_WINDOW = 90
+
+/** Velocidad media (px/s) entre la primera y la última muestra recientes. */
+function releaseVelocity(samples: PointerGesture['samples']): [number, number] {
+  const first = samples[0]
+  const last = samples[samples.length - 1]
+  if (!first || !last || last.t - first.t < 10) return [0, 0]
+  const dt = (last.t - first.t) / 1000
+  return [(last.x - first.x) / dt, (last.y - first.y) / dt]
 }
 
 /** Engancha los eventos y devuelve la función que los desengancha. */
@@ -88,6 +108,7 @@ export function bindMapInput(
       start: point,
       last: point,
       mode: paints ? 'paint' : 'pending',
+      samples: [],
     }
     canvas.setPointerCapture(event.pointerId)
     if (paints) handlers.onDragStart(toTile(point))
@@ -117,20 +138,27 @@ export function bindMapInput(
     if (gesture.mode === 'pending' && moved > CLICK_TOLERANCE && canPan(gesture.button)) {
       gesture.mode = 'pan'
       canvas.style.cursor = 'grabbing'
+      handlers.onPanStart()
     }
-    if (gesture.mode === 'pan') camera.pan(point.x - gesture.last.x, point.y - gesture.last.y)
+    if (gesture.mode === 'pan') {
+      camera.pan(point.x - gesture.last.x, point.y - gesture.last.y)
+      const now = performance.now()
+      gesture.samples.push({ t: now, x: point.x, y: point.y })
+      gesture.samples = gesture.samples.filter((sample) => now - sample.t <= VELOCITY_WINDOW)
+    }
     gesture.last = point
   }
 
   const onPointerUp = (event: PointerEvent): void => {
     if (!gesture || event.pointerId !== gesture.pointerId) return
 
-    const { button, mode } = gesture
+    const { button, mode, samples } = gesture
     const tile = toTile(toScreen(event))
     endGesture(event)
 
     if (mode === 'paint') return handlers.onDragEnd(tile)
-    if (mode === 'pan' || mode === 'cancelled') return
+    if (mode === 'pan') return handlers.onPanRelease(...releaseVelocity(samples))
+    if (mode === 'cancelled') return
     if (button === BUTTON_LEFT) handlers.onPrimaryClick(tile)
     if (button === BUTTON_RIGHT) handlers.onCancel()
   }
@@ -147,7 +175,7 @@ export function bindMapInput(
 
   const onWheel = (event: WheelEvent): void => {
     event.preventDefault() // evita que la página haga scroll o zoom
-    camera.zoomAt(toScreen(event), wheelToZoomFactor(event.deltaY))
+    handlers.onWheel(toScreen(event), wheelToZoomFactor(event.deltaY))
   }
 
   const onContextMenu = (event: MouseEvent): void => event.preventDefault()

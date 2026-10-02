@@ -18,5 +18,11 @@ export default tseslint.config(
     },
   },
   { rules: { '@typescript-eslint/no-explicit-any': 'error' } },
+  {
+    // En TS/Vue el compilador ya detecta identificadores no definidos (y conoce
+    // los tipos del DOM); 'no-undef' daría falsos positivos (recomendación de typescript-eslint).
+    files: ['**/*.ts', '**/*.vue'],
+    rules: { 'no-undef': 'off' },
+  },
   prettier,
 )

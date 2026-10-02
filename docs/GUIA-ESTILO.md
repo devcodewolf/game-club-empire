@@ -69,3 +69,9 @@ No forman parte del mundo, solo dan feedback al jugador.
 - Lo que toca un borde se repite en el opuesto: la textura es continua y queda alineada con la rejilla.
 - Referencia de aspecto: los materiales de Prison Architect (solo como referencia; no se copian sus imágenes).
 - Idea para cuando haya personas: cada suelo modifica la velocidad al caminar (hierba y barro frenan, asfalto y losa aceleran), como en Prison Architect.
+
+## Interfaz: libreta y pestañas (Fase 1B)
+- **Letra manuscrita**: Patrick Hand (SIL Open Font License), empaquetada en local con `@fontsource/patrick-hand`. Clase `font-hand`. Para títulos, notas y fichas; los datos densos siguen en la letra normal.
+- **Hoja de libreta** (`src/ui/components/NotebookSheet.vue`): papel `#f7efd9`, renglones azules cada 24 px, margen rojo y sombra plana. Para fichas, avisos y (Fase 2) informes. El texto se alinea a los renglones con `leading-6`.
+- **Pestañas laterales**: lengüetas en colores pastel con el extremo en bisel; la activa sobresale y tiene el color pleno; el texto se lee de abajo arriba.
+- Tokens en `src/style.css` (`@theme`): `--font-hand`, `--color-paper`, `--color-paper-line`, `--color-paper-margin`, `--color-ink`, `--color-ink-blue`.

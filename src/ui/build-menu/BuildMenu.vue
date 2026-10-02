@@ -26,7 +26,6 @@ const openCategory = computed(
     >
       <CategoryPanel
         v-if="openCategory"
-        :key="openCategory.id"
         :category="openCategory"
         :tab-index="menu.activeTab(openCategory.id)"
         @close="menu.close()"

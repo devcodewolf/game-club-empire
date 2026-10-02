@@ -1,4 +1,17 @@
 @import 'tailwindcss';
+/* Letra manuscrita para títulos y notas (OFL, empaquetada en local) */
+@import '@fontsource/patrick-hand/latin-400.css';
+@import '@fontsource/patrick-hand/latin-ext-400.css';
+
+/* Tema de la interfaz: tokens reutilizables desde clases de Tailwind (font-hand, bg-paper…) */
+@theme {
+  --font-hand: 'Patrick Hand', 'Comic Sans MS', cursive;
+  --color-paper: #f7efd9;
+  --color-paper-line: #a9c2cf;
+  --color-paper-margin: #e08a8a;
+  --color-ink: #2e2a26;
+  --color-ink-blue: #2f4f7a;
+}
 
 /* Base: la app ocupa toda la ventana, sin scroll */
 html,
