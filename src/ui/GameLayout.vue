@@ -23,11 +23,15 @@ defineSlots<{
     <header class="col-span-3 flex items-start gap-3 *:pointer-events-auto">
       <slot name="top" />
     </header>
-    <aside class="flex flex-col gap-3 overflow-y-auto *:pointer-events-auto">
+    <aside
+      class="side-slot flex flex-col gap-3 overflow-x-clip overflow-y-auto pr-1 pb-1 *:pointer-events-auto"
+    >
       <slot name="left" />
     </aside>
     <div />
-    <aside class="flex flex-col gap-3 overflow-y-auto *:pointer-events-auto">
+    <aside
+      class="side-slot flex flex-col gap-3 overflow-x-clip overflow-y-auto pr-1 pb-1 *:pointer-events-auto"
+    >
       <slot name="right" />
     </aside>
     <footer class="col-span-3 flex items-end justify-start gap-3 *:pointer-events-auto">
@@ -35,3 +39,18 @@ defineSlots<{
     </footer>
   </div>
 </template>
+
+<style scoped>
+/*
+ * Los paneles laterales entran deslizándose: durante la animación sobresalen
+ * del hueco. Se recorta en horizontal (overflow-x-clip) y se ocultan las
+ * barras de scroll; si un panel es más alto que la pantalla, la rueda sigue
+ * desplazándolo. El padding deja sitio a la sombra plana de los paneles.
+ */
+.side-slot {
+  scrollbar-width: none;
+}
+.side-slot::-webkit-scrollbar {
+  display: none;
+}
+</style>
