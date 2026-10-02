@@ -24,13 +24,13 @@ defineSlots<{
       <slot name="top" />
     </header>
     <aside
-      class="side-slot flex flex-col gap-3 overflow-x-clip overflow-y-auto pr-1 pb-1 *:pointer-events-auto"
+      class="side-slot flex flex-col gap-3 overflow-x-clip overflow-y-visible pr-1 pb-1 *:pointer-events-auto"
     >
       <slot name="left" />
     </aside>
     <div />
     <aside
-      class="side-slot flex flex-col gap-3 overflow-x-clip overflow-y-auto pr-1 pb-1 *:pointer-events-auto"
+      class="side-slot flex flex-col gap-3 overflow-x-clip overflow-y-visible pr-1 pb-1 *:pointer-events-auto"
     >
       <slot name="right" />
     </aside>
@@ -43,9 +43,10 @@ defineSlots<{
 <style scoped>
 /*
  * Los paneles laterales entran deslizándose: durante la animación sobresalen
- * del hueco. Se recorta en horizontal (overflow-x-clip) y se ocultan las
- * barras de scroll; si un panel es más alto que la pantalla, la rueda sigue
- * desplazándolo. El padding deja sitio a la sombra plana de los paneles.
+ * del hueco. Se recorta solo en horizontal (overflow-x-clip); en vertical el
+ * panel crece con su contenido (overflow-y-visible): las fichas nunca hacen
+ * scroll. A diferencia de "hidden", "clip" no fuerza scroll en el otro eje.
+ * El padding deja sitio a la sombra plana de los paneles.
  */
 .side-slot {
   scrollbar-width: none;

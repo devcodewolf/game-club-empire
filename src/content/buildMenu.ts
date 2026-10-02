@@ -82,22 +82,8 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
     color: 'green',
     tabs: [
       {
-        label: 'Fútbol 11',
-        items: [
-          building('pitch11Dirt', 'Tierra'),
-          building('pitch11Artificial', 'Césped artificial'),
-          building('pitch11Natural', 'Césped natural'),
-          building('pitch11Hybrid', 'Césped híbrido'),
-        ],
-      },
-      {
-        label: 'Fútbol 7',
-        items: [
-          building('pitch7Dirt', 'Tierra'),
-          building('pitch7Artificial', 'Césped artificial'),
-          building('pitch7Natural', 'Césped natural'),
-          building('pitch7Hybrid', 'Césped híbrido'),
-        ],
+        label: 'Campos',
+        items: [building('pitch11', 'Fútbol 11'), building('pitch7', 'Fútbol 7 (cantera)')],
       },
     ],
   },

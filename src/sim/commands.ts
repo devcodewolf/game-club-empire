@@ -6,7 +6,13 @@
  * comando inválido nunca deja el estado a medias. El resultado incluye un
  * evento que el render puede usar para animar (construir, demoler, etc.).
  */
-import { maxTier, type BuildingId, type BuildingTypeId, type PlacedBuilding } from './buildings'
+import {
+  maxTier,
+  type BuildingId,
+  type BuildingTypeId,
+  type PitchRole,
+  type PlacedBuilding,
+} from './buildings'
 import type { SimContent } from './content'
 import type { FloorId } from './floors'
 import {
@@ -61,6 +67,8 @@ export type Command =
   | { readonly type: 'demolishBuilding'; readonly buildingId: BuildingId }
   /** Subir un objeto al siguiente nivel, en el sitio. */
   | { readonly type: 'upgradeBuilding'; readonly buildingId: BuildingId }
+  /** Cambiar el uso de un campo (principal, filial, entrenamiento). */
+  | { readonly type: 'setPitchRole'; readonly buildingId: BuildingId; readonly role: PitchRole }
   | { readonly type: 'paintFloor'; readonly rect: TileRect; readonly floor: FloorId }
   | { readonly type: 'buildWalls'; readonly rect: TileRect; readonly wall: WallId }
   | {
@@ -87,6 +95,13 @@ export type GameEvent =
       /** El objeto ya con su nivel nuevo. */
       readonly building: PlacedBuilding
       readonly fromTier: number
+    }
+  | {
+      readonly type: 'pitchRoleChanged'
+      readonly buildingId: BuildingId
+      readonly role: PitchRole
+      /** Campo que dejó de ser el principal al elegir otro, si lo había. */
+      readonly demotedId?: BuildingId
     }
   | { readonly type: 'buildingDemolished'; readonly building: PlacedBuilding }
   | {
@@ -119,6 +134,8 @@ export type CommandError =
   | 'buildingNotFound'
   | 'notUpgradable'
   | 'maxTier'
+  | 'notAPitch'
+  | 'sameRole'
   | 'nothingToDemolish'
 
 export type CommandResult =
@@ -137,6 +154,8 @@ export function executeCommand(
       return placeBuilding(state, command, content)
     case 'upgradeBuilding':
       return upgradeBuilding(state, command.buildingId, content)
+    case 'setPitchRole':
+      return setPitchRole(state, command, content)
     case 'demolishBuilding':
       return demolishBuilding(state, command.buildingId, content)
     case 'paintFloor':
@@ -240,6 +259,7 @@ function placeBuilding(
     origin,
     rotation,
     tier: 0,
+    ...(content.buildings[buildingType]?.pitch ? { role: defaultPitchRole(state, content) } : {}),
   }
   state.nextBuildingId += 1
   state.buildings[building.id] = building
@@ -271,6 +291,43 @@ function upgradeBuilding(
   return {
     ok: true,
     event: { type: 'buildingUpgraded', building: upgraded, fromTier: building.tier },
+  }
+}
+
+/** Campos ya colocados. */
+function pitchesIn(state: MapState, content: SimContent): PlacedBuilding[] {
+  return Object.values(state.buildings).filter((b) => content.buildings[b.type]?.pitch)
+}
+
+/** El primer campo es el principal; los siguientes, de entrenamiento. */
+function defaultPitchRole(state: MapState, content: SimContent): PitchRole {
+  return pitchesIn(state, content).some((b) => b.role === 'main') ? 'training' : 'main'
+}
+
+/** Cambia el uso de un campo. Solo hay un principal: el anterior pasa a entrenamiento. */
+function setPitchRole(
+  state: MapState,
+  { buildingId, role }: Extract<Command, { type: 'setPitchRole' }>,
+  content: SimContent,
+): CommandResult {
+  const building = state.buildings[buildingId]
+  const def = building && content.buildings[building.type]
+  if (!building || !def) return { ok: false, reason: 'buildingNotFound' }
+  if (!def.pitch) return { ok: false, reason: 'notAPitch' }
+  if (building.role === role) return { ok: false, reason: 'sameRole' }
+
+  let demotedId: BuildingId | undefined
+  if (role === 'main') {
+    const previous = pitchesIn(state, content).find((b) => b.role === 'main')
+    if (previous) {
+      state.buildings[previous.id] = { ...previous, role: 'training' }
+      demotedId = previous.id
+    }
+  }
+  state.buildings[buildingId] = { ...building, role }
+  return {
+    ok: true,
+    event: { type: 'pitchRoleChanged', buildingId, role, ...(demotedId ? { demotedId } : {}) },
   }
 }
 

@@ -29,7 +29,11 @@ export interface BuildingDef {
    * Si es un terreno de juego: formato y suelo. Tiene medidas reglamentarias,
    * por eso es de tamaño fijo y no se arrastra. El render dibuja sus líneas.
    */
-  readonly pitch?: { readonly format: 7 | 11; readonly surface: FloorId }
+  readonly pitch?: {
+    readonly format: 7 | 11
+    /** Superficie por nivel (índice = tier): tierra → césped artificial → natural → híbrido. */
+    readonly surfaces: readonly FloorId[]
+  }
   /** Sin orientación (árbol, farola…): no se dibuja la flecha de frente. */
   readonly symmetric?: boolean
   /** Aforo, para gradas (espectadores). */
@@ -70,6 +74,15 @@ export function tierQuality(def: BuildingDef, tier: number): number {
 
 export type BuildingCatalog = Readonly<Record<BuildingTypeId, BuildingDef>>
 
+/** Uso de un campo de fútbol. Solo puede haber un campo principal. */
+export type PitchRole = 'main' | 'reserve' | 'training'
+
+/** Superficie de un campo en su nivel actual. */
+export function pitchSurface(def: BuildingDef, tier: number): FloorId | undefined {
+  const surfaces = def.pitch?.surfaces
+  return surfaces?.[Math.min(tier, surfaces.length - 1)]
+}
+
 /** Edificio colocado en el mapa. */
 export interface PlacedBuilding {
   readonly id: BuildingId
@@ -78,4 +91,6 @@ export interface PlacedBuilding {
   readonly rotation: Rotation
   /** Nivel actual (índice en `tiers`; 0 = nivel 1). */
   readonly tier: number
+  /** Solo campos: para qué se usa. */
+  readonly role?: PitchRole
 }

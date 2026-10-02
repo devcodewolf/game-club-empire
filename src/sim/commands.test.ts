@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { executeCommand, type Command } from './commands'
 import type { Rotation, TileCoord, TileRect } from './geometry'
-import { maxTier, tierQuality } from './buildings'
+import { maxTier, pitchSurface, tierQuality, type PitchRole } from './buildings'
 import { buildingAt, floorAt, type MapState } from './map'
 import { createTestMap, TEST_CONTENT } from './test-fixtures'
 
@@ -359,6 +359,109 @@ describe('upgradeBuilding', () => {
     expect(countTiles(state, 1)).toBe(1)
     expect(state.buildings[1]?.origin).toEqual(origen)
     expect(buildingAt(state, { x: 1, y: 1 })?.tier).toBe(1)
+  })
+})
+
+describe('uso de los campos (role)', () => {
+  const roleCmd = (buildingId: number, role: PitchRole): Command => ({
+    type: 'setPitchRole',
+    buildingId,
+    role,
+  })
+  /** Dos campos 4×3 (ids 1 y 2) sin solaparse. */
+  const twoFields = () => {
+    const state = createTestMap()
+    run(state, placeCmd('field', { x: 0, y: 0 }))
+    run(state, placeCmd('field', { x: 5, y: 0 }))
+    return state
+  }
+
+  it("el primer campo es 'main' y el segundo 'training'", () => {
+    const state = twoFields()
+
+    expect(state.buildings[1]?.role).toBe('main')
+    expect(state.buildings[2]?.role).toBe('training')
+  })
+
+  it('un objeto que no es campo no tiene role', () => {
+    const state = createTestMap()
+    run(state, placeCmd('small', { x: 0, y: 0 }))
+
+    expect(state.buildings[1]).not.toHaveProperty('role')
+  })
+
+  it("'reserve' cambia el uso del campo", () => {
+    const state = twoFields()
+
+    expect(run(state, roleCmd(2, 'reserve'))).toEqual({
+      ok: true,
+      event: { type: 'pitchRoleChanged', buildingId: 2, role: 'reserve' },
+    })
+    expect(state.buildings[2]?.role).toBe('reserve')
+    expect(state.buildings[1]?.role).toBe('main')
+  })
+
+  it("'main' sobre otro campo degrada al principal anterior y lo indica en el evento", () => {
+    const state = twoFields()
+
+    expect(run(state, roleCmd(2, 'main'))).toEqual({
+      ok: true,
+      event: { type: 'pitchRoleChanged', buildingId: 2, role: 'main', demotedId: 1 },
+    })
+    expect(state.buildings[2]?.role).toBe('main')
+    expect(state.buildings[1]?.role).toBe('training')
+  })
+
+  it.each<[string, number, PitchRole, string]>([
+    ['no es un campo', 3, 'main', 'notAPitch'],
+    ['mismo uso', 1, 'main', 'sameRole'],
+    ['no existe', 99, 'main', 'buildingNotFound'],
+  ])('inválido (%s): devuelve el motivo y deja el estado idéntico', (_n, id, role, motivo) => {
+    const state = twoFields()
+    run(state, placeCmd('small', { x: 10, y: 0 }))
+    const antes = structuredClone(state)
+
+    expect(run(state, roleCmd(id, role))).toEqual({ ok: false, reason: motivo })
+    expect(state).toEqual(antes)
+  })
+
+  it("al demoler el principal, el siguiente campo colocado es 'main'", () => {
+    const state = twoFields()
+    run(state, demolishCmd(1))
+    // El campo 2 sigue siendo 'training': no hay principal, así que el nuevo lo será.
+    run(state, placeCmd('field', { x: 0, y: 5 }))
+
+    expect(state.buildings[3]?.role).toBe('main')
+    expect(state.buildings[2]?.role).toBe('training')
+  })
+
+  it('mejorar un campo conserva su role', () => {
+    const state = twoFields()
+    run(state, roleCmd(1, 'reserve'))
+    run(state, { type: 'upgradeBuilding', buildingId: 1 })
+    run(state, { type: 'upgradeBuilding', buildingId: 2 })
+
+    expect(state.buildings[1]).toMatchObject({ tier: 1, role: 'reserve' })
+    expect(state.buildings[2]).toMatchObject({ tier: 1, role: 'training' })
+  })
+})
+
+describe('pitchSurface', () => {
+  const field = TEST_CONTENT.buildings['field']
+
+  it('devuelve la superficie de cada nivel y la última si el nivel se pasa', () => {
+    expect(field && [0, 1, 2, 3, 9].map((t) => pitchSurface(field, t))).toEqual([
+      'dirt',
+      'grass',
+      'stone',
+      'stone',
+      'stone',
+    ])
+  })
+
+  it('devuelve undefined si el objeto no es un campo', () => {
+    const small = TEST_CONTENT.buildings['small']
+    expect(small && pitchSurface(small, 0)).toBeUndefined()
   })
 })
 

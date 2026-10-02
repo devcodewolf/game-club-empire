@@ -5,7 +5,7 @@
  * conocen la simulación más allá de la definición del edificio (`BuildingDef`).
  */
 import { Container, Graphics, Sprite, Text } from 'pixi.js'
-import type { BuildingDef } from '@/sim/buildings'
+import { pitchSurface, type BuildingDef, type PitchRole } from '@/sim/buildings'
 import { rotateSize, type Rotation } from '@/sim/geometry'
 import { TILE_SIZE } from './grid'
 import { OBJECT_ART, type ObjectPainter } from './objectArt'
@@ -34,13 +34,15 @@ export function createBuildingMarker(
   rotation: Rotation,
   assets?: RenderAssets,
   tier = 0,
+  role?: PitchRole,
 ): Container {
   // Los terrenos de juego tienen su propio dibujo (superficie + líneas de cal).
   if (def.pitch) {
     return createPitchMarker(
       def,
       rotation,
-      assets?.floors.pattern(def.pitch.surface) ?? def.markerColor,
+      assets?.floors.pattern(pitchSurface(def, tier) ?? 'dirt') ?? def.markerColor,
+      role,
     )
   }
   // Objetos con dibujo propio (taquilla, ducha, mesa…)

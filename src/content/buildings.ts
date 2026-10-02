@@ -37,45 +37,60 @@ const PITCH_SIZE = {
   7: { width: 34, height: 24 },
 } as const satisfies Record<PitchFormat, { width: number; height: number }>
 
-/** Nombre y color de marcador (el de la superficie) por superficie. */
-const SURFACE_INFO = {
-  dirt: { label: 'Tierra', color: 0x7a5a3a },
-  artificialTurf: { label: 'Césped artificial', color: 0x4f9a4a },
-  naturalGrass: { label: 'Césped natural', color: 0x5a9a3a },
-  hybridGrass: { label: 'Césped híbrido', color: 0x64a844 },
-} as const satisfies Record<PitchSurface, { label: string; color: number }>
+/** Nombre de cada superficie, para el nombre de cada nivel del campo. */
+const SURFACE_LABEL = {
+  dirt: 'Tierra',
+  artificialTurf: 'Césped artificial',
+  naturalGrass: 'Césped natural',
+  hybridGrass: 'Césped híbrido',
+} as const satisfies Record<PitchSurface, string>
 
-/** Genera la entrada de un campo para no repetir datos. */
+/** Orden de mejora de la superficie: cada nivel del campo es la siguiente. */
+const SURFACES: readonly PitchSurface[] = ['dirt', 'artificialTurf', 'naturalGrass', 'hybridGrass']
+
+/**
+ * Genera un campo con sus 4 niveles de superficie. `costs` y `requires` van
+ * por nivel; el coste del primero es el de construirlo.
+ */
 function pitch<const Id extends string>(
   id: Id,
   format: PitchFormat,
-  surface: PitchSurface,
-  cost: number,
-  requires?: DivisionId,
+  costs: readonly [number, number, number, number],
+  requires: readonly [DivisionId | undefined, DivisionId, DivisionId, DivisionId],
 ) {
-  const info = SURFACE_INFO[surface]
   return {
     id,
-    name: `Fútbol ${format} · ${info.label}`,
+    name: `Campo de fútbol ${format}`,
     size: PITCH_SIZE[format],
-    cost,
-    markerColor: info.color,
+    cost: costs[0],
+    markerColor: 0x7a5a3a,
     icon: 'ball-football' as const,
-    pitch: { format, surface },
-    requires,
+    pitch: { format, surfaces: SURFACES },
+    requires: requires[0],
+    tiers: SURFACES.map((surface, i) => ({
+      name: `Fútbol ${format} · ${SURFACE_LABEL[surface]}`,
+      cost: costs[i] ?? 0,
+      quality: i + 1,
+      requires: requires[i],
+    })),
   }
 }
 
 export const BUILDINGS = defineBuildings({
-  // Campos de fútbol: tamaño reglamentario fijo, no se arrastran.
-  pitch11Dirt: pitch('pitch11Dirt', 11, 'dirt', 500),
-  pitch11Artificial: pitch('pitch11Artificial', 11, 'artificialTurf', 40000, 'regional'),
-  pitch11Natural: pitch('pitch11Natural', 11, 'naturalGrass', 60000, 'autonomica'),
-  pitch11Hybrid: pitch('pitch11Hybrid', 11, 'hybridGrass', 150000, 'nacionalA'),
-  pitch7Dirt: pitch('pitch7Dirt', 7, 'dirt', 300, 'regional'),
-  pitch7Artificial: pitch('pitch7Artificial', 7, 'artificialTurf', 15000, 'autonomica'),
-  pitch7Natural: pitch('pitch7Natural', 7, 'naturalGrass', 25000, 'nacionalB'),
-  pitch7Hybrid: pitch('pitch7Hybrid', 7, 'hybridGrass', 60000, 'elite'),
+  // Campos de fútbol: tamaño reglamentario fijo, no se arrastran. Se mejoran en
+  // el sitio subiendo de superficie (tierra → artificial → natural → híbrido).
+  pitch11: pitch(
+    'pitch11',
+    11,
+    [500, 40000, 60000, 150000],
+    [undefined, 'regional', 'autonomica', 'nacionalA'],
+  ),
+  pitch7: pitch(
+    'pitch7',
+    7,
+    [300, 15000, 25000, 60000],
+    ['regional', 'autonomica', 'nacionalB', 'elite'],
+  ),
 
   // Gradas: el aforo crece con el tamaño y la división.
   standEarthBank: {

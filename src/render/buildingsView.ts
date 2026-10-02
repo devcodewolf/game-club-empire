@@ -30,7 +30,13 @@ export function createBuildingsView(
     const def = game.content.buildings[building.type]
     if (!def) return
 
-    const marker = createBuildingMarker(def, building.rotation, assets, building.tier)
+    const marker = createBuildingMarker(
+      def,
+      building.rotation,
+      assets,
+      building.tier,
+      building.role,
+    )
     const origin = tileToWorld(building.origin)
     const size = rotateSize(def.size, building.rotation)
     const rect = { x: origin.x, y: origin.y, w: size.width * TILE_SIZE, h: size.height * TILE_SIZE }
@@ -61,6 +67,15 @@ export function createBuildingsView(
 
   const unsubscribe = game.subscribe((event) => {
     if (event.type === 'buildingPlaced') add(event.building, true)
+    if (event.type === 'pitchRoleChanged') {
+      // Cambia el rótulo de uso: se redibujan el campo y, si lo hay, el que dejó de ser principal
+      for (const id of [event.buildingId, event.demotedId]) {
+        const building = id === undefined ? undefined : game.state.buildings[id]
+        if (!building) continue
+        remove(building.id, false)
+        add(building, false)
+      }
+    }
     if (event.type === 'buildingUpgraded') {
       // Mejora en el sitio: se cambia el dibujo por el del nivel nuevo, con un rebote
       remove(event.building.id, false)

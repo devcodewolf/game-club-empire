@@ -5,7 +5,7 @@
  * Mismo estilo que la ficha de sala (hoja de libreta).
  */
 import { computed, watch } from 'vue'
-import { maxTier, tierQuality } from '@/sim/buildings'
+import { maxTier, tierQuality, type PitchRole } from '@/sim/buildings'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
 import { findBuilding } from '@/ui/composables/contentLookup'
@@ -66,6 +66,25 @@ watch(
   },
 )
 
+/** Usos posibles de un campo, en el orden en que se muestran. */
+const PITCH_ROLES: readonly { readonly id: PitchRole; readonly label: string }[] = [
+  { id: 'main', label: 'Principal' },
+  { id: 'reserve', label: 'Filial' },
+  { id: 'training', label: 'Entrenamiento' },
+]
+
+/** Uso actual del campo seleccionado (`undefined` si no es un campo). */
+const currentRole = computed(() =>
+  def.value?.pitch ? (building.value?.role ?? 'training') : undefined,
+)
+
+/** Cambia el uso del campo; si ya es el actual no hace nada. */
+function setRole(role: PitchRole): void {
+  const id = selection.selectedBuildingId
+  if (id === null || role === currentRole.value) return
+  game.dispatch({ type: 'setPitchRole', buildingId: id, role })
+}
+
 function upgrade(): void {
   const id = selection.selectedBuildingId
   if (id === null || info.value?.next?.lockReason) return
@@ -115,6 +134,36 @@ function upgrade(): void {
         </p>
       </template>
       <p class="font-hand text-[18px] leading-6 text-ink-blue">Calidad: {{ info.quality }}</p>
+
+      <section v-if="currentRole" class="mt-2">
+        <p
+          id="pitch-role-label"
+          class="font-hand text-[20px] leading-6 underline underline-offset-2"
+        >
+          Uso del campo:
+        </p>
+        <div role="radiogroup" aria-labelledby="pitch-role-label" class="mt-1 flex gap-1">
+          <button
+            v-for="option in PITCH_ROLES"
+            :key="option.id"
+            type="button"
+            role="radio"
+            :aria-checked="currentRole === option.id"
+            class="flex-1 cursor-pointer border-2 border-ink px-1 py-0.5 font-hand text-[16px] leading-5 focus-visible:outline-2 focus-visible:outline-ink"
+            :class="
+              currentRole === option.id
+                ? 'bg-amber-300 font-bold shadow-[2px_2px_0_rgba(0,0,0,0.35)]'
+                : 'bg-transparent hover:bg-black/10'
+            "
+            @click="setRole(option.id)"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+        <p class="mt-1 font-hand text-[15px] leading-5 text-ink-blue">
+          Solo puede haber un campo principal.
+        </p>
+      </section>
 
       <section v-if="info.next" class="mt-2">
         <p class="font-hand text-[20px] leading-6 underline underline-offset-2">Siguiente nivel:</p>

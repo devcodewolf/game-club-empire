@@ -5,8 +5,8 @@
  * 105×68 m), así sirven igual para fútbol 11 y fútbol 7 y para cualquier giro.
  * El origen (0,0) es la esquina superior izquierda de la huella con margen.
  */
-import { Container, Graphics, type FillInput } from 'pixi.js'
-import type { BuildingDef } from '@/sim/buildings'
+import { Container, Graphics, Text, type FillInput } from 'pixi.js'
+import type { BuildingDef, PitchRole } from '@/sim/buildings'
 import { rotateSize, type Rotation } from '@/sim/geometry'
 import { TILE_SIZE } from './grid'
 import { palette } from './palette'
@@ -32,6 +32,7 @@ export function createPitchMarker(
   def: BuildingDef,
   rotation: Rotation,
   surface: FillInput,
+  role?: PitchRole,
 ): Container {
   const tiles = rotateSize(def.size, rotation)
   const width = tiles.width * TILE_SIZE
@@ -52,7 +53,36 @@ export function createPitchMarker(
 
   const marker = new Container({ label: `building:${def.id}` })
   marker.addChild(g)
+  if (role) marker.addChild(createRoleLabel(role, width, margin))
   return marker
+}
+
+const ROLE_LABEL: Record<PitchRole, string> = {
+  main: 'CAMPO PRINCIPAL',
+  reserve: 'FILIAL',
+  training: 'ENTRENAMIENTO',
+}
+
+/**
+ * Uso del campo pintado en el margen superior, como un rótulo de cal sobre el
+ * césped (el principal, algo más marcado).
+ */
+function createRoleLabel(role: PitchRole, width: number, margin: number): Text {
+  const label = new Text({
+    text: ROLE_LABEL[role],
+    style: {
+      fontSize: 44,
+      fill: palette.chalk,
+      fontFamily: 'Trebuchet MS, sans-serif',
+      fontWeight: 'bold',
+      letterSpacing: 6,
+    },
+    resolution: 2,
+  })
+  label.anchor.set(0.5)
+  label.position.set(width / 2, margin / 2)
+  label.alpha = role === 'main' ? 0.85 : 0.6
+  return label
 }
 
 /**

@@ -36,6 +36,21 @@ export const TEST_CATALOG: BuildingCatalog = {
     markerColor: 0x0000ff,
     icon: 'B',
   },
+  /** Campo pequeño 4×3 con 3 niveles (una superficie por nivel), para probar los usos. */
+  field: {
+    id: 'field',
+    name: 'Campo',
+    size: { width: 4, height: 3 },
+    cost: 50,
+    markerColor: 0x00aa00,
+    icon: 'F',
+    pitch: { format: 7, surfaces: ['dirt', 'grass', 'stone'] },
+    tiers: [
+      { name: 'Tierra', cost: 50, quality: 1 },
+      { name: 'Césped', cost: 100, quality: 2 },
+      { name: 'Piedra', cost: 200, quality: 4 },
+    ],
+  },
   /** 1×1 con 3 niveles, para probar las mejoras. */
   tiered: {
     id: 'tiered',

@@ -127,6 +127,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 **Resultado visible:** juegas una liga completa, ves la clasificación y puedes ascender.
 
 - [ ] 🧠 Diseño de la progresión en `docs/PROGRESION.md`: divisiones (de Regional a Primera), qué hace falta para ascender y qué desbloquea cada ascenso (salas, objetos, suelos, sistemas)
+  - Las divisiones deben imitar la pirámide real del fútbol (categorías regionales → nacionales → profesional), con nombres ficticios. **El número de niveles de objetos, campos y gradas irá correlativo al número de categorías** (hoy son provisionales: 3 en objetos, 4 en campos, 6 en gradas).
 - [ ] 🧠 Generador de liga ficticia: nombres de clubes y pueblos inventados, 10 equipos por división
 - [ ] 🧠 Calendario de temporada (ida y vuelta) integrado en los ticks
 - [ ] 🧠 Simulación de partido simple: fuerza del equipo derivada de instalaciones + moral + factor local

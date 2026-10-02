@@ -85,7 +85,17 @@ describe('contenido', () => {
 
   it('cada superficie de campo existe en FLOORS', () => {
     for (const { id, pitch } of buildings) {
-      if (pitch) expect(FLOORS, id).toHaveProperty(pitch.surface)
+      if (!pitch) continue
+      expect(pitch.surfaces.length, id).toBeGreaterThan(0)
+      for (const surface of pitch.surfaces)
+        expect(FLOORS, `${id}: ${surface}`).toHaveProperty(surface)
+    }
+  })
+
+  it('los campos tienen tantos niveles como superficies', () => {
+    for (const { id, pitch, tiers } of buildings) {
+      if (!pitch) continue
+      expect(tiers?.length, id).toBe(pitch.surfaces.length)
     }
   })
 
