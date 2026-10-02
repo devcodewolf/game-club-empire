@@ -3,3 +3,5 @@ node_modules
 assets/dist
 pnpm-lock.yaml
 *.md
+# Generado por la skill pixi-artist (check-colors.mjs --baseline)
+.claude/skills/pixi-artist/scripts/colors-baseline.json

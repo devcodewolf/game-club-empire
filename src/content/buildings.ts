@@ -6,7 +6,7 @@
  * Los costes se cobran a partir de la Fase 2; en la Fase 1 solo se definen.
  * Tamaños en casillas de 64 px, sin girar (ancho × alto).
  */
-import type { BuildingDef } from '@/sim/buildings'
+import type { BuildingDef, TierDef } from '@/sim/buildings'
 import type { IconName } from './icons'
 import type { DivisionId } from './progression'
 
@@ -21,6 +21,7 @@ function defineBuildings<
       readonly id: K
       readonly icon: IconName
       readonly requires?: DivisionId
+      readonly tiers?: readonly (TierDef & { readonly requires?: DivisionId })[]
     }
   },
 >(catalog: T): T {
@@ -144,6 +145,11 @@ export const BUILDINGS = defineBuildings({
     cost: 80,
     markerColor: 0x6f8fa8,
     icon: 'archive',
+    tiers: [
+      { name: 'Taquilla metálica', cost: 80, quality: 1 },
+      { name: 'Taquilla de madera', cost: 150, quality: 2, requires: 'regional' },
+      { name: 'Taquilla de lujo', cost: 400, quality: 4, requires: 'autonomica' },
+    ],
   },
   changingBench: {
     id: 'changingBench',
@@ -152,6 +158,11 @@ export const BUILDINGS = defineBuildings({
     cost: 60,
     markerColor: 0x9a6b3f,
     icon: 'armchair-2',
+    tiers: [
+      { name: 'Banco de tablón', cost: 60, quality: 1 },
+      { name: 'Banco con respaldo', cost: 100, quality: 2, requires: 'regional' },
+      { name: 'Banco acolchado', cost: 300, quality: 4, requires: 'autonomica' },
+    ],
   },
   shower: {
     id: 'shower',
@@ -160,6 +171,11 @@ export const BUILDINGS = defineBuildings({
     cost: 150,
     markerColor: 0x5b8fb9,
     icon: 'bath',
+    tiers: [
+      { name: 'Ducha sencilla', cost: 150, quality: 1 },
+      { name: 'Ducha con mampara', cost: 250, quality: 2, requires: 'regional' },
+      { name: 'Ducha de lluvia', cost: 600, quality: 4, requires: 'autonomica' },
+    ],
   },
   toilet: {
     id: 'toilet',

@@ -48,6 +48,8 @@ const entries = computed<ChecklistEntry[]>(() => {
   ]
 })
 
+const qualityText = computed(() => (status.value ? `Calidad: ${status.value.quality}` : null))
+
 const capacityText = computed(() => {
   const s = status.value
   const unit = def.value?.capacity?.unit
@@ -115,6 +117,9 @@ function removeRoom(): void {
 
       <p v-if="capacityText" class="font-hand text-[18px] leading-6 text-ink-blue">
         {{ capacityText }}
+      </p>
+      <p v-if="qualityText" class="font-hand text-[18px] leading-6 text-ink-blue">
+        {{ qualityText }}
       </p>
 
       <button

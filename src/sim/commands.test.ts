@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { executeCommand, type Command } from './commands'
 import type { Rotation, TileCoord, TileRect } from './geometry'
+import { maxTier, tierQuality } from './buildings'
 import { buildingAt, floorAt, type MapState } from './map'
 import { createTestMap, TEST_CONTENT } from './test-fixtures'
 
@@ -25,7 +26,7 @@ describe('placeBuilding', () => {
     const state = createTestMap()
     const result = run(state, placeCmd('wide', { x: 2, y: 3 }, 1))
 
-    const esperado = { id: 1, type: 'wide', origin: { x: 2, y: 3 }, rotation: 1 }
+    const esperado = { id: 1, type: 'wide', origin: { x: 2, y: 3 }, rotation: 1, tier: 0 }
     expect(result).toEqual({ ok: true, event: { type: 'buildingPlaced', building: esperado } })
     expect(state.buildings[1]).toEqual(esperado)
     expect(state.nextBuildingId).toBe(2)
@@ -278,5 +279,100 @@ describe('paintFloor', () => {
     expect(run(state, paintCmd({ x: 2, y: 2, width: 3, height: 2 }, 'dirt')).ok).toBe(true)
     expect(floorAt(state, { x: 2, y: 2 })).toBe('dirt')
     expect(buildingAt(state, { x: 2, y: 2 })?.id).toBe(1)
+  })
+})
+
+describe('upgradeBuilding', () => {
+  const upgradeCmd = (buildingId: number): Command => ({ type: 'upgradeBuilding', buildingId })
+
+  it('sube el nivel de 0 a 1 y de 1 a 2', () => {
+    const state = createTestMap()
+    run(state, placeCmd('tiered', { x: 1, y: 1 }))
+    expect(state.buildings[1]?.tier).toBe(0)
+
+    expect(run(state, upgradeCmd(1)).ok).toBe(true)
+    expect(state.buildings[1]?.tier).toBe(1)
+    expect(run(state, upgradeCmd(1)).ok).toBe(true)
+    expect(state.buildings[1]?.tier).toBe(2)
+  })
+
+  it("devuelve 'maxTier' en el último nivel", () => {
+    const state = createTestMap()
+    run(state, placeCmd('tiered', { x: 1, y: 1 }))
+    run(state, upgradeCmd(1))
+    run(state, upgradeCmd(1))
+
+    expect(run(state, upgradeCmd(1))).toEqual({ ok: false, reason: 'maxTier' })
+    expect(state.buildings[1]?.tier).toBe(2)
+  })
+
+  it("devuelve 'notUpgradable' si el objeto no tiene niveles", () => {
+    const state = createTestMap()
+    run(state, placeCmd('small', { x: 1, y: 1 }))
+
+    expect(run(state, upgradeCmd(1))).toEqual({ ok: false, reason: 'notUpgradable' })
+  })
+
+  it("devuelve 'buildingNotFound' si el id no existe", () => {
+    const state = createTestMap()
+
+    expect(run(state, upgradeCmd(42))).toEqual({ ok: false, reason: 'buildingNotFound' })
+  })
+
+  it('el evento lleva el edificio ya mejorado y el nivel anterior', () => {
+    const state = createTestMap()
+    run(state, placeCmd('tiered', { x: 1, y: 1 }))
+    run(state, upgradeCmd(1))
+    const result = run(state, upgradeCmd(1))
+
+    expect(result).toEqual({
+      ok: true,
+      event: {
+        type: 'buildingUpgraded',
+        building: { id: 1, type: 'tiered', origin: { x: 1, y: 1 }, rotation: 0, tier: 2 },
+        fromTier: 1,
+      },
+    })
+  })
+
+  it('si el comando es inválido, el estado queda idéntico', () => {
+    const state = createTestMap()
+    run(state, placeCmd('small', { x: 0, y: 0 }))
+    run(state, placeCmd('tiered', { x: 1, y: 1 }))
+    run(state, upgradeCmd(2))
+    run(state, upgradeCmd(2))
+    const antes = structuredClone(state)
+
+    for (const id of [1, 2, 99]) expect(run(state, upgradeCmd(id)).ok).toBe(false)
+    expect(state).toEqual(antes)
+  })
+
+  it('la huella y la ocupación no cambian al mejorar', () => {
+    const state = createTestMap()
+    run(state, placeCmd('tiered', { x: 1, y: 1 }))
+    const ocupacion = [...state.occupancy]
+    const origen = state.buildings[1]?.origin
+
+    run(state, upgradeCmd(1))
+
+    expect(state.occupancy).toEqual(ocupacion)
+    expect(countTiles(state, 1)).toBe(1)
+    expect(state.buildings[1]?.origin).toEqual(origen)
+    expect(buildingAt(state, { x: 1, y: 1 })?.tier).toBe(1)
+  })
+})
+
+describe('maxTier y tierQuality', () => {
+  const tiered = TEST_CONTENT.buildings['tiered']
+  const small = TEST_CONTENT.buildings['small']
+
+  it('maxTier es el último índice, o 0 sin niveles', () => {
+    expect(tiered && maxTier(tiered)).toBe(2)
+    expect(small && maxTier(small)).toBe(0)
+  })
+
+  it('tierQuality devuelve la calidad del nivel, o 1 sin niveles', () => {
+    expect(tiered && [0, 1, 2].map((t) => tierQuality(tiered, t))).toEqual([1, 2, 4])
+    expect(small && tierQuality(small, 0)).toBe(1)
   })
 })

@@ -33,6 +33,7 @@ export function createBuildingMarker(
   def: BuildingDef,
   rotation: Rotation,
   assets?: RenderAssets,
+  tier = 0,
 ): Container {
   // Los terrenos de juego tienen su propio dibujo (superficie + líneas de cal).
   if (def.pitch) {
@@ -44,7 +45,7 @@ export function createBuildingMarker(
   }
   // Objetos con dibujo propio (taquilla, ducha, mesa…)
   const painter = OBJECT_ART[def.id]
-  if (painter) return createArtMarker(def, rotation, painter)
+  if (painter) return createArtMarker(def, rotation, painter, tier)
 
   const tiles = rotateSize(def.size, rotation)
   const width = tiles.width * TILE_SIZE
@@ -156,7 +157,12 @@ function drawFrontArrow(
  * frente hacia abajo; aquí se gira el dibujo entero alrededor de su centro.
  * La sombra va aparte y sin girar, para que caiga siempre abajo a la derecha.
  */
-function createArtMarker(def: BuildingDef, rotation: Rotation, painter: ObjectPainter): Container {
+function createArtMarker(
+  def: BuildingDef,
+  rotation: Rotation,
+  painter: ObjectPainter,
+  tier: number,
+): Container {
   const w = def.size.width * TILE_SIZE
   const h = def.size.height * TILE_SIZE
   const rotated = rotateSize(def.size, rotation)
@@ -178,7 +184,7 @@ function createArtMarker(def: BuildingDef, rotation: Rotation, painter: ObjectPa
   )
 
   const art = new Graphics()
-  painter(art, w, h, createRandom(seedFromText(def.id)))
+  painter(art, w, h, createRandom(seedFromText(def.id)), tier)
   art.pivot.set(w / 2, h / 2)
   art.position.set(rw / 2, rh / 2)
   art.rotation = (rotation * Math.PI) / 2

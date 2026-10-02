@@ -221,6 +221,24 @@ describe('evaluateRoom', () => {
     expect(status.objects).toEqual({ small: 1 })
   })
 
+  it('quality suma la calidad según el nivel de cada objeto y cambia al mejorar', () => {
+    const state = house()
+    place(state, 'small', INSIDE)
+    place(state, 'tiered', { x: 4, y: 3 })
+    place(state, 'tiered', { x: 5, y: 3 })
+    const id = designate(state, 'kit')
+
+    // small (sin niveles) = 1; tiered nivel 1 = 1 cada uno
+    expect(evaluate(state, id).quality).toBe(3)
+
+    ok(state, { type: 'upgradeBuilding', buildingId: 2 })
+    expect(evaluate(state, id).quality).toBe(4)
+
+    ok(state, { type: 'upgradeBuilding', buildingId: 2 })
+    ok(state, { type: 'upgradeBuilding', buildingId: 3 })
+    expect(evaluate(state, id).quality).toBe(1 + 4 + 2)
+  })
+
   it('sin puerta, hasDoor es false y ok es false', () => {
     const state = house(false)
     place(state, 'small', INSIDE)

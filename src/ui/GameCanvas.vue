@@ -9,6 +9,7 @@ import { createGameRenderer, type GameRenderer } from '@/render/createGameRender
 import type { Command } from '@/sim/commands'
 import type { Game } from '@/sim/game'
 import type { TileCoord } from '@/sim/geometry'
+import { buildingAt } from '@/sim/map'
 import { NO_ROOM } from '@/sim/roomTypes'
 import { roomAt } from '@/sim/rooms'
 import { useNoticeStore } from '@/ui/stores/noticeStore'
@@ -29,11 +30,13 @@ function onCommand(command: Command): void {
   props.game.dispatch(command)
 }
 
-/** Clic sin herramienta: selecciona la sala de la casilla o limpia la selección. */
+/** Clic sin herramienta: selecciona el objeto de la casilla (prioridad), si no la sala, si no limpia. */
 function onInspect(tile: TileCoord): void {
+  const building = buildingAt(props.game.state, tile)
+  if (building) return selectionStore.selectBuilding(building.id)
   const roomId = roomAt(props.game.state, tile)
   if (roomId === NO_ROOM) return selectionStore.clear()
-  selectionStore.select(roomId)
+  selectionStore.selectRoom(roomId)
 }
 
 onMounted(async () => {

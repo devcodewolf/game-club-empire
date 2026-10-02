@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grassroots · Galería de arte</title>
+    <!-- Solo desarrollo: Vite la sirve en /gallery.html pero no entra en el build -->
+    <style>
+      body {
+        margin: 0;
+        background: #1b2a1f;
+        color: #eef0ea;
+        font-family: 'Trebuchet MS', sans-serif;
+      }
+      #nav {
+        padding: 8px 12px;
+        font-size: 12px;
+        line-height: 1.8;
+      }
+      #nav a {
+        color: #f2c46b;
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="nav"></div>
+    <div id="gallery"></div>
+    <script type="module" src="/src/gallery/main.ts"></script>
+  </body>
+</html>

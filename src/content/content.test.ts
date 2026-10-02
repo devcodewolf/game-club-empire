@@ -69,6 +69,20 @@ describe('contenido', () => {
     }
   })
 
+  it('los niveles de cada edificio son coherentes', () => {
+    for (const { id, cost, tiers } of buildings) {
+      if (!tiers) continue
+      expect(tiers.length, id).toBeGreaterThanOrEqual(2)
+      expect(tiers[0]?.cost, id).toBe(cost)
+      tiers.slice(1).forEach((tier, i) => {
+        expect(tier.quality, `${id}: ${tier.name}`).toBeGreaterThan(tiers[i]?.quality ?? 0)
+      })
+      for (const { name, requires } of tiers) {
+        if (requires) expect(divisionIds, `${id}: ${name}`).toContain(requires)
+      }
+    }
+  })
+
   it('cada superficie de campo existe en FLOORS', () => {
     for (const { id, pitch } of buildings) {
       if (pitch) expect(FLOORS, id).toHaveProperty(pitch.surface)

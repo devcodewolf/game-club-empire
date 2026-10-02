@@ -6,7 +6,7 @@
  * muros y puertas. Una sala "funciona" si está cerrada, tiene puerta, cumple
  * el tamaño mínimo y tiene los objetos requeridos.
  */
-import type { BuildingTypeId } from './buildings'
+import { tierQuality, type BuildingTypeId } from './buildings'
 import type { SimContent } from './content'
 import { footprint, isInsideGrid, type TileCoord, type TileRect } from './geometry'
 import { tileIndex, type MapState } from './map'
@@ -173,6 +173,8 @@ export interface RoomStatus {
   /** Objetos de cada tipo que hay dentro de la sala. */
   readonly objects: Readonly<Record<BuildingTypeId, number>>
   readonly capacity: number
+  /** Suma de la calidad de los objetos de la sala según su nivel. */
+  readonly quality: number
   /** ¿Cumple todos los requisitos? */
   readonly ok: boolean
 }
@@ -207,6 +209,7 @@ export function evaluateRoom(
 
   // Objetos cuya huella cae (aunque sea en parte) dentro de la sala
   const objects: Record<BuildingTypeId, number> = {}
+  let quality = 0
   for (const building of Object.values(state.buildings)) {
     const bdef = content.buildings[building.type]
     if (!bdef) continue
@@ -217,7 +220,9 @@ export function evaluateRoom(
         if (state.roomOf[tileIndex(state, { x, y })] === id) inside = true
       }
     }
-    if (inside) objects[building.type] = (objects[building.type] ?? 0) + 1
+    if (!inside) continue
+    objects[building.type] = (objects[building.type] ?? 0) + 1
+    quality += tierQuality(bdef, building.tier)
   }
 
   const missing = def.requirements
@@ -241,6 +246,7 @@ export function evaluateRoom(
     missing,
     objects,
     capacity,
+    quality,
     ok: enclosed && hasDoor && !tooSmall && missing.length === 0,
   }
 }

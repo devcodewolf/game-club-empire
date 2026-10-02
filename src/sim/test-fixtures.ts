@@ -10,7 +10,7 @@ import type { RoomCatalog } from './roomTypes'
 import type { DoorCatalog, WallCatalog } from './structureTypes'
 import { createMapState, type MapConfig, type MapState } from './map'
 
-/** Catálogo de prueba: 1×1, 3×2 y 4×4. */
+/** Catálogo de prueba: 1×1, 3×2, 4×4 y 'tiered' (1×1 con 3 niveles). */
 export const TEST_CATALOG: BuildingCatalog = {
   small: {
     id: 'small',
@@ -35,6 +35,20 @@ export const TEST_CATALOG: BuildingCatalog = {
     cost: 40,
     markerColor: 0x0000ff,
     icon: 'B',
+  },
+  /** 1×1 con 3 niveles, para probar las mejoras. */
+  tiered: {
+    id: 'tiered',
+    name: 'Mejorable',
+    size: { width: 1, height: 1 },
+    cost: 10,
+    markerColor: 0xffff00,
+    icon: 'T',
+    tiers: [
+      { name: 'Básico', cost: 10, quality: 1 },
+      { name: 'Medio', cost: 30, quality: 2 },
+      { name: 'Alto', cost: 80, quality: 4 },
+    ],
   },
 }
 

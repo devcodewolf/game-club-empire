@@ -6,7 +6,7 @@
  * comando inválido nunca deja el estado a medias. El resultado incluye un
  * evento que el render puede usar para animar (construir, demoler, etc.).
  */
-import type { BuildingId, BuildingTypeId, PlacedBuilding } from './buildings'
+import { maxTier, type BuildingId, type BuildingTypeId, type PlacedBuilding } from './buildings'
 import type { SimContent } from './content'
 import type { FloorId } from './floors'
 import {
@@ -59,6 +59,8 @@ export type Command =
       readonly rotation: Rotation
     }
   | { readonly type: 'demolishBuilding'; readonly buildingId: BuildingId }
+  /** Subir un objeto al siguiente nivel, en el sitio. */
+  | { readonly type: 'upgradeBuilding'; readonly buildingId: BuildingId }
   | { readonly type: 'paintFloor'; readonly rect: TileRect; readonly floor: FloorId }
   | { readonly type: 'buildWalls'; readonly rect: TileRect; readonly wall: WallId }
   | {
@@ -80,6 +82,12 @@ export type Command =
 
 export type GameEvent =
   | { readonly type: 'buildingPlaced'; readonly building: PlacedBuilding }
+  | {
+      readonly type: 'buildingUpgraded'
+      /** El objeto ya con su nivel nuevo. */
+      readonly building: PlacedBuilding
+      readonly fromTier: number
+    }
   | { readonly type: 'buildingDemolished'; readonly building: PlacedBuilding }
   | {
       readonly type: 'floorPainted'
@@ -109,6 +117,8 @@ export type CommandError =
   | StructureError
   | RoomError
   | 'buildingNotFound'
+  | 'notUpgradable'
+  | 'maxTier'
   | 'nothingToDemolish'
 
 export type CommandResult =
@@ -125,6 +135,8 @@ export function executeCommand(
   switch (command.type) {
     case 'placeBuilding':
       return placeBuilding(state, command, content)
+    case 'upgradeBuilding':
+      return upgradeBuilding(state, command.buildingId, content)
     case 'demolishBuilding':
       return demolishBuilding(state, command.buildingId, content)
     case 'paintFloor':
@@ -227,6 +239,7 @@ function placeBuilding(
     type: buildingType,
     origin,
     rotation,
+    tier: 0,
   }
   state.nextBuildingId += 1
   state.buildings[building.id] = building
@@ -235,6 +248,30 @@ function placeBuilding(
   }
 
   return { ok: true, event: { type: 'buildingPlaced', building } }
+}
+
+/**
+ * Sube un objeto al siguiente nivel. El coste se cobrará en la Fase 2 y el
+ * bloqueo por división se comprobará aquí cuando la simulación la conozca
+ * (Fase 3); de momento lo filtra la interfaz.
+ */
+function upgradeBuilding(
+  state: MapState,
+  buildingId: BuildingId,
+  content: SimContent,
+): CommandResult {
+  const building = state.buildings[buildingId]
+  const def = building && content.buildings[building.type]
+  if (!building || !def) return { ok: false, reason: 'buildingNotFound' }
+  if (!def.tiers || def.tiers.length < 2) return { ok: false, reason: 'notUpgradable' }
+  if (building.tier >= maxTier(def)) return { ok: false, reason: 'maxTier' }
+
+  const upgraded: PlacedBuilding = { ...building, tier: building.tier + 1 }
+  state.buildings[buildingId] = upgraded
+  return {
+    ok: true,
+    event: { type: 'buildingUpgraded', building: upgraded, fromTier: building.tier },
+  }
 }
 
 function demolishBuilding(

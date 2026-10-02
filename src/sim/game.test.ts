@@ -30,7 +30,7 @@ describe('createGame · dispatch', () => {
     expect(listener).toHaveBeenCalledTimes(1)
     expect(listener).toHaveBeenCalledWith({
       type: 'buildingPlaced',
-      building: { id: 1, type: 'small', origin: { x: 1, y: 1 }, rotation: 0 },
+      building: { id: 1, type: 'small', origin: { x: 1, y: 1 }, rotation: 0, tier: 0 },
     })
   })
 
@@ -94,6 +94,7 @@ describe('createGame · dispatch', () => {
       type: 'small',
       origin: { x: 1, y: 1 },
       rotation: 0,
+      tier: 0,
     })
   })
 

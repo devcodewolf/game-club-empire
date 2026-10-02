@@ -17,20 +17,29 @@ function isDivisionId(value: string): value is DivisionId {
   return DIVISIONS.some((division) => division.id === value)
 }
 
+/** Modo desarrollo: la URL lleva `?dev` (o `&dev`) y todo queda desbloqueado. */
+function detectDevMode(): boolean {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).has('dev')
+}
+
 export const useProgressionStore = defineStore('progression', () => {
   const division = ref<DivisionId>(STARTING_DIVISION)
 
-  /** Sin requisito (o con uno desconocido) se considera desbloqueado. */
+  const devMode = detectDevMode()
+
+  /** Sin requisito (o con uno desconocido) se considera desbloqueado. En modo desarrollo, siempre. */
   function isUnlocked(requires?: string): boolean {
+    if (devMode) return true
     if (!requires || !isDivisionId(requires)) return true
     return isDivisionReached(requires, division.value)
   }
 
   /** Motivo del bloqueo para tooltips, o null si está disponible. */
   function lockReason(requires?: string): string | null {
-    if (isUnlocked(requires) || !requires || !isDivisionId(requires)) return null
+    if (devMode || isUnlocked(requires) || !requires || !isDivisionId(requires)) return null
     return `Se desbloquea en ${divisionName(requires)}`
   }
 
-  return { division, isUnlocked, lockReason }
+  return { division, devMode, isUnlocked, lockReason }
 })

@@ -39,6 +39,33 @@ export interface BuildingDef {
    * está disponible desde el principio. De momento solo lo usa el menú.
    */
   readonly requires?: string
+  /**
+   * Niveles de mejora (taquilla metálica → de madera → de lujo). El primero es
+   * el nivel con el que se construye. Misma huella en todos: se mejora en el
+   * sitio. Sin `tiers`, el objeto no se puede mejorar.
+   */
+  readonly tiers?: readonly TierDef[]
+}
+
+/** Un nivel de un objeto mejorable. */
+export interface TierDef {
+  readonly name: string
+  /** Coste de mejorar HASTA este nivel (el del primero es el coste de construir). */
+  readonly cost: number
+  /** Calidad que aporta a su sala (la usarán las necesidades de los jugadores). */
+  readonly quality: number
+  /** División a partir de la cual se puede alcanzar este nivel (id de división). */
+  readonly requires?: string
+}
+
+/** Nivel máximo (índice) de un objeto; 0 si no tiene niveles. */
+export function maxTier(def: BuildingDef): number {
+  return Math.max(0, (def.tiers?.length ?? 1) - 1)
+}
+
+/** Calidad que aporta un objeto en su nivel actual (1 si no tiene niveles). */
+export function tierQuality(def: BuildingDef, tier: number): number {
+  return def.tiers?.[tier]?.quality ?? 1
 }
 
 export type BuildingCatalog = Readonly<Record<BuildingTypeId, BuildingDef>>
@@ -49,4 +76,6 @@ export interface PlacedBuilding {
   readonly type: BuildingTypeId
   readonly origin: TileCoord
   readonly rotation: Rotation
+  /** Nivel actual (índice en `tiers`; 0 = nivel 1). */
+  readonly tier: number
 }

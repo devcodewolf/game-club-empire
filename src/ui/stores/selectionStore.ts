@@ -1,18 +1,32 @@
-/** Selección del jugador en el mapa (por ahora, una sala). */
+/** Selección del jugador en el mapa: una sala o un objeto (solo una cosa a la vez). */
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import type { BuildingId } from '@/sim/buildings'
 import type { RoomId } from '@/sim/roomTypes'
 
-export const useSelectionStore = defineStore('selection', () => {
-  const selectedRoomId = ref<RoomId | null>(null)
+export type Selection = { kind: 'room'; id: RoomId } | { kind: 'building'; id: BuildingId }
 
-  function select(id: RoomId): void {
-    selectedRoomId.value = id
+export const useSelectionStore = defineStore('selection', () => {
+  const selection = ref<Selection | null>(null)
+
+  const selectedRoomId = computed<RoomId | null>(() =>
+    selection.value?.kind === 'room' ? selection.value.id : null,
+  )
+  const selectedBuildingId = computed<BuildingId | null>(() =>
+    selection.value?.kind === 'building' ? selection.value.id : null,
+  )
+
+  function selectRoom(id: RoomId): void {
+    selection.value = { kind: 'room', id }
+  }
+
+  function selectBuilding(id: BuildingId): void {
+    selection.value = { kind: 'building', id }
   }
 
   function clear(): void {
-    selectedRoomId.value = null
+    selection.value = null
   }
 
-  return { selectedRoomId, select, clear }
+  return { selection, selectedRoomId, selectedBuildingId, selectRoom, selectBuilding, clear }
 })

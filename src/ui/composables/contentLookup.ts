@@ -2,7 +2,12 @@
  * Búsquedas tolerantes en el catálogo para ids que llegan como `string`
  * desde la simulación (que no conoce los ids concretos del contenido).
  */
-import { BUILDINGS, getBuilding, type StarterBuildingId } from '@/content/buildings'
+import {
+  BUILDINGS,
+  getBuilding,
+  type CatalogBuilding,
+  type StarterBuildingId,
+} from '@/content/buildings'
 import { ROOMS, getRoom, type CatalogRoom, type RoomTypeId } from '@/content/rooms'
 
 function isBuildingId(id: string): id is StarterBuildingId {
@@ -21,4 +26,9 @@ export function buildingName(id: string): string {
 /** Definición de sala del catálogo, o undefined si el id es desconocido. */
 export function findRoom(id: string): CatalogRoom | undefined {
   return isRoomTypeId(id) ? getRoom(id) : undefined
+}
+
+/** Definición de edificio del catálogo, o undefined si el id es desconocido. */
+export function findBuilding(id: string): CatalogBuilding | undefined {
+  return isBuildingId(id) ? getBuilding(id) : undefined
 }

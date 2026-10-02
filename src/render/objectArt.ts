@@ -13,9 +13,22 @@
 import type { Graphics } from 'pixi.js'
 import { shade } from './color'
 import { palette } from './palette'
+import { DEFAULT_CLUB_COLORS, type ClubColors } from './clubColors'
 import type { Random } from './random'
+import { MIN_DETAIL, OUTLINE, OUTLINE_DETAIL, OUTLINE_WALL } from './style'
 
-export type ObjectPainter = (g: Graphics, w: number, h: number, rnd: Random) => void
+/**
+ * Pintor de un objeto. `tier` es el nivel (0 = nivel 1) para los objetos
+ * mejorables; `club`, los colores del club para lo que se tiñe.
+ */
+export type ObjectPainter = (
+  g: Graphics,
+  w: number,
+  h: number,
+  rnd: Random,
+  tier?: number,
+  club?: ClubColors,
+) => void
 
 const O = palette.outline
 const LINE = 1.5
@@ -65,64 +78,275 @@ const C = {
 } as const
 
 // ── Vestuario ────────────────────────────────────────────────────
+//
+// Taquilla, banco y ducha tienen 3 niveles (skill pixi-artist): misma huella,
+// y cada nivel se distingue a ×0,5 por material, color y silueta.
 
-const locker: ObjectPainter = (g, w, h) => {
-  const body = 0x6b7f8f
-  box(g, 8, 6, w - 16, h - 12, body)
-  // Techo de la taquilla (arriba) y frente con puerta (abajo)
-  g.rect(9.5, 7.5, w - 19, (h - 12) * 0.55).fill(shade(body, 0.12))
-  const frontY = 6 + (h - 12) * 0.58
-  g.rect(9.5, frontY, w - 19, h - 13.5 - frontY + 6).fill(shade(body, -0.12))
-  for (let i = 0; i < 3; i++)
-    line(g, 16 + i * 6, frontY + 4, 16 + i * 6, frontY + 10, shade(body, -0.4), 2)
-  g.circle(w - 16, frontY + 9, 2.2)
-    .fill(palette.warmLight)
-    .stroke({ color: O, width: 0.8 })
-}
+/** Materiales del vestuario, todos derivados de la paleta. */
+const M = {
+  steel: palette.stone,
+  steelDark: palette.stoneDark,
+  woodLight: shade(palette.wood, 0.32),
+  wood: palette.wood,
+  woodDark: shade(palette.wood, -0.38),
+  /** Azulejo blanco (ducha sencilla) y azul (ducha con mampara). */
+  tileWhite: shade(palette.chalk, -0.06),
+  tile: shade(palette.waterShine, 0.1),
+  stone: palette.stone,
+  brass: palette.warmLight,
+  towel: palette.chalk,
+} as const
 
-const changingBench: ObjectPainter = (g, w, h) => {
-  // Patas metálicas en los extremos
-  for (const x of [12, w - 20])
-    g.rect(x, h / 2 - 14, 8, 28)
-      .fill(C.metalDark)
-      .stroke({ color: O, width: 1 })
-  // Tablón con dos tablas
-  box(g, 6, h / 2 - 11, w - 12, 22, C.woodLight, 4)
-  line(g, 10, h / 2, w - 10, h / 2, shade(C.woodLight, -0.25))
-  // Toalla doblada
-  box(g, w * 0.62, h / 2 - 9, 26, 18, palette.chalk, 3)
-  line(g, w * 0.62 + 4, h / 2, w * 0.62 + 22, h / 2, shade(palette.chalk, -0.2))
-}
-
-const shower: ObjectPainter = (g, w, h) => {
-  // Plato de ducha con baldosín y agua
-  box(g, 4, 4, w - 8, h - 8, 0xc9d6dc, 4)
-  for (let i = 1; i < 4; i++) {
-    line(g, 4 + ((w - 8) * i) / 4, 6, 4 + ((w - 8) * i) / 4, h - 6, shade(0xc9d6dc, -0.12))
-    line(g, 6, 4 + ((h - 8) * i) / 4, w - 6, 4 + ((h - 8) * i) / 4, shade(0xc9d6dc, -0.12))
+/** Vetas de madera: líneas finas paralelas, sembradas para que no se repitan. */
+function grain(
+  g: Graphics,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: number,
+  rnd: Random,
+  vertical = false,
+): void {
+  const count = Math.max(2, Math.round((vertical ? w : h) / 7))
+  for (let i = 0; i < count; i++) {
+    const t = (i + 0.5 + rnd.range(-0.2, 0.2)) / count
+    if (vertical)
+      line(
+        g,
+        x + w * t,
+        y + 2,
+        x + w * t + rnd.range(-1, 1),
+        y + h - 2,
+        shade(color, -0.16),
+        OUTLINE_DETAIL,
+      )
+    else
+      line(
+        g,
+        x + 2,
+        y + h * t,
+        x + w - 2,
+        y + h * t + rnd.range(-1, 1),
+        shade(color, -0.16),
+        OUTLINE_DETAIL,
+      )
   }
-  g.ellipse(w / 2 + 4, h / 2 + 6, 16, 11).fill({ color: C.water, alpha: 0.45 })
-  // Desagüe
-  g.circle(w / 2, h - 16, 5)
-    .fill(C.metalDark)
-    .stroke({ color: O, width: 1 })
-  for (const dx of [-2, 0, 2]) line(g, w / 2 + dx, h - 19, w / 2 + dx, h - 13, C.metal)
-  // Tubería y alcachofa (pegadas a la pared de arriba)
-  g.rect(w / 2 - 2, 0, 4, 12)
-    .fill(C.metal)
-    .stroke({ color: O, width: 0.8 })
+}
+
+/**
+ * Taquilla 1×1, vista desde arriba con la puerta (frente) abajo.
+ *  1 · metal gris: rejilla de 3 ranuras y candado
+ *  2 · madera clara con vetas y una toalla blanca colgando del frente
+ *  3 · madera oscura, franja del club, tirador dorado y luz cálida
+ */
+const locker: ObjectPainter = (g, w, h, rnd, tier = 0, club = DEFAULT_CLUB_COLORS) => {
+  const x = 9
+  const y = 6
+  const bw = w - 18
+  const bh = h - 14
+  const material = tier === 0 ? M.steel : tier === 1 ? M.woodLight : M.woodDark
+  const front = y + bh * 0.62
+
+  box(g, x, y, bw, bh, material)
+  // Techo (arriba) y puerta (abajo, en sombra)
+  g.rect(x + 1.5, front, bw - 3, y + bh - front - 1.5).fill(shade(material, -0.14))
+  line(g, x + 1.5, front, x + bw - 1.5, front, shade(material, -0.35), OUTLINE_DETAIL)
+
+  if (tier === 0) {
+    // Rejilla de ventilación en el techo y candado en la puerta
+    for (let i = 0; i < 3; i++)
+      g.rect(x + 7, y + 6 + i * 6, bw - 14, MIN_DETAIL + 0.5).fill(M.steelDark)
+    g.rect(x + bw - 11, front + 4, 6, 6)
+      .fill(M.brass)
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+    return
+  }
+
+  if (tier === 1) {
+    grain(g, x + 1.5, y + 1.5, bw - 3, front - y - 2, material, rnd, true)
+    // Toalla colgando del frente: rompe la silueta hacia abajo
+    g.roundRect(x + 6, front + 2, 16, bh - (front - y) + 6, 2)
+      .fill(M.towel)
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+    line(g, x + 6, y + bh + 4, x + 22, y + bh + 4, shade(M.towel, -0.22), MIN_DETAIL)
+    g.circle(x + bw - 8, front + 8, 2.5).fill(M.steelDark)
+    return
+  }
+
+  // Lujo: franja del club, tirador dorado y luz cálida en el techo
+  grain(g, x + 1.5, y + 1.5, bw - 3, front - y - 2, material, rnd, true)
+  g.rect(x + bw / 2 - 4, y + 1.5, 8, bh - 3).fill(club.primary)
+  g.rect(x + bw / 2 - 4, y + 1.5, 1.5, bh - 3).fill(shade(club.primary, 0.3))
+  g.circle(x + bw / 2, y + 8, 6).fill({ color: M.brass, alpha: 0.35 })
+  g.circle(x + bw / 2, y + 8, 3).fill(M.brass)
+  g.roundRect(x + bw - 13, front + 5, 8, 4, 2)
+    .fill(M.brass)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+}
+
+/**
+ * Banco de vestuario 3×1; la pared (respaldo) queda arriba, el frente abajo.
+ *  1 · tablón sobre dos patas metálicas
+ *  2 · con respaldo, perchas y una camiseta colgada
+ *  3 · cojín corrido del color del club con capitoné y marco de madera oscura
+ */
+const changingBench: ObjectPainter = (g, w, h, rnd, tier = 0, club = DEFAULT_CLUB_COLORS) => {
+  const seatY = h / 2 - 8
+  const seatH = 24
+
+  if (tier === 0) {
+    for (const x of [14, w - 22])
+      g.rect(x, seatY - 3, 8, seatH + 6)
+        .fill(M.steelDark)
+        .stroke({ color: O, width: OUTLINE_DETAIL })
+    box(g, 6, seatY, w - 12, seatH, M.woodLight, 3)
+    line(g, 9, seatY + seatH / 2, w - 9, seatY + seatH / 2, shade(M.woodLight, -0.28), MIN_DETAIL)
+    grain(g, 6, seatY, w - 12, seatH, M.woodLight, rnd)
+    return
+  }
+
+  if (tier === 1) {
+    // Respaldo contra la pared con perchas
+    box(g, 6, 4, w - 12, 10, M.wood, 2)
+    for (const x of [w * 0.2, w * 0.5, w * 0.8]) g.circle(x, 9, 2.5).fill(M.steelDark)
+    box(g, 6, seatY, w - 12, seatH, M.woodLight, 3)
+    line(g, 9, seatY + seatH / 2, w - 9, seatY + seatH / 2, shade(M.woodLight, -0.28), MIN_DETAIL)
+    grain(g, 6, seatY, w - 12, seatH, M.woodLight, rnd)
+    // Camiseta colgada de la percha del medio, del color del club
+    const sx = w * 0.5
+    g.poly([
+      sx - 14,
+      10,
+      sx + 14,
+      10,
+      sx + 18,
+      18,
+      sx + 11,
+      21,
+      sx + 11,
+      34,
+      sx - 11,
+      34,
+      sx - 11,
+      21,
+      sx - 18,
+      18,
+    ])
+      .fill(club.primary)
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+    g.rect(sx - 4, 10, 8, MIN_DETAIL + 1).fill(club.secondary)
+    return
+  }
+
+  // Lujo: marco de madera oscura, cojín del club con capitoné y respaldo acolchado
+  box(g, 4, 3, w - 8, h - 8, M.woodDark, 4)
+  box(g, 9, 7, w - 18, 12, shade(club.primary, -0.12), 4)
+  box(g, 9, seatY + 1, w - 18, seatH - 2, club.primary, 6)
+  for (let i = 0; i < 6; i++) {
+    const bx = 22 + (i * (w - 44)) / 5
+    g.circle(bx, seatY + seatH / 2, 2.5).fill(shade(club.primary, -0.35))
+    g.circle(bx, 13, 2).fill(shade(club.primary, -0.4))
+  }
+  g.roundRect(14, seatY + 3, w - 28, 3, 1.5).fill(shade(club.primary, 0.22))
+}
+
+/**
+ * Ducha 1×1; la pared con la alcachofa queda arriba.
+ *  1 · plato de azulejo con desagüe y alcachofa redonda
+ *  2 · lo mismo con mampara de cristal en dos lados (silueta en L)
+ *  3 · ducha de lluvia: suelo de piedra, alcachofa cuadrada grande y banco de teca
+ */
+const shower: ObjectPainter = (g, w, h, rnd, tier = 0) => {
+  // El color del plato distingue el nivel a ×0,5: blanco → azul → piedra
+  const floor = tier === 2 ? M.stone : tier === 1 ? M.tile : M.tileWhite
+  box(g, 4, 4, w - 8, h - 8, floor, 3)
+
+  if (tier === 2) {
+    // Losas de piedra irregulares
+    for (const [x, y, sw, sh] of [
+      [6, 6, 26, 22],
+      [33, 6, 25, 15],
+      [33, 22, 25, 21],
+      [6, 29, 26, 29],
+      [33, 44, 25, 14],
+    ] as const) {
+      g.rect(x, y, sw, sh)
+        .fill(shade(M.stone, rnd.range(-0.08, 0.08)))
+        .stroke({ color: shade(M.stone, -0.3), width: OUTLINE_DETAIL })
+    }
+  } else {
+    for (let i = 1; i < 4; i++) {
+      line(
+        g,
+        4 + ((w - 8) * i) / 4,
+        6,
+        4 + ((w - 8) * i) / 4,
+        h - 6,
+        shade(floor, -0.14),
+        OUTLINE_DETAIL,
+      )
+      line(
+        g,
+        6,
+        4 + ((h - 8) * i) / 4,
+        w - 6,
+        4 + ((h - 8) * i) / 4,
+        shade(floor, -0.14),
+        OUTLINE_DETAIL,
+      )
+    }
+  }
+  // Charco y desagüe
+  g.ellipse(w / 2 + 3, h / 2 + 6, 15, 10).fill({ color: palette.water, alpha: 0.4 })
+  g.circle(w / 2, h - 15, 4)
+    .fill(M.steelDark)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+
+  if (tier === 2) {
+    // Alcachofa de lluvia cuadrada y banco de teca a la izquierda
+    g.rect(w / 2 - 2, 0, 4, 10).fill(M.steelDark)
+    g.roundRect(w / 2 - 11, 10, 22, 22, 3)
+      .fill(M.steelDark)
+      .stroke({ color: O, width: OUTLINE })
+    g.roundRect(w / 2 - 8, 13, 16, 16, 2).fill(shade(M.steelDark, 0.25))
+    box(g, 7, h - 24, 18, 16, M.woodLight, 2)
+    line(g, 7, h - 16, 25, h - 16, shade(M.woodLight, -0.3), OUTLINE_DETAIL)
+    return
+  }
+
+  // Alcachofa redonda
+  g.rect(w / 2 - 2, 0, 4, 11)
+    .fill(M.steel)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
   g.circle(w / 2, 16, 8)
-    .fill(C.metal)
-    .stroke({ color: O, width: LINE })
-  for (const [dx, dy] of [
-    [-3, -2],
-    [0, -3],
-    [3, -2],
-    [-3, 2],
-    [0, 3],
-    [3, 2],
-  ] as const) {
-    g.circle(w / 2 + dx, 16 + dy, 0.9).fill(C.metalDark)
+    .fill(M.steel)
+    .stroke({ color: O, width: OUTLINE })
+  g.circle(w / 2, 16, 4).fill(shade(M.steel, -0.25))
+
+  if (tier === 1) {
+    // Mampara de cristal en L (lado derecho y frente): perfil metálico OSCURO para
+    // que contraste con el azulejo claro, postes en las esquinas y reflejos.
+    const pane = 8
+    const glass = { color: palette.water, alpha: 0.55 }
+    g.rect(w - 4 - pane, 4, pane, h - 8)
+      .fill(glass)
+      .stroke({ color: M.steelDark, width: OUTLINE_WALL })
+    g.rect(4, h - 4 - pane, w - 8 - pane, pane)
+      .fill(glass)
+      .stroke({ color: M.steelDark, width: OUTLINE_WALL })
+    for (const [px, py] of [
+      [w - 4 - pane, 4],
+      [w - 4 - pane, h - 4 - pane],
+      [4, h - 4 - pane],
+    ] as const) {
+      g.rect(px, py, pane, pane).fill(M.steelDark)
+    }
+    // Reflejos diagonales sobre el cristal
+    for (const t of [0.3, 0.6]) {
+      line(g, w - 4 - pane + 1, h * t, w - 5, h * t - 5, palette.chalk, MIN_DETAIL)
+      line(g, w * t, h - 5, w * t + 5, h - 4 - pane + 1, palette.chalk, MIN_DETAIL)
+    }
   }
 }
 

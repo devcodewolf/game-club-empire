@@ -10,7 +10,7 @@ import type { BuildingId, PlacedBuilding } from '@/sim/buildings'
 import type { Game } from '@/sim/game'
 import { rotateSize } from '@/sim/geometry'
 import { createBuildingMarker, destroyBuildingMarker } from './buildingMarker'
-import { playBuild, playDemolish, stopEffects, type PxRect } from './effects'
+import { playBuild, playDemolish, playUpgrade, stopEffects, type PxRect } from './effects'
 import { TILE_SIZE, tileToWorld } from './grid'
 import type { RenderAssets } from './renderAssets'
 
@@ -26,11 +26,11 @@ export function createBuildingsView(
 ): BuildingsView {
   const markers = new Map<BuildingId, { marker: Container; rect: PxRect }>()
 
-  const add = (building: PlacedBuilding, animate: boolean): void => {
+  const add = (building: PlacedBuilding, animate: boolean | 'upgrade'): void => {
     const def = game.content.buildings[building.type]
     if (!def) return
 
-    const marker = createBuildingMarker(def, building.rotation, assets)
+    const marker = createBuildingMarker(def, building.rotation, assets, building.tier)
     const origin = tileToWorld(building.origin)
     const size = rotateSize(def.size, building.rotation)
     const rect = { x: origin.x, y: origin.y, w: size.width * TILE_SIZE, h: size.height * TILE_SIZE }
@@ -39,7 +39,8 @@ export function createBuildingsView(
     marker.position.set(rect.x + rect.w / 2, rect.y + rect.h / 2)
     layer.addChild(marker)
     markers.set(building.id, { marker, rect })
-    if (animate) playBuild(marker, rect, effects)
+    if (animate === 'upgrade') playUpgrade(marker, rect, effects)
+    else if (animate) playBuild(marker, rect, effects)
   }
 
   const remove = (buildingId: BuildingId, animate: boolean): void => {
@@ -60,6 +61,11 @@ export function createBuildingsView(
 
   const unsubscribe = game.subscribe((event) => {
     if (event.type === 'buildingPlaced') add(event.building, true)
+    if (event.type === 'buildingUpgraded') {
+      // Mejora en el sitio: se cambia el dibujo por el del nivel nuevo, con un rebote
+      remove(event.building.id, false)
+      add(event.building, 'upgrade')
+    }
     if (event.type === 'buildingDemolished') remove(event.building.id, true)
     if (event.type === 'areaDemolished')
       for (const building of event.buildings) remove(building.id, true)

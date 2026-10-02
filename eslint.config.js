@@ -24,5 +24,10 @@ export default tseslint.config(
     files: ['**/*.ts', '**/*.vue'],
     rules: { 'no-undef': 'off' },
   },
+  {
+    // Scripts de herramientas en Node 22: estos globales existen sin importarlos.
+    files: ['tools/**/*.mjs', '.claude/**/*.mjs'],
+    languageOptions: { globals: { fetch: 'readonly', WebSocket: 'readonly', Buffer: 'readonly' } },
+  },
   prettier,
 )

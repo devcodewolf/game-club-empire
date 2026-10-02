@@ -118,6 +118,15 @@ export function playBuild(marker: Container, rect: PxRect, effects: Container): 
     .call(() => dustPuff(effects, rect, 0.8), [], 0.5)
 }
 
+/** Mejora en el sitio: el objeto nuevo rebota desde un poco más pequeño, con algo de polvo. */
+export function playUpgrade(marker: Container, rect: PxRect, effects: Container): void {
+  if (prefersReducedMotion()) return
+
+  marker.scale.set(0.8)
+  gsap.to(marker.scale, { x: 1, y: 1, duration: 0.45, ease: 'back.out(3)' })
+  dustPuff(effects, rect, 0.5)
+}
+
 /** Derribo: polvo, el marcador se hunde un poco y se desvanece; luego se destruye. */
 export function playDemolish(
   marker: Container,
