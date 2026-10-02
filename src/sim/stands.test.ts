@@ -4,7 +4,7 @@ import { executeCommand, type Command } from './commands'
 import type { PlacedBuilding, StandSlot } from './buildings'
 import type { Rotation, TileCoord } from './geometry'
 import { buildingAt, type MapState } from './map'
-import { standCapacity, standTargetAt } from './stands'
+import { pitchCapacity, standCapacity, standTargetAt } from './stands'
 import { createTestMap, TEST_CONTENT } from './test-fixtures'
 
 const run = (state: MapState, command: Command) => executeCommand(state, command, TEST_CONTENT)
@@ -252,5 +252,20 @@ describe('standCapacity', () => {
     const upgraded = state.buildings[north.id]
     if (!upgraded) throw new Error('grada desaparecida')
     expect(standCapacity(def, upgraded)).toBe(80)
+  })
+})
+
+describe('pitchCapacity', () => {
+  it('suma el aforo de las gradas del campo (0 sin gradas)', () => {
+    const state = mapWithPitch()
+    const pitchId = Object.values(state.buildings)[0]?.id ?? 0
+    expect(pitchCapacity(state, TEST_CONTENT, pitchId)).toBe(0)
+
+    const north = placeStand(state, 'north') // 4 × 10
+    placeStand(state, 'east') // 3 × 10
+    expect(pitchCapacity(state, TEST_CONTENT, pitchId)).toBe(70)
+
+    run(state, upgradeCmd(north.id)) // norte: 4 × 20
+    expect(pitchCapacity(state, TEST_CONTENT, pitchId)).toBe(110)
   })
 })

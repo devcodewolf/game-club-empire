@@ -109,6 +109,14 @@ export function standsOf(state: MapState, pitchId: BuildingId): PlacedBuilding[]
   return Object.values(state.buildings).filter((b) => b.attach?.pitchId === pitchId)
 }
 
+/** Aforo de un campo: la suma de sus gradas. */
+export function pitchCapacity(state: MapState, content: SimContent, pitchId: BuildingId): number {
+  return standsOf(state, pitchId).reduce((total, stand) => {
+    const def = content.buildings[stand.type]
+    return def ? total + standCapacity(def, stand) : total
+  }, 0)
+}
+
 export type StandError =
   | 'unknownBuilding'
   | 'notAPitch'

@@ -6,7 +6,7 @@
  */
 import { computed, watch } from 'vue'
 import { maxTier, tierQuality, type PitchRole } from '@/sim/buildings'
-import { standCapacity, validateStandUpgrade } from '@/sim/stands'
+import { pitchCapacity, standCapacity, validateStandUpgrade } from '@/sim/stands'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
 import { findBuilding } from '@/ui/composables/contentLookup'
@@ -44,6 +44,13 @@ function standUpgradeBlock(tier: number): string | null {
   }
   return null
 }
+
+/** Aforo de un campo: la suma de sus gradas (solo campos). */
+const pitchSeats = computed(() => {
+  const b = building.value
+  if (!b || !def.value?.pitch) return undefined
+  return pitchCapacity(game.state, game.content, b.id).toLocaleString('es-ES')
+})
 
 /** Aforo actual y del siguiente nivel, solo para gradas. */
 const standInfo = computed(() => {
@@ -171,6 +178,10 @@ function upgrade(): void {
       <p class="font-hand text-[18px] leading-6 text-ink-blue">Calidad: {{ info.quality }}</p>
       <p v-if="standInfo" class="font-hand text-[18px] leading-6 text-ink-blue">
         Aforo: {{ standInfo.capacity }} espectadores
+      </p>
+
+      <p v-if="pitchSeats" class="font-hand text-[18px] leading-6 text-ink-blue">
+        Aforo: {{ pitchSeats }} espectadores
       </p>
 
       <section v-if="currentRole" class="mt-2">
