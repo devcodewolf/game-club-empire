@@ -9,7 +9,7 @@
  * Usa exactamente el código de dibujo del juego (marcadores, texturas, vistas
  * de suelos/muros/salas), así lo que se ve aquí es lo que se verá en partida.
  */
-import { Application, Container, Graphics, Text } from 'pixi.js'
+import { Application, Container, Graphics, Text, type Ticker } from 'pixi.js'
 import { BUILDINGS } from '@/content/buildings'
 import { GAME_CONTENT } from '@/content/gameContent'
 import { createBuildingMarker } from '@/render/art/buildingMarker'
@@ -58,6 +58,7 @@ async function main(): Promise<void> {
   const def = assetId ? GAME_CONTENT.buildings[assetId] : undefined
   const tierIds = params.get('tiers')?.split(',').filter(Boolean)
   const scene = GALLERY_SCENES.find((item) => item.name === params.get('scene'))
+  const buildStart = performance.now()
   const page = scene
     ? scenePage(scene, assets)
     : tierIds
@@ -71,6 +72,7 @@ async function main(): Promise<void> {
     Math.max(PAGE_WIDTH, Math.ceil(page.node.width + GAP)),
     Math.ceil(page.height + GAP),
   )
+  if (scene?.name === 'rendimiento') await benchmark(app, page, performance.now() - buildStart)
   // Señal para las capturas automáticas: la galería ya está dibujada.
   document.body.dataset.ready = 'true'
 }
@@ -299,6 +301,24 @@ function sceneView(scene: GalleryScene, scale: number, assets: RenderAssets): Pl
   createBuildingsView(buildings, effects, game, assets)
 
   return { node: world, height: scene.size.height * T * scale }
+}
+
+/**
+ * Mide la escena de rendimiento: tiempo de montaje y fps medios durante
+ * 2 s. Lo escribe arriba de la escena y en la consola.
+ */
+async function benchmark(app: Application, page: Placed, buildMs: number): Promise<void> {
+  const frames: number[] = []
+  const tick = (ticker: Ticker): void => {
+    frames.push(ticker.deltaMS)
+  }
+  app.ticker.add(tick)
+  await new Promise((resolve) => setTimeout(resolve, 2000))
+  app.ticker.remove(tick)
+  const avg = frames.slice(10).reduce((sum, ms) => sum + ms, 0) / Math.max(1, frames.length - 10)
+  const text = `Montaje ${buildMs.toFixed(0)} ms · ${(1000 / avg).toFixed(0)} fps (${avg.toFixed(1)} ms/frame)`
+  console.info(`Galería, rendimiento: ${text}`)
+  addLabel(page.node, text, 0, -GAP + 4, 40)
 }
 
 // ── Utilidades ───────────────────────────────────────────────────

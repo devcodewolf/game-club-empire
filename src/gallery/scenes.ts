@@ -151,7 +151,51 @@ const BIG_STADIUM: GalleryScene = {
   ],
 }
 
-export const GALLERY_SCENES: readonly GalleryScene[] = [CHANGING_ROOM, OFFICE, STADIUM, BIG_STADIUM]
+/** Objetos de 1×1 que se repiten en la escena de rendimiento. */
+const BENCH_OBJECTS = [
+  'locker',
+  'shower',
+  'toilet',
+  'sink',
+  'officeChair',
+  'filingCabinet',
+  'plant',
+  'waterCooler',
+  'cornerFlag',
+  'streetLamp',
+  'bin',
+  'fountain',
+  'vendingMachine',
+]
+
+/**
+ * Rendimiento: el estadio grande más 215 objetos de 1×1 en filas debajo
+ * (5 filas de 43). Con `?scene=rendimiento` la galería mide el tiempo de
+ * montaje y los fps.
+ */
+const BENCHMARK: GalleryScene = {
+  name: 'rendimiento',
+  size: { width: 88, height: 84 },
+  pieces: [],
+  commands: [
+    ...BIG_STADIUM.commands,
+    ...Array.from({ length: 5 * 43 }, (_, i) =>
+      place(
+        BENCH_OBJECTS[i % BENCH_OBJECTS.length] ?? 'bin',
+        2 + (i % 43) * 2,
+        72 + Math.floor(i / 43) * 2,
+      ),
+    ),
+  ],
+}
+
+export const GALLERY_SCENES: readonly GalleryScene[] = [
+  CHANGING_ROOM,
+  OFFICE,
+  STADIUM,
+  BIG_STADIUM,
+  BENCHMARK,
+]
 
 export function sceneFor(assetId: string): GalleryScene | undefined {
   return GALLERY_SCENES.find((scene) => scene.pieces.includes(assetId))

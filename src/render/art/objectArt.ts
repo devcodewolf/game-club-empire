@@ -69,8 +69,9 @@ const C = {
   porcelain: 0xf2f2ee,
   wood: palette.wood,
   woodLight: shade(palette.wood, 0.25),
-  clubRed: 0x8c2f39,
-  clubBlue: 0x3f6fa8,
+  // Deuda: estos objetos aún no reciben ClubColors (ver pixi-artist)
+  clubRed: palette.clubHome,
+  clubBlue: palette.clubAway,
   teal: 0x5aa39a,
   paper: palette.chalk,
   glass: palette.waterShine,

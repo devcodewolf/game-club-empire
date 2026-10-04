@@ -4,7 +4,7 @@
  * Sustituyen a los sprites hasta que existan los atlas. Solo dibujan: no
  * conocen la simulación más allá de la definición del edificio (`BuildingDef`).
  */
-import { Container, Graphics, Sprite, Text } from 'pixi.js'
+import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
 import { pitchSurface, type BuildingDef, type PitchRole } from '@/sim/buildings/buildings'
 import { rotateSize, type GridSize, type Rotation } from '@/sim/geometry'
 import { TILE_SIZE } from '../core/grid'
@@ -186,9 +186,14 @@ function createArtMarker(
 
   const marker = new Container({ label: `building:${def.id}` })
   const seed = seedFromText(def.id)
+  const corner = def.stand?.corner === true
+  // Dibujo y visera se pintan una vez por (objeto, nivel, tamaño) y se comparten.
+  const key = `${def.id}:${tier}:${size.width}x${size.height}`
+  const paintArt = (g: Graphics): void => painter(g, w, h, createRandom(seed), tier)
+  const paintRoof = (g: Graphics): boolean =>
+    corner ? paintCornerRoof(g, w, tier) : paintStandRoof(g, w, tier)
   // Las gradas proyectan una sombra más larga cuanto más altas son.
   const shadowOffset = def.stand ? standShadowOffset(tier) : SHADOW_OFFSET
-  const corner = def.stand?.corner === true
   const angle = (rotation * Math.PI) / 2
   if (corner) {
     // Sombra con la silueta del córner (cuarto de círculo), girada como el dibujo
@@ -201,12 +206,9 @@ function createArtMarker(
     marker.addChild(shadow)
   } else if (!def.stand && assets) {
     // Silueta del propio dibujo (sin colores: no depende de los del club).
-    const texture = assets.silhouettes.get(`${def.id}:${tier}`, w, h, (g) =>
-      painter(g, w, h, createRandom(seed), tier),
-    )
     const shadow = new Sprite({
       label: SHADOW_LABEL,
-      texture,
+      texture: assets.art.silhouette(key, w, h, paintArt) ?? Texture.EMPTY,
       anchor: 0.5,
       tint: palette.outline,
       alpha: SHADOW_ALPHA,
@@ -231,8 +233,7 @@ function createArtMarker(
     )
   }
 
-  const art = new Graphics()
-  painter(art, w, h, createRandom(seed), tier)
+  const art = sharedGraphics(assets, key, paintArt) ?? new Graphics()
   art.pivot.set(w / 2, h / 2)
   art.position.set(rw / 2, rh / 2)
   art.rotation = angle
@@ -240,18 +241,34 @@ function createArtMarker(
 
   // Visera de las gradas altas: aparte, para desvanecerla con el ratón encima.
   if (def.stand) {
-    const roof = new Graphics({ label: STAND_ROOF_LABEL })
-    const painted = corner ? paintCornerRoof(roof, w, tier) : paintStandRoof(roof, w, tier)
-    if (!painted) {
-      roof.destroy()
-      return marker
-    }
+    const roof = sharedGraphics(assets, `${key}:roof`, paintRoof)
+    if (!roof) return marker
+    roof.label = STAND_ROOF_LABEL
     roof.pivot.set(w / 2, h / 2)
     roof.position.set(rw / 2, rh / 2)
     roof.rotation = art.rotation
     marker.addChild(roof)
   }
   return marker
+}
+
+/**
+ * Graphics que comparte el dibujo cacheado de `key`. Sin caché (no debería
+ * pasar fuera de tests) pinta uno propio. `null` si no hay nada que dibujar.
+ */
+function sharedGraphics(
+  assets: RenderAssets | undefined,
+  key: string,
+  paint: (g: Graphics) => boolean | void,
+): Graphics | null {
+  if (assets) {
+    const context = assets.art.context(key, paint)
+    return context ? new Graphics(context) : null
+  }
+  const g = new Graphics()
+  if (paint(g) !== false) return g
+  g.destroy()
+  return null
 }
 
 /**

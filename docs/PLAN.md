@@ -87,9 +87,9 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 **Resultado visible:** suelos, muros, carretera y objetos iniciales con arte propio, no con rectángulos de color.
 
 - [x] Hoja de muestra de estilo validada por Raul (escala A de personas; pide más textura y detalle)
-- [ ] Completar `docs/GUIA-ESTILO.md` y `src/render/palette.ts` con pieles, pelo y colores de club
-- [ ] 🧠 Caché de texturas horneadas: cada pintor se hornea una vez por (id, nivel, colores del club) con `generateTexture` y se dibuja como `Sprite`, con el marcador de color como fallback; prueba de 200 edificios a 60 fps
-  > Decisión (4-oct-2026): se descarta el pipeline SVG → PNG → atlas. Todo el arte se pinta por código con `Graphics` (niveles y colores del club salen por parámetro) y se hornea en tiempo de carga.
+- [x] Completar `docs/GUIA-ESTILO.md` y `src/render/palette.ts` con pieles, pelo y colores de club
+- [x] 🧠 Caché del arte (`render/art/artCache.ts`): cada pintor se dibuja una vez por (objeto, nivel, tamaño) en un `GraphicsContext` compartido por todas las copias; las siluetas de sombra sí se hornean a textura. Escena de prueba `?scene=rendimiento` (estadio grande + 215 objetos) con tiempo de montaje y fps
+  > Decisión (4-oct-2026): se descarta el pipeline SVG → PNG → atlas. Todo el arte se pinta por código con `Graphics` (niveles y colores del club salen por parámetro). Se comparte la geometría en vez de hornear a `Sprite`: sigue nítida con zoom ×2 en pantallas de alta densidad y las gradas (hasta 56×14 casillas) no ocupan decenas de MB en texturas.
 - [x] Texturas de los suelos iniciales con variación por casilla (adelantado a la Fase 1B, bloque A; se pulirán aquí)
 - [ ] Pintores de piezas de muro para el autotiling (recto, esquina, T, cruz y final) y puerta
 - [ ] Pintores de los objetos iniciales, cada uno con sus 2-3 detalles característicos y su sombra

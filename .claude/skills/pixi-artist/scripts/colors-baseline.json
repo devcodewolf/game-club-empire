@@ -4,16 +4,6 @@
     "#2f3540": [
       "src/render/art/objectArt.ts"
     ],
-    "#8c2f39": [
-      "src/content/rooms.ts",
-      "src/render/art/objectArt.ts",
-      "src/render/core/clubColors.ts",
-      "src/render/views/entranceView.ts"
-    ],
-    "#3f6fa8": [
-      "src/render/art/objectArt.ts",
-      "src/render/views/entranceView.ts"
-    ],
     "#b5643c": [
       "src/content/buildings.ts",
       "src/content/rooms.ts",

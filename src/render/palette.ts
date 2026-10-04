@@ -32,6 +32,21 @@ export const palette = {
   chalk: 0xeef0ea,
   warmLight: 0xf2c46b,
   outline: 0x2e2a26,
+  // Personas: piel y pelo
+  skinLight: 0xe3b896,
+  skinMedium: 0xc08a63,
+  skinDark: 0x8a5a3c,
+  hairBrown: 0x3b2a1f,
+  hairBlond: 0xc99a4a,
+  hairBlack: 0x1f1a17,
+  hairGrey: 0x9a9a96,
+
+  // Colores del club por defecto: los pintores no los usan directamente, los
+  // reciben en `ClubColors` (el jugador los cambiará al crear su club).
+  clubHome: 0x8c2f39,
+  clubAway: 0x3f6fa8,
+  clubKeeper: 0xe0bf3a,
+  clubStaff: 0x2f3b4c,
 
   // Fondo fuera del mapa
   background: 0x1b2a1f,

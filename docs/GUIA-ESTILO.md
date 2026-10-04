@@ -34,8 +34,21 @@ El clima es parte del juego: la lluvia embarra el campo y crea charcos que se ve
 | Luz cálida | `#f2c46b` ventanas y focos |
 | Lluvia | `#cfdde4` al 55 % de opacidad |
 | Contorno | `#2e2a26` |
+| Piel | `#e3b896` clara · `#c08a63` media · `#8a5a3c` oscura |
+| Pelo | `#3b2a1f` castaño · `#c99a4a` rubio · `#1f1a17` negro · `#9a9a96` canoso |
 
-Los colores del club (camisetas, banderas, gradas) los elige el jugador y no forman parte de esta paleta base.
+### Colores del club
+Los colores del club (camisetas, banderas, asientos, franjas de lujo) los elige el jugador: los pintores nunca los escriben fijos, los reciben como parámetro (`ClubColors` en `src/render/core/clubColors.ts`). Hasta que exista la creación del club se usan estos por defecto:
+
+| Uso | Color |
+|---|---|
+| Primera equipación (color principal) | `#8c2f39` granate |
+| Ribete y color secundario | `#eef0ea` cal |
+| Segunda equipación (visitante) | `#3f6fa8` azul |
+| Portero | `#e0bf3a` amarillo |
+| Cuerpo técnico | `#2f3b4c` azul marino |
+
+Las personas combinan piel y pelo con libertad; la afición viste ropa de calle (piedra oscura) con detalles del color del club.
 
 ## Implementación
 - La paleta vive en `src/render/palette.ts` y es la única fuente de colores para sprites y efectos.
@@ -46,7 +59,7 @@ Los colores del club (camisetas, banderas, gradas) los elige el jugador y no for
 Muestra: `assets/src/muestras/muestra-estilo.svg` (se regenera con `node tools/muestras/muestra-estilo.mjs assets/src/muestras/muestra-estilo.svg`).
 
 - **Escala de personas: opción A**, unos 40 px de ancho por persona en una casilla de 64 px (escala "de juego", como Prison Architect). Sustituye a los 12×8 px de "Vista y escala".
-- **Pieles, pelo y colores del club:** se aceptan como punto de partida los de la muestra; se pasarán a la paleta en la Fase 1B.
+- **Pieles, pelo y colores del club:** se aceptan los de la muestra; ya están en la paleta (4-oct-2026).
 - **Primera aproximación aceptada, pero hace falta más textura y más detalle** (referencia: materiales y salas de Prison Architect):
   - Materiales con más vida: segundo y tercer tono, juntas, vetas y piezas irregulares (madera en tablas desalineadas, baldosas con junta, grava con piedras sueltas). Siguen siendo colores planos, sin degradados.
   - Sombras planas interiores: una franja oscura junto a los muros dentro de las salas y bajo los muebles, para dar profundidad.

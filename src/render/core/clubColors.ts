@@ -1,10 +1,10 @@
 /**
- * Colores del club: los elige el jugador (no forman parte de la paleta base,
- * ver docs/GUIA-ESTILO.md). Los pintores los reciben como parámetro para
+ * Colores del club: los elige el jugador (ver "Colores del club" en
+ * docs/GUIA-ESTILO.md). Los pintores los reciben como parámetro para
  * teñir camisetas, asientos o la franja de las taquillas de lujo.
  *
- * Hasta que exista la creación del club, se usan estos por defecto (un único
- * sitio: cambiar aquí cambia todo el arte).
+ * Hasta que exista la creación del club, se usan los de la paleta por
+ * defecto (un único sitio: cambiar aquí cambia todo el arte).
  */
 import { palette } from '../palette'
 
@@ -16,6 +16,6 @@ export interface ClubColors {
 }
 
 export const DEFAULT_CLUB_COLORS: ClubColors = {
-  primary: 0x8c2f39,
+  primary: palette.clubHome,
   secondary: palette.chalk,
 }
