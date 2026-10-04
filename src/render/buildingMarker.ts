@@ -56,7 +56,7 @@ export function createBuildingMarker(
   }
   // Objetos con dibujo propio (taquilla, ducha, mesa…)
   const painter = OBJECT_ART[def.id]
-  if (painter) return createArtMarker(def, rotation, painter, tier, size)
+  if (painter) return createArtMarker(def, rotation, painter, tier, size, assets)
 
   const tiles = rotateSize(size, rotation)
   const width = tiles.width * TILE_SIZE
@@ -166,7 +166,9 @@ function drawFrontArrow(
 /**
  * Marcador con dibujo propio. El pintor dibuja el objeto sin girar con el
  * frente hacia abajo; aquí se gira el dibujo entero alrededor de su centro.
- * La sombra va aparte y sin girar, para que caiga siempre abajo a la derecha.
+ * La sombra se gira como el dibujo pero se desplaza sin girar, para que caiga
+ * siempre abajo a la derecha. Los objetos proyectan la silueta de su dibujo;
+ * las gradas rectas, un rectángulo con su huella.
  */
 function createArtMarker(
   def: BuildingDef,
@@ -174,6 +176,7 @@ function createArtMarker(
   painter: ObjectPainter,
   tier: number,
   size: GridSize,
+  assets?: RenderAssets,
 ): Container {
   const w = size.width * TILE_SIZE
   const h = size.height * TILE_SIZE
@@ -182,8 +185,8 @@ function createArtMarker(
   const rh = rotated.height * TILE_SIZE
 
   const marker = new Container({ label: `building:${def.id}` })
+  const seed = seedFromText(def.id)
   // Las gradas proyectan una sombra más larga cuanto más altas son.
-  const shadowInset = def.stand ? 0 : def.symmetric ? 14 : 6
   const shadowOffset = def.stand ? standShadowOffset(tier) : SHADOW_OFFSET
   const corner = def.stand?.corner === true
   const angle = (rotation * Math.PI) / 2
@@ -196,14 +199,32 @@ function createArtMarker(
     shadow.position.set(rw / 2 + shadowOffset, rh / 2 + shadowOffset)
     shadow.rotation = angle
     marker.addChild(shadow)
+  } else if (!def.stand && assets) {
+    // Silueta del propio dibujo (sin colores: no depende de los del club).
+    const texture = assets.silhouettes.get(`${def.id}:${tier}`, w, h, (g) =>
+      painter(g, w, h, createRandom(seed), tier),
+    )
+    const shadow = new Sprite({
+      label: SHADOW_LABEL,
+      texture,
+      anchor: 0.5,
+      tint: palette.outline,
+      alpha: SHADOW_ALPHA,
+    })
+    // La textura lleva un margen alrededor de la huella: su centro es el del dibujo.
+    shadow.position.set(rw / 2 + shadowOffset, rh / 2 + shadowOffset)
+    shadow.rotation = angle
+    marker.addChild(shadow)
   } else {
+    // Gradas rectas (ocupan toda su huella) o sin recursos cargados.
+    const inset = def.stand ? 0 : def.symmetric ? 14 : 6
     marker.addChild(
       new Graphics({ label: SHADOW_LABEL })
         .roundRect(
-          shadowInset + shadowOffset,
-          shadowInset + shadowOffset,
-          rw - shadowInset * 2,
-          rh - shadowInset * 2,
+          inset + shadowOffset,
+          inset + shadowOffset,
+          rw - inset * 2,
+          rh - inset * 2,
           def.stand ? 2 : 6,
         )
         .fill({ color: palette.outline, alpha: SHADOW_ALPHA }),
@@ -211,7 +232,7 @@ function createArtMarker(
   }
 
   const art = new Graphics()
-  painter(art, w, h, createRandom(seedFromText(def.id)), tier)
+  painter(art, w, h, createRandom(seed), tier)
   art.pivot.set(w / 2, h / 2)
   art.position.set(rw / 2, rh / 2)
   art.rotation = angle

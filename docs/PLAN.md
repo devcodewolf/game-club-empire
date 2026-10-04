@@ -105,7 +105,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
   - [x] a) Laterales y fondos, niveles 1-3 (talud, bancos, asientos); aforo por casilla de largo con tope de 100 000; galería `?scene=estadio`
   - [x] b) Niveles 4-6 en anillos escalonados (pasillos con vomitorios, palcos en la gran tribuna), visera que se desvanece con el ratón y sombra según la altura; galería `?scene=estadio-alto`
   - [x] c) Córners: botón propio en el menú, se colocan y mejoran a mano; necesitan las dos gradas vecinas y no pasan del nivel de la más baja; filas en arco que empalman con los lados; sombras en capa propia (RenderLayer)
-- [ ] 🧠 Sombra de objetos que sigue la silueta (en lugar del rectángulo genérico)
+- [x] 🧠 Sombra de objetos que sigue la silueta (en lugar del rectángulo genérico): silueta horneada por objeto y nivel (`silhouettes.ts`); los halos de luz no proyectan sombra
 
 ✅ **Validar:** un vestuario y un campo montados a mano se ven coherentes con la guía de estilo.
 
