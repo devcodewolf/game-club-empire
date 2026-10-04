@@ -91,11 +91,11 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [x] 🧠 Caché del arte (`render/art/artCache.ts`): cada pintor se dibuja una vez por (objeto, nivel, tamaño) en un `GraphicsContext` compartido por todas las copias; las siluetas de sombra sí se hornean a textura. Escena de prueba `?scene=rendimiento` (estadio grande + 215 objetos en una vista de 1600×900, como el juego alejado): 57 fps en una gráfica integrada Intel UHD 730. `?bench` mide cualquier escena; `?scale=` y `?hide=floors,walls,buildings,grass` sirven para diagnosticar
   > Decisión (4-oct-2026): se descarta el pipeline SVG → PNG → atlas. Todo el arte se pinta por código con `Graphics` (niveles y colores del club salen por parámetro). Se comparte la geometría en vez de hornear a `Sprite`: sigue nítida con zoom ×2 en pantallas de alta densidad y las gradas (hasta 56×14 casillas) no ocupan decenas de MB en texturas.
 - [x] Texturas de los suelos iniciales con variación por casilla (adelantado a la Fase 1B, bloque A; se pulirán aquí)
-- [ ] Pintores de piezas de muro para el autotiling (recto, esquina, T, cruz y final) y puerta
+- [x] Pintores de piezas de muro para el autotiling (recto, esquina, T, cruz y final) y puerta (hechos en la Fase 1B: `views/wallsView.ts` con remate, cara de material y sombra)
 - [ ] Pintores de los objetos iniciales, cada uno con sus 2-3 detalles característicos y su sombra
 - [ ] Pintores de carretera, arcén y entrada
 - [ ] Iconos de líneas blancas para el menú de construcción
-- [ ] ⚡ Crear `docs/ASSETS-LICENSES.md` y registrar los recursos externos (Tabler Icons, Patrick Hand y demás fuentes)
+- [x] ⚡ Crear `docs/ASSETS-LICENSES.md` y registrar los recursos externos (Tabler Icons, Patrick Hand y demás fuentes)
 
 **Skill de arte (`.claude/skills/pixi-artist/`)**
 - [x] 🧠 `src/render/style.ts`, validador de colores con baseline, galería `/gallery.html` (solo desarrollo) y `tools/capture.mjs`

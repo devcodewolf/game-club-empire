@@ -23,9 +23,6 @@
     "#d8e4ea": [
       "src/render/art/objectArt.ts"
     ],
-    "#5a7a96": [
-      "src/render/art/objectArt.ts"
-    ],
     "#b5523b": [
       "src/content/buildings.ts",
       "src/render/views/entranceView.ts"
@@ -77,16 +74,7 @@
     "#e08a3c": [
       "src/render/art/objectArt.ts"
     ],
-    "#d9d9d4": [
-      "src/render/art/objectArt.ts"
-    ],
-    "#6a4428": [
-      "src/render/art/objectArt.ts"
-    ],
-    "#3e4a5a": [
-      "src/render/art/objectArt.ts"
-    ],
-    "#8f979c": [
+    "#5a7a96": [
       "src/render/art/objectArt.ts"
     ],
     "#4a5260": [

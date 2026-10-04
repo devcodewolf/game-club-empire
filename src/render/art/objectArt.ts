@@ -401,42 +401,68 @@ const tacticsBoard: ObjectPainter = (g, w, h) => {
 
 // ── Oficina, recepción y almacén ─────────────────────────────────
 
-const officeDesk: ObjectPainter = (g, w, h) => {
-  box(g, 4, 8, w - 8, h - 16, C.wood, 3)
-  g.rect(6, h - 14, w - 12, 4).fill(shade(C.wood, -0.2))
-  // Monitor, teclado, papeles y taza
-  box(g, w / 2 - 14, 12, 28, 8, 0x2f3540, 1)
-  g.rect(w / 2 - 12, 13.5, 24, 5).fill(0x5a7a96)
-  box(g, w / 2 - 12, 24, 24, 7, 0xd9d9d4, 1)
-  g.rect(12, 14, 18, 22).fill(C.paper).stroke({ color: O, width: 0.8 })
-  g.rect(16, 18, 18, 22).fill(shade(C.paper, -0.05)).stroke({ color: O, width: 0.8 })
-  for (let i = 0; i < 4; i++) line(g, 19, 23 + i * 4, 30, 23 + i * 4, shade(C.paper, -0.35))
-  g.circle(w - 20, 22, 5)
+/** Monitor visto desde arriba: carcasa oscura con la pantalla mirando al frente. */
+const SCREEN = { case: shade(palette.slate, -0.35), glass: palette.waterEdge } as const
+
+const officeDesk: ObjectPainter = (g, w, h, rnd) => {
+  // Tablero de madera clara (contrasta con suelos de madera) y canto frontal en sombra
+  const top = shade(palette.wood, 0.3)
+  box(g, 3, 5, w - 6, h - 10, top, 3)
+  grain(g, 5, 9, w - 10, h - 22, top, rnd)
+  g.rect(4, h - 12, w - 8, 6).fill(shade(top, -0.3))
+  // Monitor al fondo, teclado delante
+  box(g, w / 2 - 20, 9, 40, 10, SCREEN.case, 2)
+  g.rect(w / 2 - 17, 15, 34, 3).fill(SCREEN.glass)
+  box(g, w / 2 - 15, 24, 30, 9, shade(palette.chalk, -0.08), 2)
+  for (let r = 0; r < 2; r++)
+    line(g, w / 2 - 12, 27 + r * 3, w / 2 + 12, 27 + r * 3, palette.stone, OUTLINE_DETAIL)
+  // Pila de papeles a la izquierda y taza a la derecha
+  g.rect(10, 10, 20, 24).fill(C.paper).stroke({ color: O, width: OUTLINE_DETAIL })
+  g.rect(13, 13, 20, 24).fill(shade(C.paper, -0.05)).stroke({ color: O, width: OUTLINE_DETAIL })
+  for (let i = 0; i < 4; i++) line(g, 16, 19 + i * 4, 29, 19 + i * 4, palette.stone, OUTLINE_DETAIL)
+  g.circle(w - 18, 22, 6)
     .fill(palette.chalk)
-    .stroke({ color: O, width: 1 })
-  g.circle(w - 20, 22, 3).fill(0x6a4428)
+    .stroke({ color: O, width: OUTLINE })
+  g.circle(w - 18, 22, 3.5).fill(palette.mudDeep)
+  g.rect(w - 12, 20, 4, 4)
+    .fill(palette.chalk)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
 }
 
 const officeChair: ObjectPainter = (g, w, h) => {
-  const seat = 0x3e4a5a
-  // Brazos, asiento y respaldo (el respaldo mira al frente = abajo)
-  g.rect(w / 2 - 17, h / 2 - 8, 5, 20)
-    .fill(shade(seat, -0.2))
-    .stroke({ color: O, width: 1 })
-  g.rect(w / 2 + 12, h / 2 - 8, 5, 20)
-    .fill(shade(seat, -0.2))
-    .stroke({ color: O, width: 1 })
-  box(g, w / 2 - 12, h / 2 - 12, 24, 22, seat, 7)
-  box(g, w / 2 - 14, h / 2 + 10, 28, 9, shade(seat, -0.1), 4)
+  const seat = palette.slate
+  const cx = w / 2
+  const cy = h / 2
+  // Base de estrella con ruedas (asoma bajo el asiento)
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + (i / 5) * Math.PI * 2
+    const x = cx + Math.cos(a) * 19
+    const y = cy + Math.sin(a) * 19
+    line(g, cx, cy, x, y, SCREEN.case, 3)
+    g.circle(x, y, 2.5).fill(SCREEN.case).stroke({ color: O, width: OUTLINE_DETAIL })
+  }
+  // Brazos, asiento con costura y respaldo (el respaldo mira al frente = abajo)
+  box(g, cx - 18, cy - 9, 6, 20, shade(seat, -0.25), 2)
+  box(g, cx + 12, cy - 9, 6, 20, shade(seat, -0.25), 2)
+  box(g, cx - 13, cy - 13, 26, 24, seat, 7)
+  line(g, cx - 8, cy - 1, cx + 8, cy - 1, shade(seat, -0.3), OUTLINE_DETAIL)
+  box(g, cx - 16, cy + 9, 32, 10, shade(seat, -0.12), 4)
 }
 
 const filingCabinet: ObjectPainter = (g, w, h) => {
-  const body = 0x8f979c
-  box(g, 10, 6, w - 20, h - 12, body)
-  for (let i = 1; i < 3; i++)
-    line(g, 12, 6 + ((h - 12) * i) / 3, w - 12, 6 + ((h - 12) * i) / 3, shade(body, -0.35), 1.5)
-  for (let i = 0; i < 3; i++)
-    g.rect(w / 2 - 6, 10 + ((h - 12) * i) / 3 + 4, 12, 3).fill(shade(body, -0.45))
+  const body = palette.stone
+  // Tapa, frente en sombra y tres cajones con etiqueta y tirador
+  box(g, 7, 5, w - 14, h - 10, body, 2)
+  g.rect(8, h - 11, w - 16, 5).fill(shade(body, -0.3))
+  const drawer = (h - 18) / 3
+  for (let i = 0; i < 3; i++) {
+    const y = 8 + drawer * i
+    if (i > 0) line(g, 9, y, w - 9, y, shade(body, -0.4), OUTLINE)
+    g.rect(w / 2 - 9, y + 3, 7, 5)
+      .fill(palette.chalk)
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+    g.rect(w / 2 + 1, y + 4, 9, 3).fill(shade(body, -0.55))
+  }
 }
 
 const receptionDesk: ObjectPainter = (g, w, h) => {
@@ -479,29 +505,76 @@ const storageShelf: ObjectPainter = (g, w, h, rnd) => {
   }
 }
 
-const plant: ObjectPainter = (g, w, h) => {
+/** Hoja en punta desde (cx, cy) hacia el ángulo `a`. */
+function leaf(
+  g: Graphics,
+  cx: number,
+  cy: number,
+  a: number,
+  len: number,
+  wide: number,
+  color: number,
+): void {
+  const cos = Math.cos(a)
+  const sin = Math.sin(a)
+  const mx = cx + cos * len * 0.55
+  const my = cy + sin * len * 0.55
+  g.poly([
+    cx,
+    cy,
+    mx - sin * wide,
+    my + cos * wide,
+    cx + cos * len,
+    cy + sin * len,
+    mx + sin * wide,
+    my - cos * wide,
+  ])
+    .fill(color)
+    .stroke({ color: palette.treeOutline, width: OUTLINE_DETAIL })
+}
+
+/** Maceta de barro cocido. */
+const POT = 0xb5643c
+
+const plant: ObjectPainter = (g, w, h, rnd) => {
   const cx = w / 2
   const cy = h / 2
-  for (let i = 0; i < 7; i++) {
-    const a = (i / 7) * Math.PI * 2
-    g.ellipse(cx + Math.cos(a) * 12, cy + Math.sin(a) * 12, 9, 5)
-      .fill(i % 2 ? palette.tree : palette.treeLight)
-      .stroke({ color: palette.treeOutline, width: 1 })
+  // Maceta con borde y tierra; las hojas la desbordan
+  g.circle(cx, cy, 13).fill(POT).stroke({ color: O, width: OUTLINE })
+  g.circle(cx, cy, 10).fill(shade(POT, -0.25))
+  g.circle(cx, cy, 8).fill(palette.mudDeep)
+  const leaves = 9
+  for (let i = 0; i < leaves; i++) {
+    const a = (i / leaves) * Math.PI * 2 + rnd.range(-0.2, 0.2)
+    leaf(g, cx, cy, a, rnd.range(19, 24), 5, i % 2 ? palette.tree : palette.treeLight)
   }
-  g.circle(cx, cy, 10).fill(0xb5643c).stroke({ color: O, width: LINE })
-  g.circle(cx, cy, 7).fill(palette.mudDeep)
-  g.circle(cx - 2, cy - 2, 4).fill(palette.treeLight)
+  for (let i = 0; i < 4; i++) leaf(g, cx, cy, (i / 4) * Math.PI * 2 + 0.6, 12, 4, palette.treeLight)
 }
 
 const waterCooler: ObjectPainter = (g, w, h) => {
-  box(g, 12, 10, w - 24, h - 20, C.porcelain, 4)
-  g.circle(w / 2, h / 2 - 2, 13)
-    .fill({ color: C.water, alpha: 0.85 })
-    .stroke({ color: O, width: LINE })
-  g.circle(w / 2 - 4, h / 2 - 6, 4).fill(C.glass)
-  g.rect(w / 2 - 5, h - 18, 10, 5)
-    .fill(C.clubBlue)
-    .stroke({ color: O, width: 0.8 })
+  // Cuerpo, bandeja delantera con dos grifos (frío y caliente) y garrafa encima
+  box(g, 10, 7, w - 20, h - 14, C.porcelain, 4)
+  g.rect(w / 2 - 12, h - 15, 24, 6)
+    .fill(shade(C.porcelain, -0.25))
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.circle(w / 2 - 6, h - 12, 2.5)
+    .fill(palette.water)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.circle(w / 2 + 6, h - 12, 2.5)
+    .fill(palette.warmLight)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  const by = h / 2 - 4
+  g.circle(w / 2, by, 15)
+    .fill(C.water)
+    .stroke({ color: O, width: OUTLINE })
+  g.circle(w / 2, by, 11).fill(shade(C.water, 0.12))
+  // Brillo en media luna (moveTo: que el arco no arrastre una línea desde el último punto)
+  g.moveTo(w / 2 + Math.cos(Math.PI * 1.05) * 12, by + Math.sin(Math.PI * 1.05) * 12)
+    .arc(w / 2, by, 12, Math.PI * 1.05, Math.PI * 1.55)
+    .stroke({ color: C.glass, width: 3 })
+  g.circle(w / 2, by, 5)
+    .fill(palette.waterEdge)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
 }
 
 // ── Campo, exterior y gradas ─────────────────────────────────────
