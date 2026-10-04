@@ -4,6 +4,7 @@ import GameLayout from '@/ui/GameLayout.vue'
 import BuildMenu from '@/ui/build-menu/BuildMenu.vue'
 import NoticeToasts from '@/ui/components/NoticeToasts.vue'
 import ObjectPanel from '@/ui/object-panel/ObjectPanel.vue'
+import ContextMenu from '@/ui/context-menu/ContextMenu.vue'
 import RoomPanel from '@/ui/room-panel/RoomPanel.vue'
 import { provideGame } from '@/ui/composables/useGame'
 import { useProgressionStore } from '@/ui/stores/progressionStore'
@@ -46,5 +47,6 @@ useToolShortcuts()
         <BuildMenu />
       </template>
     </GameLayout>
+    <ContextMenu />
   </main>
 </template>

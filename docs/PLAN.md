@@ -115,6 +115,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 **Resultado visible:** se puede mover un objeto o un bloque entero (edificio con sus salas y objetos) sin demoler y reconstruir.
 
 - [x] 🧠 Mover un elemento: herramienta "Mover", clic sobre un objeto, campo o grada → fantasma en el cursor, R para girar, clic para soltar (verde/rojo). Mover un campo se lleva sus gradas (comando atómico `moveBuilding` en `sim/buildings/move.ts`; clic en una grada coge su campo; Esc devuelve la pieza)
+- [x] 🧠 Menú contextual con el botón derecho sobre un objeto, campo o grada (sin herramienta activa): Mover, Demoler, Mejorar y Ver ficha. Acciones como datos para añadir opciones nuevas (personal, consumo…) sin tocar el menú (`src/ui/context-menu/buildingActions.ts`; Mover desde el menú es de un solo uso)
 - [ ] 🧠 Mover un bloque: arrastrar un rectángulo (como Demoler) selecciona muros, puertas, suelos, objetos y salas; se mueve en fantasma y se suelta. Un único comando atómico, destino validado entero, salas recalculadas, objetos con su nivel y uso
 - [ ] ⚡ Tests de mover (objeto, bloque, destino inválido sin cambios, salas y niveles conservados) — objeto y campo hechos (42 tests en `move.test.ts`); falta el bloque
 - [ ] ⚡ Animación al soltar (polvo y rebote) y vista previa del bloque completo

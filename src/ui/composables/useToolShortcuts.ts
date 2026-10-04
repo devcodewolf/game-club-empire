@@ -2,6 +2,7 @@
  * Atajos de teclado de la herramienta activa: R gira, Escape suelta la herramienta o cierra el menú.
  * Se registran al montar el componente y se retiran al desmontarlo.
  */
+import { useContextMenuStore } from '@/ui/context-menu/contextMenuStore'
 import { onBeforeUnmount, onMounted } from 'vue'
 import { useBuildMenu } from '@/ui/composables/useBuildMenu'
 import { useSelectionStore } from '@/ui/stores/selectionStore'
@@ -21,9 +22,11 @@ export function useToolShortcuts(): void {
   const toolStore = useToolStore()
   const buildMenu = useBuildMenu()
   const selection = useSelectionStore()
+  const contextMenu = useContextMenuStore()
 
-  /** Escape: suelta lo que se lleva o la herramienta; si no hay, deselecciona la sala u objeto; si tampoco, cierra el menú. */
+  /** Escape: cierra el menú contextual; si no, suelta lo que se lleva o la herramienta; si no hay, deselecciona la sala u objeto; si tampoco, cierra el menú. */
   function onEscape(): void {
+    if (contextMenu.menu) return contextMenu.close()
     if (toolStore.tool.kind !== 'none') return toolStore.cancel()
     if (selection.selection !== null) return selection.clear()
     buildMenu.close()

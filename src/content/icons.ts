@@ -19,6 +19,8 @@ export const ICON_NAMES = [
   'users',
   'hammer',
   'arrows-move',
+  'arrow-big-up-lines',
+  'notebook',
   // Campos y gradas
   'ball-football',
   'stairs',

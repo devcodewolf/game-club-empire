@@ -21,6 +21,8 @@ import boltSvg from '@tabler/icons/outline/bolt.svg?raw'
 import usersSvg from '@tabler/icons/outline/users.svg?raw'
 import hammerSvg from '@tabler/icons/outline/hammer.svg?raw'
 import arrowsMoveSvg from '@tabler/icons/outline/arrows-move.svg?raw'
+import arrowBigUpLinesSvg from '@tabler/icons/outline/arrow-big-up-lines.svg?raw'
+import notebookSvg from '@tabler/icons/outline/notebook.svg?raw'
 import ballFootballSvg from '@tabler/icons/outline/ball-football.svg?raw'
 import stairsSvg from '@tabler/icons/outline/stairs.svg?raw'
 import playFootballSvg from '@tabler/icons/outline/play-football.svg?raw'
@@ -74,6 +76,8 @@ const SVG_SOURCES = {
   users: usersSvg,
   hammer: hammerSvg,
   'arrows-move': arrowsMoveSvg,
+  'arrow-big-up-lines': arrowBigUpLinesSvg,
+  notebook: notebookSvg,
   'ball-football': ballFootballSvg,
   stairs: stairsSvg,
   'play-football': playFootballSvg,

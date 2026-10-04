@@ -5,13 +5,14 @@
  * Mismo estilo que la ficha de sala (hoja de libreta).
  */
 import { computed, watch } from 'vue'
-import { maxTier, tierQuality, type PitchRole, type StandSlot } from '@/sim/buildings/buildings'
-import { lowestNeighbour, pitchCapacity, standCapacity, validateStandUpgrade } from '@/sim/buildings/stands'
+import { maxTier, tierQuality, type PitchRole } from '@/sim/buildings/buildings'
+import { pitchCapacity, standCapacity } from '@/sim/buildings/stands'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
 import { findBuilding } from '@/ui/composables/contentLookup'
 import { useGame } from '@/ui/composables/useGame'
 import { useGameVersion } from '@/ui/composables/useGameVersion'
+import { upgradeLock } from '@/ui/composables/upgradeLock'
 import { useProgressionStore } from '@/ui/stores/progressionStore'
 import { useSelectionStore } from '@/ui/stores/selectionStore'
 
@@ -29,35 +30,6 @@ const building = computed(() => {
 })
 
 const def = computed(() => (building.value ? findBuilding(building.value.type) : undefined))
-
-/** Nombre en español de cada lado, para los avisos de córner. */
-const SIDE_NAMES: Partial<Record<StandSlot, string>> = {
-  north: 'norte',
-  south: 'sur',
-  east: 'este',
-  west: 'oeste',
-}
-
-/** Motivo por el que no se puede ampliar una grada (franja nueva ocupada o fuera del terreno). */
-function standUpgradeBlock(tier: number): string | null {
-  const b = building.value
-  if (!b) return null
-  const check = validateStandUpgrade(game.state, game.content, b, tier)
-  if (check.ok) return null
-  if (check.reason === 'occupied' || check.reason === 'wall') {
-    return 'Hay algo construido detrás de la grada'
-  }
-  if (check.reason === 'outOfBounds' || check.reason === 'reserved') {
-    return 'La grada no cabe: llega al borde del terreno'
-  }
-  if (check.reason === 'needsNeighbours') return 'Le falta una grada vecina'
-  if (check.reason === 'cornerAboveNeighbours' && b.attach) {
-    const lowest = lowestNeighbour(game.state, b.attach.pitchId, b.attach.slot)
-    const name = lowest && SIDE_NAMES[lowest]
-    return name ? `Mejora antes la grada ${name}` : null
-  }
-  return null
-}
 
 /** Aforo de un campo: la suma de sus gradas (solo campos). */
 const pitchSeats = computed(() => {
@@ -89,10 +61,8 @@ const info = computed(() => {
   if (!b || !d) return undefined
   const total = maxTier(d) + 1
   const hasTiers = (d.tiers?.length ?? 0) > 1
-  const next = hasTiers ? d.tiers?.[b.tier + 1] : undefined
-  const divisionLock = next ? progression.lockReason(next.requires) : null
-  // Las gradas además necesitan sitio detrás para crecer.
-  const lockReason = divisionLock ?? (next && d.stand ? standUpgradeBlock(b.tier + 1) : null)
+  // División y, en las gradas, sitio detrás para crecer (igual que el menú contextual)
+  const { next, reason: lockReason } = upgradeLock(game, b, d, progression.lockReason)
   return {
     title: d.tiers?.[b.tier]?.name ?? d.name,
     hasTiers,

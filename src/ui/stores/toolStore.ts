@@ -58,15 +58,24 @@ export const useToolStore = defineStore('tool', () => {
     tool.value = tool.value.kind === 'move' ? NO_TOOL : { kind: 'move', carrying: null }
   }
 
+  /**
+   * Mover de un solo uso (desde el menú contextual): al soltar o cancelar se
+   * vuelve a no tener herramienta, en lugar de quedar lista para coger otra cosa.
+   */
+  let moveOnce = false
+
   /** Coge un objeto o campo para moverlo, con su giro actual. */
-  function pickUp(buildingId: BuildingId, current: Rotation): void {
+  function pickUp(buildingId: BuildingId, current: Rotation, once = false): void {
     if (tool.value.kind !== 'move') return
+    moveOnce = once
     tool.value = { kind: 'move', carrying: { buildingId, rotation: current } }
   }
 
-  /** Suelta lo que se lleva (tras moverlo o al cancelar); la herramienta sigue activa. */
+  /** Suelta lo que se lleva (tras moverlo o al cancelar); la herramienta sigue activa salvo en un solo uso. */
   function putDown(): void {
-    if (tool.value.kind === 'move') tool.value = { kind: 'move', carrying: null }
+    if (tool.value.kind !== 'move') return
+    if (moveOnce) return clear()
+    tool.value = { kind: 'move', carrying: null }
   }
 
   /** Escape / clic derecho: si se lleva algo, lo deja donde estaba; si no, suelta la herramienta. */
@@ -116,6 +125,7 @@ export const useToolStore = defineStore('tool', () => {
   }
 
   function clear(): void {
+    moveOnce = false
     tool.value = NO_TOOL
   }
 

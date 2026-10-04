@@ -58,6 +58,8 @@ export interface GameRendererOptions {
   readonly onExpansionClick: (side: ExpansionSide) => void
   /** Clic con la herramienta Mover sin nada cogido. */
   readonly onPickUp: (tile: TileCoord) => void
+  /** Clic derecho sin herramienta: menú contextual del objeto (posición en la ventana). */
+  readonly onContextMenu: (tile: TileCoord, client: { x: number; y: number }) => void
   /** Clic sin herramienta: el jugador quiere inspeccionar lo que hay en la casilla. */
   readonly onInspect: (tile: TileCoord) => void
 }
@@ -70,7 +72,14 @@ export interface GameRenderer {
 export async function createGameRenderer(
   host: HTMLElement,
   game: Game,
-  { onCommand, onCancel, onExpansionClick, onInspect, onPickUp }: GameRendererOptions,
+  {
+    onCommand,
+    onCancel,
+    onExpansionClick,
+    onInspect,
+    onPickUp,
+    onContextMenu,
+  }: GameRendererOptions,
 ): Promise<GameRenderer> {
   const app = new Application()
   await app.init({
@@ -186,6 +195,12 @@ export async function createGameRenderer(
       // Primero se cancela el arrastre en curso; si no lo hay, se suelta la herramienta.
       if (dragStart) return setDragStart(null)
       onCancel()
+    },
+    onSecondaryClick: (tile, client) => {
+      // Con herramienta (o arrastrando), el clic derecho cancela; sin ella, abre el menú del objeto.
+      if (dragStart) return setDragStart(null)
+      if (tool.kind !== 'none') return onCancel()
+      onContextMenu(tile, client)
     },
   })
 

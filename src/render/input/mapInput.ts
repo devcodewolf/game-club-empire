@@ -35,8 +35,13 @@ export interface MapInputHandlers {
   readonly onDragStart: (tile: TileCoord) => void
   readonly onDragMove: (tile: TileCoord) => void
   readonly onDragEnd: (tile: TileCoord) => void
-  /** Clic derecho sin arrastrar: soltar herramienta o cancelar el arrastre en curso. */
+  /** Cancelar el arrastre en curso (clic derecho durante el arrastre o gesto interrumpido). */
   readonly onCancel: () => void
+  /**
+   * Clic derecho sin arrastrar, con la casilla y la posición en la ventana
+   * (para colocar un menú): soltar herramienta o abrir el menú del objeto.
+   */
+  readonly onSecondaryClick: (tile: TileCoord, client: Point) => void
   /** Empieza a mover la cámara arrastrando (para frenar la inercia anterior). */
   readonly onPanStart: () => void
   /** Se suelta un arrastre de cámara con esta velocidad (px de pantalla por segundo). */
@@ -160,7 +165,8 @@ export function bindMapInput(
     if (mode === 'pan') return handlers.onPanRelease(...releaseVelocity(samples))
     if (mode === 'cancelled') return
     if (button === BUTTON_LEFT) handlers.onPrimaryClick(tile)
-    if (button === BUTTON_RIGHT) handlers.onCancel()
+    if (button === BUTTON_RIGHT)
+      handlers.onSecondaryClick(tile, { x: event.clientX, y: event.clientY })
   }
 
   const onPointerCancel = (event: PointerEvent): void => {

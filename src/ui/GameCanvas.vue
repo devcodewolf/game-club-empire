@@ -16,12 +16,14 @@ import { roomAt } from '@/sim/rooms/rooms'
 import { useNoticeStore } from '@/ui/stores/noticeStore'
 import { useSelectionStore } from '@/ui/stores/selectionStore'
 import { useToolStore } from '@/ui/stores/toolStore'
+import { useContextMenuStore } from '@/ui/context-menu/contextMenuStore'
 
 const props = defineProps<{ game: Game }>()
 
 const toolStore = useToolStore()
 const noticeStore = useNoticeStore()
 const selectionStore = useSelectionStore()
+const contextMenu = useContextMenuStore()
 const host = useTemplateRef('host')
 let renderer: GameRenderer | null = null
 // Evita la carrera: si se desmonta antes de que termine el init async.
@@ -31,6 +33,13 @@ function onCommand(command: Command): void {
   const result = props.game.dispatch(command)
   // Mover: si se soltó bien, la herramienta vuelve a estar lista para coger otra cosa
   if (result.ok && command.type === 'moveBuilding') toolStore.putDown()
+}
+
+/** Clic derecho sin herramienta: menú del objeto de la casilla (o cierra el que hubiera). */
+function onContextMenu(tile: TileCoord, client: { x: number; y: number }): void {
+  const building = buildingAt(props.game.state, tile)
+  if (!building) return contextMenu.close()
+  contextMenu.open(building.id, client.x, client.y)
 }
 
 /** Herramienta Mover sin nada cogido: coge el objeto o campo de la casilla (una grada coge su campo). */
@@ -56,6 +65,7 @@ onMounted(async () => {
     onCancel: toolStore.cancel,
     onInspect,
     onPickUp,
+    onContextMenu,
     onExpansionClick: () =>
       noticeStore.show('🔒', 'Ampliación no disponible todavía. Llegará en una versión futura.'),
   })
