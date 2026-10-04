@@ -88,7 +88,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 
 - [x] Hoja de muestra de estilo validada por Raul (escala A de personas; pide más textura y detalle)
 - [x] Completar `docs/GUIA-ESTILO.md` y `src/render/palette.ts` con pieles, pelo y colores de club
-- [x] 🧠 Caché del arte (`render/art/artCache.ts`): cada pintor se dibuja una vez por (objeto, nivel, tamaño) en un `GraphicsContext` compartido por todas las copias; las siluetas de sombra sí se hornean a textura. Escena de prueba `?scene=rendimiento` (estadio grande + 215 objetos) con tiempo de montaje y fps
+- [x] 🧠 Caché del arte (`render/art/artCache.ts`): cada pintor se dibuja una vez por (objeto, nivel, tamaño) en un `GraphicsContext` compartido por todas las copias; las siluetas de sombra sí se hornean a textura. Escena de prueba `?scene=rendimiento` (estadio grande + 215 objetos en una vista de 1600×900, como el juego alejado): 57 fps en una gráfica integrada Intel UHD 730. `?bench` mide cualquier escena; `?scale=` y `?hide=floors,walls,buildings,grass` sirven para diagnosticar
   > Decisión (4-oct-2026): se descarta el pipeline SVG → PNG → atlas. Todo el arte se pinta por código con `Graphics` (niveles y colores del club salen por parámetro). Se comparte la geometría en vez de hornear a `Sprite`: sigue nítida con zoom ×2 en pantallas de alta densidad y las gradas (hasta 56×14 casillas) no ocupan decenas de MB en texturas.
 - [x] Texturas de los suelos iniciales con variación por casilla (adelantado a la Fase 1B, bloque A; se pulirán aquí)
 - [ ] Pintores de piezas de muro para el autotiling (recto, esquina, T, cruz y final) y puerta

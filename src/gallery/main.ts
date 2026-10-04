@@ -66,13 +66,15 @@ async function main(): Promise<void> {
       : def
         ? detailPage(def, assets)
         : overviewPage(assets)
+  const buildMs = performance.now() - buildStart
   app.stage.addChild(page.node)
+  if (scene?.name === 'rendimiento' || params.has('bench')) await benchmark(app, page, buildMs)
   // Las escenas grandes (estadio) pueden ser más anchas que la página: se ensancha.
-  app.renderer.resize(
-    Math.max(PAGE_WIDTH, Math.ceil(page.node.width + GAP)),
-    Math.ceil(page.height + GAP),
-  )
-  if (scene?.name === 'rendimiento') await benchmark(app, page, performance.now() - buildStart)
+  else
+    app.renderer.resize(
+      Math.max(PAGE_WIDTH, Math.ceil(page.node.width + GAP)),
+      Math.ceil(page.height + GAP),
+    )
   // Señal para las capturas automáticas: la galería ya está dibujada.
   document.body.dataset.ready = 'true'
 }
@@ -120,7 +122,8 @@ function detailPage(def: BuildingDef, assets: RenderAssets): Placed {
 
 /** `?scene=nombre`: solo una escena de vecinos a ×0,5 (p. ej. el estadio entero). */
 function scenePage(scene: GalleryScene, assets: RenderAssets): Placed {
-  const view = sceneView(scene, 0.5, assets)
+  const scale = Number(new URLSearchParams(location.search).get('scale') ?? 0.5)
+  const view = sceneView(scene, scale, assets)
   view.node.position.set(GAP, GAP)
   return { node: view.node, height: view.height + GAP }
 }
@@ -299,26 +302,61 @@ function sceneView(scene: GalleryScene, scale: number, assets: RenderAssets): Pl
   createRoomsView(labels, game)
   createWallsView(walls, game, assets.walls)
   createBuildingsView(buildings, effects, game, assets)
+  // Diagnóstico de rendimiento: ?hide=floors,walls,buildings,grass oculta capas
+  const hidden = new URLSearchParams(location.search).get('hide')?.split(',') ?? []
+  const named: Record<string, Container> = { grass, floors, walls, buildings }
+  for (const name of hidden) if (named[name]) named[name].visible = false
 
   return { node: world, height: scene.size.height * T * scale }
 }
 
+/** Vista de la prueba de rendimiento: como una ventana de juego, no la escena entera. */
+const BENCH_VIEW = { width: 1600, height: 900 }
+
 /**
- * Mide la escena de rendimiento: tiempo de montaje y fps medios durante
- * 2 s. Lo escribe arriba de la escena y en la consola.
+ * Mide la escena de rendimiento como la vería el juego: lienzo de 1600×900
+ * con la escena entera dentro (cámara alejada). Mide el tiempo de montaje y
+ * los fps medios durante 3 s, y lo escribe arriba junto con la tarjeta
+ * gráfica y la densidad de pantalla (los fps dependen mucho de ambas).
  */
 async function benchmark(app: Application, page: Placed, buildMs: number): Promise<void> {
+  const fit = Math.min(
+    (BENCH_VIEW.width - GAP * 2) / page.node.width,
+    (BENCH_VIEW.height - GAP * 3) / page.node.height,
+  )
+  page.node.scale.set(page.node.scale.x * fit)
+  page.node.position.set(GAP, GAP * 2)
+  app.renderer.resize(BENCH_VIEW.width, BENCH_VIEW.height)
+
   const frames: number[] = []
   const tick = (ticker: Ticker): void => {
     frames.push(ticker.deltaMS)
   }
   app.ticker.add(tick)
-  await new Promise((resolve) => setTimeout(resolve, 2000))
+  await new Promise((resolve) => setTimeout(resolve, 3000))
   app.ticker.remove(tick)
-  const avg = frames.slice(10).reduce((sum, ms) => sum + ms, 0) / Math.max(1, frames.length - 10)
-  const text = `Montaje ${buildMs.toFixed(0)} ms · ${(1000 / avg).toFixed(0)} fps (${avg.toFixed(1)} ms/frame)`
+  const measured = frames.slice(20)
+  const avg = measured.reduce((sum, ms) => sum + ms, 0) / Math.max(1, measured.length)
+  const text =
+    `Montaje ${buildMs.toFixed(0)} ms · ${(1000 / avg).toFixed(0)} fps (${avg.toFixed(1)} ms/frame)` +
+    ` · ${BENCH_VIEW.width}×${BENCH_VIEW.height} ×${window.devicePixelRatio} · ${gpuName(app)}`
   console.info(`Galería, rendimiento: ${text}`)
-  addLabel(page.node, text, 0, -GAP + 4, 40)
+  const label = new Text({
+    text,
+    style: { fontSize: 14, fill: palette.chalk, fontFamily: 'Trebuchet MS, sans-serif' },
+    resolution: 2,
+  })
+  label.position.set(GAP, 8)
+  app.stage.addChild(label)
+}
+
+/** Nombre de la tarjeta gráfica (si el navegador lo da). */
+function gpuName(app: Application): string {
+  const gl = 'gl' in app.renderer ? (app.renderer.gl as WebGL2RenderingContext) : null
+  const info = gl?.getExtension('WEBGL_debug_renderer_info')
+  return (info && gl ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : 'GPU desconocida')
+    .replace(/^ANGLE \((.*)\)$/, '$1')
+    .slice(0, 70)
 }
 
 // ── Utilidades ───────────────────────────────────────────────────
