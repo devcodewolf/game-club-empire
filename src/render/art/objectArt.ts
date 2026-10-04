@@ -17,7 +17,14 @@ import { DEFAULT_CLUB_COLORS, type ClubColors } from '../core/clubColors'
 import type { Random } from '../core/random'
 import { standPainter } from './standArt'
 import { standCornerPainter } from './standCornerArt'
-import { MIN_DETAIL, OUTLINE, OUTLINE_DETAIL, OUTLINE_WALL } from '../style'
+import {
+  MIN_DETAIL,
+  OUTLINE,
+  OUTLINE_DETAIL,
+  OUTLINE_WALL,
+  SHADOW_ALPHA,
+  SHADOW_OFFSET,
+} from '../style'
 
 /**
  * Pintor de un objeto. `tier` es el nivel (0 = nivel 1) para los objetos
@@ -69,9 +76,6 @@ const C = {
   porcelain: 0xf2f2ee,
   wood: palette.wood,
   woodLight: shade(palette.wood, 0.25),
-  // Deuda: estos objetos aún no reciben ClubColors (ver pixi-artist)
-  clubRed: palette.clubHome,
-  clubBlue: palette.clubAway,
   teal: 0x5aa39a,
   paper: palette.chalk,
   glass: palette.waterShine,
@@ -354,49 +358,61 @@ const shower: ObjectPainter = (g, w, h, rnd, tier = 0) => {
 }
 
 const toilet: ObjectPainter = (g, w, h) => {
-  // Cisterna arriba y taza ovalada delante
-  box(g, w / 2 - 16, 6, 32, 14, C.porcelain, 4)
-  g.circle(w / 2, 13, 2.5).fill(C.metal)
-  g.ellipse(w / 2, h / 2 + 8, 14, 18)
+  // Cisterna arriba con pulsador y taza ovalada delante con su asiento
+  box(g, w / 2 - 15, 5, 30, 13, C.porcelain, 4)
+  g.circle(w / 2, 11, 3)
+    .fill(C.metal)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.ellipse(w / 2, h / 2 + 8, 15, 19)
     .fill(C.porcelain)
-    .stroke({ color: O, width: LINE })
-  g.ellipse(w / 2, h / 2 + 9, 9, 12)
-    .fill(0xd8e4ea)
-    .stroke({ color: shade(C.porcelain, -0.25), width: 1 })
-  g.ellipse(w / 2, h / 2 + 11, 5, 7).fill({ color: C.water, alpha: 0.7 })
+    .stroke({ color: O, width: OUTLINE })
+  g.ellipse(w / 2, h / 2 + 9, 11, 14)
+    .fill(shade(C.porcelain, -0.1))
+    .stroke({ color: shade(C.porcelain, -0.35), width: OUTLINE_DETAIL })
+  g.ellipse(w / 2, h / 2 + 10, 7, 9).fill(C.water)
 }
 
 const sink: ObjectPainter = (g, w, h) => {
-  box(g, 6, 8, w - 12, h * 0.5, C.porcelain, 5)
-  g.ellipse(w / 2, 8 + h * 0.27, 15, 9)
-    .fill(0xd8e4ea)
-    .stroke({ color: shade(C.porcelain, -0.3), width: 1 })
-  g.circle(w / 2, 8 + h * 0.29, 2).fill(C.metalDark)
-  // Grifo
-  g.rect(w / 2 - 2, 6, 4, 9)
+  // Encimera, pila con desagüe, grifo con dos mandos y espejo en la pared
+  box(g, 4, 6, w - 8, h * 0.56, C.porcelain, 5)
+  g.ellipse(w / 2, 8 + h * 0.3, 16, 10)
+    .fill(shade(palette.waterShine, 0.35))
+    .stroke({ color: shade(C.porcelain, -0.35), width: OUTLINE_DETAIL })
+  g.circle(w / 2, 8 + h * 0.32, 2).fill(C.metalDark)
+  g.rect(w / 2 - 2, 6, 4, 11)
     .fill(C.metal)
-    .stroke({ color: O, width: 0.8 })
-  // Espejo en la pared de arriba
-  g.rect(w / 2 - 14, 1, 28, 4)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.circle(w / 2 - 8, 10, 2.5)
+    .fill(palette.water)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.circle(w / 2 + 8, 10, 2.5)
+    .fill(palette.warmLight)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.rect(w / 2 - 16, 1, 32, 4)
     .fill(C.glass)
-    .stroke({ color: O, width: 0.8 })
+    .stroke({ color: O, width: OUTLINE_DETAIL })
 }
 
-const tacticsBoard: ObjectPainter = (g, w, h) => {
-  // Patas
-  for (const x of [14, w - 18]) g.rect(x, h / 2 + 6, 4, 14).fill(C.metalDark)
-  box(g, 6, h / 2 - 16, w - 12, 26, palette.chalk, 2)
-  g.rect(6, h / 2 - 16, w - 12, 26).stroke({ color: C.metal, width: 3 })
-  // Jugada dibujada: círculos, cruces y flechas
-  const y = h / 2 - 3
-  for (const x of [22, 46, 70]) g.circle(x, y - 4, 3).stroke({ color: C.clubBlue, width: 1.5 })
-  for (const x of [34, 58, 86]) {
-    line(g, x - 3, y + 2, x + 3, y + 8, C.clubRed, 1.5)
-    line(g, x + 3, y + 2, x - 3, y + 8, C.clubRed, 1.5)
+const tacticsBoard: ObjectPainter = (g, w, h, _rnd, _tier, club = DEFAULT_CLUB_COLORS) => {
+  // Patas, pizarra blanca con marco metálico y bandeja de rotuladores
+  for (const x of [12, w - 16]) g.rect(x, h / 2 + 8, 4, 14).fill(C.metalDark)
+  box(g, 4, h / 2 - 19, w - 8, 30, palette.chalk, 2)
+  g.rect(4, h / 2 - 19, w - 8, 30).stroke({ color: C.metal, width: 3 })
+  g.rect(w / 2 - 14, h / 2 + 11, 28, 4).fill(C.metalDark)
+  g.rect(w / 2 - 10, h / 2 + 11, 8, 3).fill(club.primary)
+  // Jugada: rivales (círculos), los nuestros (cruces del club) y una flecha
+  const y = h / 2 - 4
+  line(g, w / 2, h / 2 - 16, w / 2, h / 2 + 8, shade(palette.chalk, -0.15), OUTLINE_DETAIL)
+  for (const x of [20, 46, 72])
+    g.circle(x, y - 5, 3.5).stroke({ color: palette.slate, width: OUTLINE })
+  for (const x of [32, 58, 88]) {
+    line(g, x - 3.5, y + 1, x + 3.5, y + 8, club.primary, 2)
+    line(g, x + 3.5, y + 1, x - 3.5, y + 8, club.primary, 2)
   }
-  g.moveTo(22, y)
-    .quadraticCurveTo(50, y - 10, 98, y - 6)
-    .stroke({ color: O, width: 1 })
+  g.moveTo(32, y + 4)
+    .quadraticCurveTo(60, y - 12, 96, y - 8)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.poly([96, y - 8, 90, y - 11, 91, y - 5]).fill(O)
 }
 
 // ── Oficina, recepción y almacén ─────────────────────────────────
@@ -465,20 +481,23 @@ const filingCabinet: ObjectPainter = (g, w, h) => {
   }
 }
 
-const receptionDesk: ObjectPainter = (g, w, h) => {
-  // Mostrador: trasera de madera y encimera clara hacia el público (abajo)
-  box(g, 4, 6, w - 8, h - 12, C.wood, 4)
-  box(g, 4, h - 22, w - 8, 14, shade(palette.chalk, -0.08), 3)
-  box(g, w * 0.3, 12, 26, 10, 0x2f3540, 1)
-  g.rect(w * 0.3 + 2, 13.5, 22, 7).fill(0x5a7a96)
-  g.rect(w * 0.62, 12, 22, 16)
+const receptionDesk: ObjectPainter = (g, w, h, rnd) => {
+  // Trasera de madera con veta y encimera clara hacia el público (abajo)
+  box(g, 3, 5, w - 6, h - 10, C.wood, 4)
+  grain(g, 5, 8, w - 10, h - 32, C.wood, rnd)
+  box(g, 3, h - 22, w - 6, 15, shade(palette.chalk, -0.08), 3)
+  // Monitor, papeles y timbre
+  box(g, w * 0.28, 10, 34, 10, SCREEN.case, 2)
+  g.rect(w * 0.28 + 3, 16, 28, 3).fill(SCREEN.glass)
+  g.rect(w * 0.6, 9, 22, 17)
     .fill(C.paper)
-    .stroke({ color: O, width: 0.8 })
-  // Timbre
-  g.circle(w - 24, h - 15, 5)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  for (let i = 0; i < 3; i++)
+    line(g, w * 0.6 + 4, 14 + i * 4, w * 0.6 + 18, 14 + i * 4, palette.stone, OUTLINE_DETAIL)
+  g.circle(w - 24, h - 14, 6)
     .fill(palette.warmLight)
-    .stroke({ color: O, width: 1 })
-  g.circle(w - 24, h - 15, 1.5).fill(O)
+    .stroke({ color: O, width: OUTLINE })
+  g.circle(w - 24, h - 14, 2).fill(O)
 }
 
 const storageShelf: ObjectPainter = (g, w, h, rnd) => {
@@ -579,13 +598,16 @@ const waterCooler: ObjectPainter = (g, w, h) => {
 
 // ── Campo, exterior y gradas ─────────────────────────────────────
 
-const dugout: ObjectPainter = (g, w, h) => {
-  // Pared del fondo, asientos y cubierta de metacrilato
+const dugout: ObjectPainter = (g, w, h, _rnd, _tier, club = DEFAULT_CLUB_COLORS) => {
+  // Pared del fondo, asientos del club con respaldo y cubierta de metacrilato
   g.rect(4, 4, w - 8, 10)
     .fill(palette.stoneDark)
-    .stroke({ color: O, width: LINE })
+    .stroke({ color: O, width: OUTLINE })
   const seats = Math.floor((w - 16) / 22)
-  for (let i = 0; i < seats; i++) box(g, 10 + i * 22, 18, 18, 18, C.clubBlue, 4)
+  for (let i = 0; i < seats; i++) {
+    box(g, 10 + i * 22, 17, 18, 19, club.primary, 4)
+    g.rect(12 + i * 22, 18, 14, 4).fill(shade(club.primary, -0.3))
+  }
   g.roundRect(2, 2, w - 4, h * 0.72, 8)
     .fill({ color: C.glass, alpha: 0.35 })
     .stroke({ color: C.metalDark, width: 2 })
@@ -595,188 +617,261 @@ const dugout: ObjectPainter = (g, w, h) => {
 const trainingGoal: ObjectPainter = (g, w, h) => {
   // Red detrás (arriba) y palos con larguero delante (abajo)
   g.rect(6, 6, w - 12, h - 18).fill({ color: palette.chalk, alpha: 0.25 })
-  for (let x = 10; x < w - 6; x += 7) line(g, x, 6, x, h - 12, palette.chalk, 0.8)
-  for (let y = 10; y < h - 12; y += 7) line(g, 6, y, w - 6, y, palette.chalk, 0.8)
-  g.rect(6, 6, w - 12, h - 18).stroke({ color: C.metal, width: 1.5 })
+  for (let x = 10; x < w - 6; x += 7) line(g, x, 6, x, h - 12, palette.chalk, OUTLINE_DETAIL)
+  for (let y = 10; y < h - 12; y += 7) line(g, 6, y, w - 6, y, palette.chalk, OUTLINE_DETAIL)
+  g.rect(6, 6, w - 12, h - 18).stroke({ color: C.metal, width: OUTLINE })
   g.rect(4, h - 14, w - 8, 6)
     .fill(palette.chalk)
-    .stroke({ color: O, width: 1.2 })
+    .stroke({ color: O, width: OUTLINE })
   for (const x of [4, w - 10])
     g.rect(x, h - 16, 6, 10)
       .fill(palette.chalk)
-      .stroke({ color: O, width: 1 })
+      .stroke({ color: O, width: OUTLINE })
 }
 
-const cornerFlag: ObjectPainter = (g, w, h) => {
-  g.poly([w / 2, h / 2, w / 2 + 18, h / 2 - 8, w / 2, h / 2 - 16])
+const cornerFlag: ObjectPainter = (g, w, h, _rnd, _tier, club = DEFAULT_CLUB_COLORS) => {
+  // Banderín amarillo con el pico del club, y el poste en su base
+  const x = w / 2 - 4
+  const y = h / 2 + 4
+  g.poly([x, y, x + 22, y - 10, x, y - 20])
     .fill(palette.warmLight)
-    .stroke({ color: O, width: 1 })
-  g.poly([w / 2, h / 2, w / 2 + 9, h / 2 - 4, w / 2, h / 2 - 8]).fill(C.clubRed)
-  g.circle(w / 2, h / 2, 3.5)
-    .fill(palette.chalk)
-    .stroke({ color: O, width: 1 })
+    .stroke({ color: O, width: OUTLINE })
+  g.poly([x, y, x + 11, y - 5, x, y - 10]).fill(club.primary)
+  g.circle(x, y, 4).fill(palette.chalk).stroke({ color: O, width: OUTLINE })
 }
 
-const tree: ObjectPainter = (g, w, h, rnd) => {
-  const cx = w / 2
-  const cy = h / 2
-  const size = Math.min(w, h) * 0.36
-  const crowns = [
-    [0, 0, 1],
-    [-0.6, -0.3, 0.7],
-    [0.55, -0.38, 0.72],
-    [0.4, 0.52, 0.74],
-    [-0.48, 0.48, 0.7],
-    [0.05, -0.66, 0.64],
-  ].map(([dx = 0, dy = 0, k = 1]): [number, number, number] => [
+/** Copas del roble: (dx, dy, radio relativo) respecto al centro, en unidades de `size`. */
+const TREE_CROWNS: readonly (readonly [number, number, number])[] = [
+  [0, 0, 1],
+  [-0.62, -0.3, 0.7],
+  [0.58, -0.4, 0.72],
+  [0.42, 0.55, 0.74],
+  [-0.5, 0.5, 0.7],
+  [0.05, -0.68, 0.66],
+  [0.78, 0.12, 0.6],
+]
+
+/**
+ * Roble frondoso centrado en (cx, cy): siete copas superpuestas con contorno
+ * solo exterior, un tono interior más oscuro y luces arriba a la izquierda (de
+ * donde viene la luz). Lo comparten el objeto `tree` y el decorado de la
+ * entrada. Con `shadow`, pinta antes la sombra de las copas (el decorado no
+ * pasa por el marcador, que es quien la pone a los objetos).
+ */
+export function paintTree(
+  g: Graphics,
+  cx: number,
+  cy: number,
+  size: number,
+  rnd: Random,
+  shadow = false,
+): void {
+  const crowns = TREE_CROWNS.map(([dx, dy, k]): [number, number, number] => [
     cx + dx * size,
     cy + dy * size,
     k * size * rnd.range(0.9, 1.1),
   ])
+  if (shadow)
+    for (const [x, y, r] of crowns)
+      g.circle(x + SHADOW_OFFSET, y + SHADOW_OFFSET, r + 2).fill({ color: O, alpha: SHADOW_ALPHA })
   for (const [x, y, r] of crowns) g.circle(x, y, r + 2).fill(palette.treeOutline)
   for (const [x, y, r] of crowns) g.circle(x, y, r).fill(palette.tree)
   for (const [x, y, r] of crowns)
-    g.circle(x + r * 0.2, y + r * 0.2, r * 0.6).fill(shade(palette.tree, -0.1))
+    g.circle(x + r * 0.22, y + r * 0.22, r * 0.62).fill(shade(palette.tree, -0.1))
   for (const [x, y, r] of crowns.slice(0, 4))
-    g.ellipse(x - r * 0.3, y - r * 0.35, r * 0.45, r * 0.3).fill(palette.treeLight)
+    g.ellipse(x - r * 0.32, y - r * 0.36, r * 0.46, r * 0.3).fill(palette.treeLight)
+}
+
+const tree: ObjectPainter = (g, w, h, rnd) => {
+  paintTree(g, w / 2, h / 2, Math.min(w, h) * rnd.range(0.38, 0.42), rnd)
+}
+
+/**
+ * Farola centrada en (cx, cy): charco de luz cálida de radio `glow`, base,
+ * poste y luminaria. La comparten el objeto `streetLamp` y la entrada.
+ */
+export function paintStreetLamp(
+  g: Graphics,
+  cx: number,
+  cy: number,
+  glow: number,
+  shadow = false,
+): void {
+  g.circle(cx, cy, glow).fill({ color: palette.warmLight, alpha: 0.12 })
+  if (shadow)
+    g.circle(cx + SHADOW_OFFSET, cy + SHADOW_OFFSET, 9).fill({ color: O, alpha: SHADOW_ALPHA })
+  g.circle(cx, cy + 4, 9)
+    .fill(palette.stoneDark)
+    .stroke({ color: O, width: OUTLINE })
+  box(g, cx - 7, cy - 18, 14, 16, palette.stone, 4)
+  g.circle(cx, cy - 10, 4).fill(palette.warmLight)
 }
 
 const streetLamp: ObjectPainter = (g, w, h) => {
-  g.circle(w / 2, h / 2, w * 0.75).fill({ color: palette.warmLight, alpha: 0.1 })
-  g.circle(w / 2, h / 2 + 4, 8)
-    .fill(palette.stoneDark)
-    .stroke({ color: O, width: 1 })
-  box(g, w / 2 - 7, h / 2 - 16, 14, 16, palette.stone, 4)
-  g.circle(w / 2, h / 2 - 8, 4).fill(palette.warmLight)
+  paintStreetLamp(g, w / 2, h / 2, w * 0.8)
 }
 
 const bin: ObjectPainter = (g, w, h) => {
-  g.circle(w / 2, h / 2, 14)
-    .fill(0x557f37)
-    .stroke({ color: O, width: LINE })
-  g.circle(w / 2, h / 2, 10).fill(shade(0x557f37, -0.3))
-  g.circle(w / 2 - 3, h / 2 - 3, 4).fill(palette.chalk)
-  g.rect(w / 2 - 6, h / 2 - 16, 12, 4)
-    .fill(shade(0x557f37, 0.2))
-    .stroke({ color: O, width: 0.8 })
+  // Papelera verde oscuro con bolsa dentro y tapa abatible arriba
+  const body = shade(palette.treeLight, -0.15)
+  g.circle(w / 2, h / 2 + 2, 15)
+    .fill(body)
+    .stroke({ color: O, width: OUTLINE })
+  g.circle(w / 2, h / 2 + 2, 11).fill(shade(body, -0.4))
+  g.circle(w / 2, h / 2 + 2, 8).fill(palette.slate)
+  g.circle(w / 2 - 3, h / 2 - 1, 3).fill(palette.chalk)
+  g.rect(w / 2 - 7, h / 2 - 17, 14, 5)
+    .fill(shade(body, 0.2))
+    .stroke({ color: O, width: OUTLINE_DETAIL })
 }
 
-const parkBench: ObjectPainter = (g, w, h) => {
-  for (const x of [10, w - 16]) g.rect(x, h / 2 - 15, 6, 30).fill(palette.outline)
-  for (let i = 0; i < 3; i++)
-    box(g, 6, h / 2 - 14 + i * 10, w - 12, 8, i === 0 ? shade(C.wood, -0.1) : C.wood, 2)
+const parkBench: ObjectPainter = (g, w, h, rnd) => {
+  // Patas de hierro, respaldo (arriba, más oscuro) y tablas del asiento con veta
+  for (const x of [10, w - 16])
+    g.rect(x, h / 2 - 16, 6, 32)
+      .fill(SCREEN.case)
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+  for (let i = 0; i < 3; i++) {
+    const y = h / 2 - 15 + i * 10
+    const color = i === 0 ? shade(C.wood, -0.15) : C.wood
+    box(g, 4, y, w - 8, 8, color, 2)
+    line(
+      g,
+      8 + rnd.range(0, 20),
+      y + 4,
+      w / 2 + rnd.range(-10, 10),
+      y + 4,
+      shade(color, -0.2),
+      OUTLINE_DETAIL,
+    )
+  }
 }
 
 const fountain: ObjectPainter = (g, w, h) => {
-  g.circle(w / 2, h / 2, 22)
+  // Pila de piedra con borde, agua con ondas y surtidor en el centro
+  g.circle(w / 2, h / 2, 23)
     .fill(palette.stone)
-    .stroke({ color: O, width: LINE })
-  g.circle(w / 2, h / 2, 16).fill(C.water)
-  g.circle(w / 2 - 5, h / 2 - 5, 5).fill(C.glass)
+    .stroke({ color: O, width: OUTLINE })
+  g.circle(w / 2, h / 2, 21).stroke({ color: shade(palette.stone, 0.2), width: 2 })
+  g.circle(w / 2, h / 2, 17)
+    .fill(C.water)
+    .stroke({ color: palette.waterEdge, width: OUTLINE_DETAIL })
+  g.circle(w / 2, h / 2, 11).stroke({ color: C.glass, width: OUTLINE_DETAIL })
+  g.circle(w / 2 - 6, h / 2 - 6, 4).fill(C.glass)
   g.circle(w / 2, h / 2, 5)
     .fill(palette.stoneDark)
-    .stroke({ color: O, width: 1 })
+    .stroke({ color: O, width: OUTLINE })
+  g.circle(w / 2, h / 2, 2).fill(palette.chalk)
 }
 
 // ── Salud, gimnasio y cafetería ──────────────────────────────────
 
 const physioTable: ObjectPainter = (g, w, h) => {
-  for (const x of [10, w - 16]) g.rect(x, 8, 6, h - 16).fill(C.metalDark)
-  box(g, 6, 10, w - 12, h - 20, C.teal, 6)
-  box(g, 10, 14, 26, h - 28, shade(C.teal, 0.2), 6)
-  // Toalla y agujero facial
-  box(g, w - 40, 14, 22, h - 28, palette.chalk, 3)
-  g.ellipse(22, h / 2, 5, 4).fill(shade(C.teal, -0.3))
+  // Patas, colchoneta con almohada, toalla y agujero facial
+  for (const x of [10, w - 16]) g.rect(x, 6, 6, h - 12).fill(C.metalDark)
+  box(g, 4, 9, w - 8, h - 18, C.teal, 6)
+  box(g, 9, 13, 28, h - 26, shade(C.teal, 0.2), 6)
+  g.ellipse(22, h / 2, 6, 5).fill(shade(C.teal, -0.35))
+  box(g, w - 42, 13, 24, h - 26, palette.chalk, 3)
+  line(g, w - 38, h / 2, w - 22, h / 2, shade(palette.chalk, -0.2), OUTLINE_DETAIL)
 }
 
 const weightsBench: ObjectPainter = (g, w, h) => {
-  // Soportes, banco y barra con discos
+  // Soportes, banco acolchado y barra con discos
   for (const x of [w * 0.28, w * 0.72])
     g.rect(x - 3, h * 0.2, 6, 18)
       .fill(C.metalDark)
-      .stroke({ color: O, width: 1 })
-  box(g, w / 2 - 12, h * 0.3, 24, h * 0.6, 0x2f3540, 6)
-  g.rect(8, h * 0.24, w - 16, 5)
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+  box(g, w / 2 - 13, h * 0.3, 26, h * 0.62, SCREEN.case, 6)
+  line(g, w / 2 - 6, h * 0.45, w / 2 + 6, h * 0.45, palette.slate, OUTLINE_DETAIL)
+  g.rect(6, h * 0.24, w - 12, 5)
     .fill(C.metal)
-    .stroke({ color: O, width: 1 })
-  for (const x of [8, w - 20]) {
-    g.roundRect(x, h * 0.24 - 12, 12, 29, 3)
-      .fill(0x2f3540)
-      .stroke({ color: O, width: 1 })
-    g.rect(x + 3, h * 0.24 - 9, 6, 23).fill(0x4a5260)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  for (const x of [6, w - 20]) {
+    g.roundRect(x, h * 0.24 - 13, 14, 31, 3)
+      .fill(SCREEN.case)
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+    g.rect(x + 4, h * 0.24 - 10, 6, 25).fill(palette.slate)
   }
 }
 
-const exerciseBike: ObjectPainter = (g, w, h) => {
+const exerciseBike: ObjectPainter = (g, w, h, _rnd, _tier, club = DEFAULT_CLUB_COLORS) => {
+  // Bastidor, volante (arriba), manillar, carcasa del club y sillín (abajo)
   g.roundRect(w / 2 - 6, 8, 12, h - 16, 4)
     .fill(C.metalDark)
-    .stroke({ color: O, width: 1 })
-  // Rueda delantera (arriba), manillar, sillín (abajo)
-  g.ellipse(w / 2, 22, 8, 16)
-    .fill(0x2f3540)
-    .stroke({ color: O, width: 1 })
-  g.rect(w / 2 - 16, 40, 32, 5)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.ellipse(w / 2, 22, 9, 17)
+    .fill(SCREEN.case)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.ellipse(w / 2, 22, 4, 10).fill(palette.slate)
+  g.rect(w / 2 - 18, 40, 36, 5)
     .fill(C.metal)
-    .stroke({ color: O, width: 1 })
-  g.roundRect(w / 2 - 9, h - 40, 18, 22, 6)
-    .fill(0x2f3540)
-    .stroke({ color: O, width: 1 })
-  box(g, w / 2 - 10, h / 2 - 4, 20, 14, C.clubRed, 3)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  box(g, w / 2 - 11, h / 2 - 5, 22, 16, club.primary, 3)
+  g.roundRect(w / 2 - 10, h - 40, 20, 24, 6)
+    .fill(SCREEN.case)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
 }
 
-const barCounter: ObjectPainter = (g, w, h) => {
-  // Barra con encimera hacia los clientes (abajo) y botellas detrás
-  box(g, 2, 6, w - 4, h - 16, C.wood, 4)
-  box(g, 2, h - 24, w - 4, 14, shade(C.woodLight, 0.05), 3)
-  const bottles = [0x3f6630, 0x8c2f39, palette.warmLight, 0x3f6fa8]
+const barCounter: ObjectPainter = (g, w, h, rnd) => {
+  // Barra con veta, encimera hacia los clientes (abajo) y botellas detrás
+  box(g, 2, 5, w - 4, h - 14, C.wood, 4)
+  grain(g, 4, 22, w - 8, h - 46, C.wood, rnd)
+  box(g, 2, h - 24, w - 4, 15, shade(C.woodLight, 0.05), 3)
+  const bottles = [palette.tree, palette.mudDeep, palette.warmLight, palette.waterEdge]
   for (let x = 12; x < w - 10; x += 14)
-    g.circle(x, 16, 4)
-      .fill(bottles[((x / 14) % bottles.length) | 0] ?? 0x3f6630)
-      .stroke({ color: O, width: 0.8 })
+    g.circle(x, 15, 4.5)
+      .fill(bottles[((x / 14) % bottles.length) | 0] ?? palette.tree)
+      .stroke({ color: O, width: OUTLINE_DETAIL })
   // Grifo de cerveza y vasos
-  g.rect(w / 2 - 3, h - 30, 6, 10)
+  g.rect(w / 2 - 3, h - 31, 6, 11)
     .fill(C.metal)
-    .stroke({ color: O, width: 0.8 })
+    .stroke({ color: O, width: OUTLINE_DETAIL })
   for (const x of [w * 0.25, w * 0.7])
-    g.circle(x, h - 17, 4)
+    g.circle(x, h - 16, 4.5)
       .fill(C.glass)
-      .stroke({ color: O, width: 0.8 })
+      .stroke({ color: O, width: OUTLINE_DETAIL })
 }
 
-const vendingMachine: ObjectPainter = (g, w, h) => {
-  box(g, 8, 6, w - 16, h - 12, C.clubRed, 3)
-  // Escaparate (frente) con filas de productos
-  g.rect(12, h - 26, w - 24, 16)
+const vendingMachine: ObjectPainter = (g, w, h, _rnd, _tier, club = DEFAULT_CLUB_COLORS) => {
+  // Carcasa del club, rótulo arriba y escaparate (frente) con productos
+  box(g, 6, 5, w - 12, h - 10, club.primary, 3)
+  g.rect(10, 10, w - 20, 8).fill(shade(club.primary, 0.25))
+  g.rect(10, h - 27, w - 20, 17)
     .fill(C.glass)
-    .stroke({ color: O, width: 1 })
-  const items = [palette.warmLight, 0x3f6fa8, 0x3f6630, palette.chalk]
-  for (let i = 0; i < 5; i++)
-    g.rect(15 + i * 7, h - 23, 5, 10).fill(items[i % items.length] ?? palette.chalk)
-  g.rect(12, 12, w - 24, 8).fill(shade(C.clubRed, 0.2))
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  const items = [palette.warmLight, palette.waterEdge, palette.tree, palette.chalk]
+  for (let i = 0; i < 6; i++)
+    g.rect(13 + i * 6.5, h - 24, 4.5, 11).fill(items[i % items.length] ?? palette.chalk)
+  g.rect(w - 14, 22, 4, 8).fill(O)
 }
 
-const cafeTable: ObjectPainter = (g, w, h) => {
-  const chair = 0x3f6fa8
+const cafeTable: ObjectPainter = (g, w, h, rnd, _tier, club = DEFAULT_CLUB_COLORS) => {
+  // Cuatro sillas del club alrededor de una mesa redonda con veta y una taza
   for (const [x, y] of [
     [w / 2, 10],
     [w / 2, h - 10],
     [10, h / 2],
     [w - 10, h / 2],
   ] as const) {
-    g.roundRect(x - 9, y - 9, 18, 18, 5)
-      .fill(chair)
-      .stroke({ color: O, width: 1 })
+    g.roundRect(x - 10, y - 10, 20, 20, 5)
+      .fill(club.primary)
+      .stroke({ color: O, width: OUTLINE })
+    g.roundRect(x - 6, y - 6, 12, 12, 3).fill(shade(club.primary, 0.15))
   }
-  g.circle(w / 2, h / 2, Math.min(w, h) * 0.3)
+  const r = Math.min(w, h) * 0.32
+  g.circle(w / 2, h / 2, r)
     .fill(C.woodLight)
-    .stroke({ color: O, width: LINE })
-  g.circle(w / 2, h / 2, Math.min(w, h) * 0.2).stroke({
-    color: shade(C.woodLight, -0.15),
-    width: 1,
-  })
-  g.circle(w / 2 + 6, h / 2 - 4, 4)
+    .stroke({ color: O, width: OUTLINE })
+  for (let i = 0; i < 3; i++)
+    g.circle(w / 2, h / 2, r * (0.3 + 0.2 * i + rnd.range(-0.03, 0.03))).stroke({
+      color: shade(C.woodLight, -0.15),
+      width: OUTLINE_DETAIL,
+    })
+  g.circle(w / 2 + 7, h / 2 - 5, 5)
     .fill(palette.chalk)
-    .stroke({ color: O, width: 0.8 })
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  g.circle(w / 2 + 7, h / 2 - 5, 3).fill(palette.mudDeep)
 }
 
 /** Pintores por id de objeto. Los que no estén aquí usan el marcador genérico. */

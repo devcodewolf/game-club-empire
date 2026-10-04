@@ -12,6 +12,7 @@ import { shade } from '../core/color'
 import { TILE_SIZE } from '../core/grid'
 import { palette } from '../palette'
 import { createRandom, type Random } from '../core/random'
+import { paintStreetLamp, paintTree } from '../art/objectArt'
 
 const T = TILE_SIZE
 const SHADOW = 4
@@ -382,53 +383,14 @@ function drawWarehouse(g: Graphics, rect: TileRect, docks: number): void {
 
 // ── Vegetación y mobiliario ──────────────────────────────────────
 
-/**
- * Roble frondoso que llena sus 2×2 casillas: siete copas superpuestas con
- * contorno solo exterior, un tono interior más oscuro y luces arriba a la
- * izquierda (de donde viene la luz).
- */
+/** Roble de 2×2 casillas: el mismo pintor que el objeto `tree`, con su sombra. */
 function drawTree(g: Graphics, tile: TileCoord, rnd: Random): void {
-  const cx = (tile.x + 1) * T
-  const cy = (tile.y + 1) * T
-  const size = T * rnd.range(0.8, 0.9)
-  const offsets: Array<[number, number, number]> = [
-    [0, 0, 1],
-    [-0.62, -0.3, 0.7],
-    [0.58, -0.4, 0.72],
-    [0.42, 0.55, 0.74],
-    [-0.5, 0.5, 0.7],
-    [0.05, -0.68, 0.66],
-    [0.78, 0.12, 0.6],
-  ]
-  const crowns = offsets.map(([dx, dy, k]): [number, number, number] => [
-    cx + dx * size,
-    cy + dy * size,
-    k * size * rnd.range(0.9, 1.1),
-  ])
-
-  for (const [x, y, r] of crowns)
-    g.circle(x + SHADOW * 3, y + SHADOW * 3, r).fill({ color: palette.grassShadow })
-  for (const [x, y, r] of crowns) g.circle(x, y, r + 2).fill(palette.treeOutline)
-  for (const [x, y, r] of crowns) g.circle(x, y, r).fill(palette.tree)
-  // Volumen: sombra interior abajo a la derecha y luces arriba a la izquierda
-  for (const [x, y, r] of crowns)
-    g.circle(x + r * 0.22, y + r * 0.22, r * 0.62).fill(shade(palette.tree, -0.1))
-  for (const [x, y, r] of crowns.slice(0, 4)) {
-    g.ellipse(x - r * 0.32, y - r * 0.36, r * 0.46, r * 0.3).fill(palette.treeLight)
-  }
+  paintTree(g, (tile.x + 1) * T, (tile.y + 1) * T, T * rnd.range(0.8, 0.9), rnd, true)
 }
 
-/** Farola: charco de luz cálida, poste y luminaria. */
+/** Farola: el mismo pintor que el objeto `streetLamp`, con un charco de luz mayor. */
 function drawLamp(g: Graphics, tile: TileCoord): void {
-  const cx = tile.x * T + T / 2
-  const cy = tile.y * T + T / 2
-  g.circle(cx, cy, T * 1.1).fill({ color: palette.warmLight, alpha: 0.12 })
-  g.circle(cx + 3, cy + 3, 9).fill({ color: COLORS.shadow, alpha: 0.35 })
-  g.circle(cx, cy, 9).fill(palette.stoneDark).stroke({ color: palette.outline, width: 1 })
-  g.roundRect(cx - 7, cy - 22, 14, 16, 4)
-    .fill(palette.stone)
-    .stroke({ color: palette.outline, width: 1 })
-  g.circle(cx, cy - 14, 4).fill(palette.warmLight)
+  paintStreetLamp(g, tile.x * T + T / 2, tile.y * T + T / 2, T * 1.1, true)
 }
 
 /** Jardinera: caja de madera con tierra y flores. */

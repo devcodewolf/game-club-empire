@@ -17,6 +17,9 @@ const DASH = 2
 const GAP = 2
 const LINE_WIDTH = 6
 const CURB_WIDTH = 5
+/** Líneas de borde: separan el carril del arcén, a esta distancia del bordillo. */
+const EDGE_INSET = TILE_SIZE * 0.35
+const EDGE_WIDTH = 4
 
 export function drawRoad(
   layer: Container,
@@ -48,6 +51,14 @@ export function drawRoad(
   g.moveTo(asphaltLeft, entranceBottom).lineTo(asphaltLeft, bottom)
   g.moveTo(asphaltRight, top).lineTo(asphaltRight, bottom)
   g.stroke({ color: palette.stoneDark, width: CURB_WIDTH })
+
+  // Arcén: líneas de borde continuas junto a cada bordillo (la izquierda se corta en el acceso)
+  const edgeLeft = asphaltLeft + EDGE_INSET
+  const edgeRight = asphaltRight - EDGE_INSET
+  g.moveTo(edgeLeft, top).lineTo(edgeLeft, entranceTop)
+  g.moveTo(edgeLeft, entranceBottom).lineTo(edgeLeft, bottom)
+  g.moveTo(edgeRight, top).lineTo(edgeRight, bottom)
+  g.stroke({ color: palette.chalk, width: EDGE_WIDTH, alpha: 0.85 })
 
   // Línea central discontinua
   const centerX = (ROAD.x + ROAD.width / 2) * TILE_SIZE

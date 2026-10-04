@@ -92,9 +92,9 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
   > Decisión (4-oct-2026): se descarta el pipeline SVG → PNG → atlas. Todo el arte se pinta por código con `Graphics` (niveles y colores del club salen por parámetro). Se comparte la geometría en vez de hornear a `Sprite`: sigue nítida con zoom ×2 en pantallas de alta densidad y las gradas (hasta 56×14 casillas) no ocupan decenas de MB en texturas.
 - [x] Texturas de los suelos iniciales con variación por casilla (adelantado a la Fase 1B, bloque A; se pulirán aquí)
 - [x] Pintores de piezas de muro para el autotiling (recto, esquina, T, cruz y final) y puerta (hechos en la Fase 1B: `views/wallsView.ts` con remate, cara de material y sombra)
-- [ ] Pintores de los objetos iniciales, cada uno con sus 2-3 detalles característicos y su sombra
-- [ ] Pintores de carretera, arcén y entrada
-- [ ] Iconos de líneas blancas para el menú de construcción
+- [x] Pintores de los objetos iniciales, cada uno con sus 2-3 detalles característicos y su sombra (repaso de los 27: más tamaño y contraste, contornos de `style.ts`, colores de la paleta, color del club por parámetro)
+- [x] Pintores de carretera, arcén y entrada (líneas de borde del arcén; roble y farola compartidos entre objetos y entrada)
+- [x] Iconos de líneas blancas para el menú de construcción (Tabler en línea blanca sobre el color de la categoría)
 - [x] ⚡ Crear `docs/ASSETS-LICENSES.md` y registrar los recursos externos (Tabler Icons, Patrick Hand y demás fuentes)
 
 **Skill de arte (`.claude/skills/pixi-artist/`)**
@@ -107,7 +107,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
   - [x] c) Córners: botón propio en el menú, se colocan y mejoran a mano; necesitan las dos gradas vecinas y no pasan del nivel de la más baja; filas en arco que empalman con los lados; sombras en capa propia (RenderLayer)
 - [x] 🧠 Sombra de objetos que sigue la silueta (en lugar del rectángulo genérico): silueta horneada por objeto y nivel (`silhouettes.ts`); los halos de luz no proyectan sombra
 
-✅ **Validar:** un vestuario y un campo montados a mano se ven coherentes con la guía de estilo.
+✅ **Validar:** un vestuario y un campo montados a mano se ven coherentes con la guía de estilo. — **Validado por Raul el 4-oct-2026.**
 
 ---
 

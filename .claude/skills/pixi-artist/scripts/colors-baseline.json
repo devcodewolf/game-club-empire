@@ -1,9 +1,6 @@
 {
   "note": "Deuda de colores fuera de paleta. Regenerar con --baseline al migrar colores a palette.ts.",
   "colors": {
-    "#2f3540": [
-      "src/render/art/objectArt.ts"
-    ],
     "#b5643c": [
       "src/content/buildings.ts",
       "src/content/rooms.ts",
@@ -19,9 +16,6 @@
       "src/content/buildings.ts",
       "src/content/doors.ts",
       "src/content/rooms.ts"
-    ],
-    "#d8e4ea": [
-      "src/render/art/objectArt.ts"
     ],
     "#b5523b": [
       "src/content/buildings.ts",
@@ -72,12 +66,6 @@
       "src/render/art/objectArt.ts"
     ],
     "#e08a3c": [
-      "src/render/art/objectArt.ts"
-    ],
-    "#5a7a96": [
-      "src/render/art/objectArt.ts"
-    ],
-    "#4a5260": [
       "src/render/art/objectArt.ts"
     ],
     "#d8cdb8": [
