@@ -7,7 +7,7 @@
  * - Los colores son provisionales hasta las texturas de la Fase 1C.
  * - Los costes se cobran a partir de la Fase 2.
  */
-import type { FloorDef } from '@/sim/floors'
+import type { FloorDef } from '@/sim/map/floors'
 import type { DivisionId } from './progression'
 
 /**

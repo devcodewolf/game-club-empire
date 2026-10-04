@@ -4,7 +4,7 @@
  * Añadir un muro = añadir una entrada en `WALLS`. Los colores son
  * provisionales hasta el arte de la Fase 1C.
  */
-import type { WallDef } from '@/sim/structureTypes'
+import type { WallDef } from '@/sim/map/structureTypes'
 import type { DivisionId } from './progression'
 
 /** Identidad que obliga a que la clave coincida con el `id` y conserva los literales. */

@@ -4,7 +4,7 @@
  * Añadir una puerta = añadir una entrada en `DOORS`. Los colores son
  * provisionales hasta el arte de la Fase 1C.
  */
-import type { DoorDef } from '@/sim/structureTypes'
+import type { DoorDef } from '@/sim/map/structureTypes'
 import type { DivisionId } from './progression'
 
 /** Identidad que obliga a que la clave coincida con el `id` y conserva los literales. */

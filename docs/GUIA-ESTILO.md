@@ -64,7 +64,7 @@ No forman parte del mundo, solo dan feedback al jugador.
 | Fondo fuera del mapa | `#1b2a1f` |
 
 ## Texturas de suelo (Fase 1B)
-- Se generan por código en `src/render/floorTextures.ts`, cada una de 128×128 px (2×2 casillas) para que casillas vecinas no sean idénticas.
+- Se generan por código en `src/render/art/floorTextures.ts`, cada una de 128×128 px (2×2 casillas) para que casillas vecinas no sean idénticas.
 - Solo usan el color base de cada suelo (`src/content/floors.ts`) y tonos derivados con `shade()` (más claro/más oscuro): nada de colores sueltos.
 - Lo que toca un borde se repite en el opuesto: la textura es continua y queda alineada con la rejilla.
 - Referencia de aspecto: los materiales de Prison Architect (solo como referencia; no se copian sus imágenes).

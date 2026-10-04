@@ -1,8 +1,8 @@
 /** Selección del jugador en el mapa: una sala o un objeto (solo una cosa a la vez). */
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import type { BuildingId } from '@/sim/buildings'
-import type { RoomId } from '@/sim/roomTypes'
+import type { BuildingId } from '@/sim/buildings/buildings'
+import type { RoomId } from '@/sim/rooms/roomTypes'
 
 export type Selection = { kind: 'room'; id: RoomId } | { kind: 'building'; id: BuildingId }
 

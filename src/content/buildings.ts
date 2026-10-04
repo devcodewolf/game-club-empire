@@ -6,7 +6,7 @@
  * Los costes se cobran a partir de la Fase 2; en la Fase 1 solo se definen.
  * Tamaños en casillas de 64 px, sin girar (ancho × alto).
  */
-import type { BuildingDef, TierDef } from '@/sim/buildings'
+import type { BuildingDef, TierDef } from '@/sim/buildings/buildings'
 import type { IconName } from './icons'
 import type { DivisionId } from './progression'
 

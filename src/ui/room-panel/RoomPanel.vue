@@ -4,7 +4,7 @@
  * operativa, qué le falta y permite quitar su designación.
  */
 import { computed, watch } from 'vue'
-import { evaluateRoom } from '@/sim/rooms'
+import { evaluateRoom } from '@/sim/rooms/rooms'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
 import { buildingName, findRoom } from '@/ui/composables/contentLookup'

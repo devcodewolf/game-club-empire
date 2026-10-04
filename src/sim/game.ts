@@ -8,7 +8,7 @@
  */
 import { executeCommand, type Command, type CommandResult, type GameEvent } from './commands'
 import type { SimContent } from './content'
-import { createMapState, type MapConfig, type MapState } from './map'
+import { createMapState, type MapConfig, type MapState } from './map/map'
 
 export type GameListener = (event: GameEvent) => void
 

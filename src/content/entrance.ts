@@ -8,7 +8,7 @@
  * Coordenadas en casillas.
  */
 import type { TileCoord, TileRect } from '@/sim/geometry'
-import type { MapFeature } from '@/sim/map'
+import type { MapFeature } from '@/sim/map/map'
 
 /** Columna de la valla perimetral (paralela a la carretera). */
 export const FENCE_X = 222

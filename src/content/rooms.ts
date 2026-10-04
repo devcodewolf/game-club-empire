@@ -2,7 +2,7 @@
  * Catálogo de salas. Añadir una sala = añadir una entrada en `ROOMS`; sus
  * requisitos y capacidad deben apuntar a objetos de `BUILDINGS`.
  */
-import type { RoomDef } from '@/sim/roomTypes'
+import type { RoomDef } from '@/sim/rooms/roomTypes'
 import type { StarterBuildingId } from './buildings'
 import type { IconName } from './icons'
 import type { DivisionId } from './progression'

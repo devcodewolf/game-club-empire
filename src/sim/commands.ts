@@ -13,7 +13,7 @@ import {
   type PitchRole,
   type PlacedBuilding,
   type StandSlot,
-} from './buildings'
+} from './buildings/buildings'
 import {
   occupy,
   placementRect,
@@ -21,9 +21,9 @@ import {
   validatePlaceStand,
   validateStandUpgrade,
   type StandError,
-} from './stands'
+} from './buildings/stands'
 import type { SimContent } from './content'
-import type { FloorId } from './floors'
+import type { FloorId } from './map/floors'
 import {
   applyDemolishStructures,
   applyDoor,
@@ -35,8 +35,8 @@ import {
   validateWalls,
   type StructureCheck,
   type StructureError,
-} from './structures'
-import type { DoorId, WallId } from './structureTypes'
+} from './map/structures'
+import type { DoorId, WallId } from './map/structureTypes'
 import {
   applyDesignateRoom,
   applyRemoveRoom,
@@ -44,15 +44,15 @@ import {
   validateDesignateRoom,
   validateRemoveRoom,
   type RoomError,
-} from './rooms'
-import type { RoomId, RoomTypeId } from './roomTypes'
+} from './rooms/rooms'
+import type { RoomId, RoomTypeId } from './rooms/roomTypes'
 import {
   applyDemolishArea,
   applyDemolishAt,
   demolishTargetAt,
   removeBuilding,
   validateDemolishArea,
-} from './demolish'
+} from './map/demolish'
 import { tilesInRect, type Rotation, type TileCoord, type TileRect } from './geometry'
 import {
   tileIndex,
@@ -61,7 +61,7 @@ import {
   type FloorPaintError,
   type MapState,
   type PlacementError,
-} from './map'
+} from './map/map'
 
 // ── Comandos ─────────────────────────────────────────────────────
 

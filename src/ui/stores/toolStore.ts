@@ -4,12 +4,12 @@
  */
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import type { BuildingTypeId } from '@/sim/buildings'
-import type { RoomTypeId } from '@/sim/roomTypes'
-import type { FloorId } from '@/sim/floors'
+import type { BuildingTypeId } from '@/sim/buildings/buildings'
+import type { RoomTypeId } from '@/sim/rooms/roomTypes'
+import type { FloorId } from '@/sim/map/floors'
 import { nextRotation, type Rotation } from '@/sim/geometry'
-import { NO_TOOL, type Tool } from '@/render/tool'
-import type { DoorId, WallId } from '@/sim/structureTypes'
+import { NO_TOOL, type Tool } from '@/render/input/tool'
+import type { DoorId, WallId } from '@/sim/map/structureTypes'
 
 /** Los cimientos siempre dejan hormigón dentro; el muro es lo único que se elige. */
 const FOUNDATION_FLOOR: FloorId = 'concrete'

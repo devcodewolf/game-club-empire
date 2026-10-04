@@ -5,10 +5,10 @@
  * catálogos de prueba. Añadir un catálogo nuevo (salas, objetos…) = añadir
  * un campo aquí.
  */
-import type { BuildingCatalog } from './buildings'
-import type { FloorCatalog } from './floors'
-import type { RoomCatalog } from './roomTypes'
-import type { DoorCatalog, WallCatalog } from './structureTypes'
+import type { BuildingCatalog } from './buildings/buildings'
+import type { FloorCatalog } from './map/floors'
+import type { RoomCatalog } from './rooms/roomTypes'
+import type { DoorCatalog, WallCatalog } from './map/structureTypes'
 
 export interface SimContent {
   readonly buildings: BuildingCatalog

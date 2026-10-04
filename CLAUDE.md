@@ -31,8 +31,11 @@ Juego 2D en **vista cenital** (desde arriba, estilo visual de Prison Architect) 
 ```
 src/
   sim/        # lógica pura: estado, ticks, economía, temporada
+              #   raíz: game, commands, content, geometry · map/ · rooms/ · buildings/
   content/    # datos: edificios, recursos, desbloqueos
-  render/     # PixiJS: capas (suelo, edificios, personas, efectos), cámara, sprites
+  render/     # PixiJS. Raíz: createGameRenderer, palette, style
+              #   core/ (rejilla, capas, texturas base) · camera/ · art/ (pintores)
+              #   views/ (vistas por capa, efectos) · input/ (herramientas y ratón)
   ui/         # componentes Vue
   save/       # guardado/carga IndexedDB
 assets/src/   # SVG puntuales fuera del mapa (hojas de muestra; más adelante logo e iconos de UI)
@@ -40,6 +43,8 @@ tools/        # scripts: capturas de la galería, hojas de muestra
 docs/PLAN.md  # plan por fases
 docs/ASSETS-LICENSES.md # origen y licencia de cada asset
 ```
+
+Los tests van en una carpeta `__tests__/` junto a los archivos que prueban (p. ej. `sim/map/__tests__/structures.test.ts`); los datos de prueba compartidos de la simulación están en `sim/__tests__/fixtures.ts`.
 
 ## Calidad visual (referencia visual: Prison Architect)
 Bonito y con encanto, no realista. El juego tiene que sentirse vivo y cuidado, no como una hoja de cálculo con mapa.

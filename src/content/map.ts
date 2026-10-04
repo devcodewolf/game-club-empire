@@ -5,7 +5,7 @@
  * Todo es construible salvo la carretera del borde derecho, su acera y la
  * entrada de la ciudad deportiva (`entrance.ts`), que se marcan como reservados.
  */
-import type { MapConfig, MapFeature } from '@/sim/map'
+import type { MapConfig, MapFeature } from '@/sim/map/map'
 import { ACCESS, ENTRANCE_FEATURES } from './entrance'
 
 const WIDTH = 240

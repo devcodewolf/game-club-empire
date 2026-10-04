@@ -2,30 +2,23 @@
   "note": "Deuda de colores fuera de paleta. Regenerar con --baseline al migrar colores a palette.ts.",
   "colors": {
     "#2f3540": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#8c2f39": [
       "src/content/rooms.ts",
-      "src/render/clubColors.ts",
-      "src/render/entranceView.ts",
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts",
+      "src/render/core/clubColors.ts",
+      "src/render/views/entranceView.ts"
     ],
     "#3f6fa8": [
-      "src/render/entranceView.ts",
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts",
+      "src/render/views/entranceView.ts"
     ],
     "#b5643c": [
       "src/content/buildings.ts",
       "src/content/rooms.ts",
       "src/content/walls.ts",
-      "src/render/objectArt.ts"
-    ],
-    "#b5523b": [
-      "src/content/buildings.ts",
-      "src/render/entranceView.ts"
-    ],
-    "#9a6b3f": [
-      "src/content/buildings.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#9b9385": [
       "src/content/buildings.ts",
@@ -37,27 +30,25 @@
       "src/content/doors.ts",
       "src/content/rooms.ts"
     ],
-    "#3e4347": [
-      "src/content/floors.ts",
-      "src/render/entranceView.ts"
-    ],
     "#d8e4ea": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#5a7a96": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
-    "#4f9a4a": [
+    "#b5523b": [
       "src/content/buildings.ts",
-      "src/content/floors.ts"
+      "src/render/views/entranceView.ts"
     ],
-    "#5a9a3a": [
-      "src/content/buildings.ts",
-      "src/content/floors.ts"
+    "#3e4347": [
+      "src/content/floors.ts",
+      "src/render/views/entranceView.ts"
     ],
-    "#64a844": [
-      "src/content/buildings.ts",
-      "src/content/floors.ts"
+    "#8a6a48": [
+      "src/content/buildings.ts"
+    ],
+    "#9a6b3f": [
+      "src/content/buildings.ts"
     ],
     "#5b8fb9": [
       "src/content/buildings.ts",
@@ -75,62 +66,50 @@
       "src/content/buildings.ts",
       "src/content/walls.ts"
     ],
-    "#d8cdb8": [
-      "src/render/effects.ts"
-    ],
-    "#d9706a": [
-      "src/render/entranceView.ts"
-    ],
     "#ffffff": [
-      "src/render/iconTextures.ts"
+      "src/render/art/iconTextures.ts"
     ],
     "#8a96a3": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#5d6872": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#f2f2ee": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#5aa39a": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#b98a55": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#e08a3c": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#d9d9d4": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#6a4428": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#3e4a5a": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#8f979c": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
     ],
     "#4a5260": [
-      "src/render/objectArt.ts"
+      "src/render/art/objectArt.ts"
+    ],
+    "#d8cdb8": [
+      "src/render/views/effects.ts"
+    ],
+    "#d9706a": [
+      "src/render/views/entranceView.ts"
     ],
     "#b03a2e": [
-      "src/render/roomsView.ts"
-    ],
-    "#8a6a48": [
-      "src/content/buildings.ts"
-    ],
-    "#8b9298": [
-      "src/content/buildings.ts"
-    ],
-    "#a04632": [
-      "src/content/buildings.ts"
-    ],
-    "#7d3a2b": [
-      "src/content/buildings.ts"
+      "src/render/views/roomsView.ts"
     ],
     "#6f8fa8": [
       "src/content/buildings.ts"
@@ -184,6 +163,15 @@
       "src/content/doors.ts"
     ],
     "#a8aaa5": [
+      "src/content/floors.ts"
+    ],
+    "#4f9a4a": [
+      "src/content/floors.ts"
+    ],
+    "#5a9a3a": [
+      "src/content/floors.ts"
+    ],
+    "#64a844": [
       "src/content/floors.ts"
     ],
     "#6fb3a0": [

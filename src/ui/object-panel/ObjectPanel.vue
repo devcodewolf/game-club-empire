@@ -5,8 +5,8 @@
  * Mismo estilo que la ficha de sala (hoja de libreta).
  */
 import { computed, watch } from 'vue'
-import { maxTier, tierQuality, type PitchRole, type StandSlot } from '@/sim/buildings'
-import { lowestNeighbour, pitchCapacity, standCapacity, validateStandUpgrade } from '@/sim/stands'
+import { maxTier, tierQuality, type PitchRole, type StandSlot } from '@/sim/buildings/buildings'
+import { lowestNeighbour, pitchCapacity, standCapacity, validateStandUpgrade } from '@/sim/buildings/stands'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
 import { findBuilding } from '@/ui/composables/contentLookup'
