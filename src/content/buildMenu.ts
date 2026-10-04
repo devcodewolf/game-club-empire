@@ -29,6 +29,8 @@ export type MenuItem =
   | { readonly kind: 'foundation'; readonly wall: WallTypeId }
   | { readonly kind: 'wall'; readonly id: WallTypeId }
   | { readonly kind: 'door'; readonly id: DoorTypeId }
+  /** Mover: clic coge un objeto o campo, clic lo suelta (R gira). */
+  | { readonly kind: 'move' }
   /** Demoler: clic quita lo de encima; arrastrar arrasa la zona. */
   | { readonly kind: 'demolish' }
   | { readonly kind: 'room'; readonly id: RoomTypeId }
@@ -257,6 +259,13 @@ export const BUILD_CATEGORIES: readonly MenuCategory[] = [
         ],
       },
     ],
+  },
+  {
+    id: 'move',
+    label: 'Mover',
+    icon: 'arrows-move',
+    color: 'blue',
+    tabs: [{ label: 'Mover', items: [{ kind: 'move' }] }],
   },
   {
     id: 'demolish',

@@ -4,7 +4,7 @@
  * Es un dato plano. La UI la guarda en Pinia y se la pasa al renderer con
  * `setTool`; el render la usa para la vista previa y para proponer comandos.
  */
-import type { BuildingTypeId } from '@/sim/buildings/buildings'
+import type { BuildingId, BuildingTypeId } from '@/sim/buildings/buildings'
 import type { FloorId } from '@/sim/map/floors'
 import type { Rotation } from '@/sim/geometry'
 import type { RoomTypeId } from '@/sim/rooms/roomTypes'
@@ -16,6 +16,14 @@ export type Tool =
   /** Grada: se pega al lado del campo bajo el cursor; no se gira. */
   | { readonly kind: 'stand'; readonly buildingType: BuildingTypeId }
   | { readonly kind: 'demolish' }
+  /**
+   * Mover: sin `carrying`, un clic coge el objeto o campo de la casilla; con
+   * `carrying`, se lleva en fantasma (R gira) y un clic lo suelta.
+   */
+  | {
+      readonly kind: 'move'
+      readonly carrying: { readonly buildingId: BuildingId; readonly rotation: Rotation } | null
+    }
   | { readonly kind: 'paintFloor'; readonly floor: FloorId }
   | { readonly kind: 'foundation'; readonly wall: WallId; readonly floor: FloorId }
   | { readonly kind: 'wall'; readonly wall: WallId }

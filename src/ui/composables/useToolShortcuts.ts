@@ -22,9 +22,9 @@ export function useToolShortcuts(): void {
   const buildMenu = useBuildMenu()
   const selection = useSelectionStore()
 
-  /** Escape: suelta la herramienta; si no hay, deselecciona la sala u objeto; si tampoco, cierra el menú. */
+  /** Escape: suelta lo que se lleva o la herramienta; si no hay, deselecciona la sala u objeto; si tampoco, cierra el menú. */
   function onEscape(): void {
-    if (toolStore.tool.kind !== 'none') return toolStore.clear()
+    if (toolStore.tool.kind !== 'none') return toolStore.cancel()
     if (selection.selection !== null) return selection.clear()
     buildMenu.close()
   }

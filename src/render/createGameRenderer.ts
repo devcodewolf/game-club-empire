@@ -56,6 +56,8 @@ export interface GameRendererOptions {
   readonly onCancel: () => void
   /** Clic sobre una zona de ampliación bloqueada. */
   readonly onExpansionClick: (side: ExpansionSide) => void
+  /** Clic con la herramienta Mover sin nada cogido. */
+  readonly onPickUp: (tile: TileCoord) => void
   /** Clic sin herramienta: el jugador quiere inspeccionar lo que hay en la casilla. */
   readonly onInspect: (tile: TileCoord) => void
 }
@@ -68,7 +70,7 @@ export interface GameRenderer {
 export async function createGameRenderer(
   host: HTMLElement,
   game: Game,
-  { onCommand, onCancel, onExpansionClick, onInspect }: GameRendererOptions,
+  { onCommand, onCancel, onExpansionClick, onInspect, onPickUp }: GameRendererOptions,
 ): Promise<GameRenderer> {
   const app = new Application()
   await app.init({
@@ -164,6 +166,7 @@ export async function createGameRenderer(
       if (side) return onExpansionClick(side)
 
       if (tool.kind === 'none') return onInspect(tile)
+      if (tool.kind === 'move' && !tool.carrying) return onPickUp(tile)
       const command = commandForTool(tool, tile, game.state, game.content)
       if (command) onCommand(command)
     },
@@ -196,6 +199,7 @@ export async function createGameRenderer(
       tool = next
       dragStart = null
       preview.setTool(next)
+      buildings.setCarrying(next.kind === 'move' ? (next.carrying?.buildingId ?? null) : null)
     },
     destroy(): void {
       unbindInput()

@@ -4,7 +4,7 @@
  */
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import type { BuildingTypeId } from '@/sim/buildings/buildings'
+import type { BuildingId, BuildingTypeId } from '@/sim/buildings/buildings'
 import type { RoomTypeId } from '@/sim/rooms/roomTypes'
 import type { FloorId } from '@/sim/map/floors'
 import { nextRotation, type Rotation } from '@/sim/geometry'
@@ -53,6 +53,28 @@ export const useToolStore = defineStore('tool', () => {
     tool.value = tool.value.kind === 'demolish' ? NO_TOOL : { kind: 'demolish' }
   }
 
+  /** Herramienta Mover, todavía sin nada cogido. */
+  function selectMove(): void {
+    tool.value = tool.value.kind === 'move' ? NO_TOOL : { kind: 'move', carrying: null }
+  }
+
+  /** Coge un objeto o campo para moverlo, con su giro actual. */
+  function pickUp(buildingId: BuildingId, current: Rotation): void {
+    if (tool.value.kind !== 'move') return
+    tool.value = { kind: 'move', carrying: { buildingId, rotation: current } }
+  }
+
+  /** Suelta lo que se lleva (tras moverlo o al cancelar); la herramienta sigue activa. */
+  function putDown(): void {
+    if (tool.value.kind === 'move') tool.value = { kind: 'move', carrying: null }
+  }
+
+  /** Escape / clic derecho: si se lleva algo, lo deja donde estaba; si no, suelta la herramienta. */
+  function cancel(): void {
+    if (tool.value.kind === 'move' && tool.value.carrying) return putDown()
+    clear()
+  }
+
   /** Cimientos con ese muro; elegir los mismos otra vez los suelta. */
   function selectFoundation(wall: WallId): void {
     if (activeFoundation.value === wall) return clear()
@@ -80,6 +102,14 @@ export const useToolStore = defineStore('tool', () => {
   }
 
   function rotate(): void {
+    const current = tool.value
+    // Al mover, se gira lo que se lleva (sin tocar el giro recordado para construir).
+    if (current.kind === 'move') {
+      if (!current.carrying) return
+      const carrying = { ...current.carrying, rotation: nextRotation(current.carrying.rotation) }
+      tool.value = { kind: 'move', carrying }
+      return
+    }
     rotation.value = nextRotation(rotation.value)
     if (tool.value.kind !== 'build') return
     tool.value = { ...tool.value, rotation: rotation.value }
@@ -102,6 +132,10 @@ export const useToolStore = defineStore('tool', () => {
     selectStand,
     selectFloor,
     selectDemolish,
+    selectMove,
+    pickUp,
+    putDown,
+    cancel,
     selectFoundation,
     selectWall,
     selectDoor,

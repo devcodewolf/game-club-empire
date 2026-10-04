@@ -2,6 +2,8 @@
  * Vista previa de la herramienta bajo el cursor (capa overlay):
  *  - construir: edificio fantasma + huella verde (válido) o roja (inválido)
  *  - demoler: huella roja del edificio bajo el cursor
+ *  - mover: sin nada cogido, borde claro de lo que se cogería; llevando algo,
+ *    fantasma de la pieza (un campo, con todo su estadio) y huellas verde/roja
  *  - pintar suelo: rectángulo del arrastre con el color del suelo, borde verde
  *    o rojo y su tamaño ("12×8")
  *
@@ -14,8 +16,16 @@ import { buildingAt, buildingFootprint, validateFloorPaint, validatePlacement } 
 import { doorAxis, validateDoor, validateFoundation, validateWalls } from '@/sim/map/structures'
 import { regionFrom, roomAt, validateDesignateRoom } from '@/sim/rooms/rooms'
 import { demolishTargetAt } from '@/sim/map/demolish'
-import { checkStandArea, maxStandRect, placementRect, validatePlaceStand } from '@/sim/buildings/stands'
+import {
+  checkStandArea,
+  maxStandRect,
+  placementRect,
+  standsOf,
+  validatePlaceStand,
+} from '@/sim/buildings/stands'
+import { moveTargetAt, planMove, type Move } from '@/sim/buildings/move'
 import { createBuildingMarker, destroyBuildingMarker } from '../art/buildingMarker'
+import type { PlacedBuilding } from '@/sim/buildings/buildings'
 import { TILE_SIZE } from '../core/grid'
 import type { RenderAssets } from '../core/renderAssets'
 import { palette } from '../palette'
@@ -65,6 +75,44 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
   let standGhost: Container | null = null
   let standGhostKey = ''
 
+  /** Fantasma de lo que se lleva con Mover: la pieza y, si es un campo, sus gradas. */
+  let carryGhost: Container | null = null
+  let carryGhostKey = ''
+
+  /**
+   * Recrea el fantasma solo si cambia la pieza o su giro: las gradas quedan
+   * siempre en el mismo sitio respecto al campo, así que basta con moverlo.
+   */
+  const syncCarryGhost = (key: string, moves: readonly Move[]): void => {
+    if (key === carryGhostKey) return
+    if (carryGhost) carryGhost.destroy({ children: true })
+    carryGhostKey = key
+    const main = moves[0]?.to
+    carryGhost = main ? new Container({ label: 'carryGhost' }) : null
+    if (!carryGhost || !main) return
+    for (const { to } of moves) {
+      const piece = markerFor(to)
+      if (!piece) continue
+      piece.position.set(
+        (to.origin.x - main.origin.x) * TILE_SIZE,
+        (to.origin.y - main.origin.y) * TILE_SIZE,
+      )
+      carryGhost.addChild(piece)
+    }
+    carryGhost.alpha = GHOST_ALPHA
+    root.addChildAt(carryGhost, 0)
+  }
+
+  const markerFor = (building: PlacedBuilding): Container | null => {
+    const def = game.content.buildings[building.type]
+    if (!def) return null
+    return createBuildingMarker(def, building.rotation, assets, {
+      tier: building.tier,
+      role: building.role,
+      ...(building.size ? { size: building.size } : {}),
+    })
+  }
+
   const syncStandGhost = (key: string, create: () => Container | null): void => {
     if (key === standGhostKey) return
     if (standGhost) destroyBuildingMarker(standGhost)
@@ -98,7 +146,19 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
     sizeLabel.visible = false
     if (ghost) ghost.visible = false
     if (standGhost) standGhost.visible = false
+    if (carryGhost) carryGhost.visible = false
     if (!hover) return
+
+    // Mover sin nada cogido: se marca lo que se cogería (un campo, con su estadio)
+    if (tool.kind === 'move' && !tool.carrying) {
+      const target = moveTargetAt(game.state, hover)
+      if (!target) return
+      for (const piece of [target, ...standsOf(game.state, target.id)]) {
+        const def = game.content.buildings[piece.type]
+        if (def) drawRect(highlight, buildingFootprint(piece, def), zoom, palette.chalk)
+      }
+      return
+    }
 
     const command = dragStart
       ? commandForDrag(tool, dragStart, hover, game.state)
@@ -156,6 +216,34 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
           drawDashedRect(highlight, max, zoom, blocked ? palette.warmLight : palette.chalk)
         }
         drawRect(highlight, rect, zoom, check.ok ? palette.previewValid : palette.previewInvalid)
+        return
+      }
+      case 'moveBuilding': {
+        const check = planMove(
+          game.state,
+          game.content,
+          command.buildingId,
+          command.origin,
+          command.rotation,
+        )
+        const moves = check.ok ? check.moves : (check.moves ?? [])
+        const main = moves[0]?.to
+        if (!main) return
+        syncCarryGhost(`${command.buildingId}:${command.rotation}`, moves)
+        if (carryGhost) {
+          carryGhost.visible = true
+          carryGhost.position.set(main.origin.x * TILE_SIZE, main.origin.y * TILE_SIZE)
+        }
+        // Soltar en el mismo sitio no es un error: se ve en blanco, no en rojo
+        const color = check.ok
+          ? palette.previewValid
+          : check.reason === 'samePlace'
+            ? palette.chalk
+            : palette.previewInvalid
+        for (const { to } of moves) {
+          const def = game.content.buildings[to.type]
+          if (def) drawRect(highlight, buildingFootprint(to, def), zoom, color)
+        }
         return
       }
       case 'demolishBuilding': {

@@ -10,6 +10,7 @@ import type { Command } from '@/sim/commands'
 import type { Game } from '@/sim/game'
 import type { TileCoord } from '@/sim/geometry'
 import { buildingAt } from '@/sim/map/map'
+import { moveTargetAt } from '@/sim/buildings/move'
 import { NO_ROOM } from '@/sim/rooms/roomTypes'
 import { roomAt } from '@/sim/rooms/rooms'
 import { useNoticeStore } from '@/ui/stores/noticeStore'
@@ -27,7 +28,15 @@ let renderer: GameRenderer | null = null
 let disposed = false
 
 function onCommand(command: Command): void {
-  props.game.dispatch(command)
+  const result = props.game.dispatch(command)
+  // Mover: si se soltó bien, la herramienta vuelve a estar lista para coger otra cosa
+  if (result.ok && command.type === 'moveBuilding') toolStore.putDown()
+}
+
+/** Herramienta Mover sin nada cogido: coge el objeto o campo de la casilla (una grada coge su campo). */
+function onPickUp(tile: TileCoord): void {
+  const target = moveTargetAt(props.game.state, tile)
+  if (target) toolStore.pickUp(target.id, target.rotation)
 }
 
 /** Clic sin herramienta: selecciona el objeto de la casilla (prioridad), si no la sala, si no limpia. */
@@ -44,8 +53,9 @@ onMounted(async () => {
 
   const created = await createGameRenderer(host.value, props.game, {
     onCommand,
-    onCancel: toolStore.clear,
+    onCancel: toolStore.cancel,
     onInspect,
+    onPickUp,
     onExpansionClick: () =>
       noticeStore.show('🔒', 'Ampliación no disponible todavía. Llegará en una versión futura.'),
   })

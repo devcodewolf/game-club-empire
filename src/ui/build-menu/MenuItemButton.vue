@@ -149,6 +149,19 @@ const model = computed<ButtonModel>(() => {
     }
   }
 
+  if (item.kind === 'move') {
+    return {
+      label: 'Mover',
+      icon: 'arrows-move',
+      color: 'blue',
+      title:
+        'Clic: coge un objeto, campo o grada (el campo se lleva su estadio) · R: girar · Clic: soltar · Esc: cancelar',
+      locked: false,
+      active: toolStore.tool.kind === 'move',
+      select: () => toolStore.selectMove(),
+    }
+  }
+
   if (item.kind === 'demolish') {
     return {
       label: 'Demoler',

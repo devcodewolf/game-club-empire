@@ -11,6 +11,7 @@ import type { Game } from '@/sim/game'
 import { rotateSize } from '@/sim/geometry'
 import { gsap } from 'gsap'
 import { buildingAt } from '@/sim/map/map'
+import { standsOf } from '@/sim/buildings/stands'
 import type { TileCoord } from '@/sim/geometry'
 import {
   createBuildingMarker,
@@ -32,6 +33,8 @@ import type { RenderAssets } from '../core/renderAssets'
 export interface BuildingsView {
   /** Casilla bajo el ratón: desvanece la visera de la grada que haya ahí. */
   setHover(tile: TileCoord | null): void
+  /** Objeto o campo que se lleva con Mover: se atenúa en su sitio (con sus gradas). */
+  setCarrying(buildingId: BuildingId | null): void
   destroy(): void
 }
 
@@ -39,6 +42,8 @@ export interface BuildingsView {
 const ROOF_FADED_ALPHA = 0.15
 /** Duración del fundido de la visera, en segundos. */
 const ROOF_FADE_TIME = 0.25
+/** Opacidad del original mientras se lleva con Mover. */
+const CARRIED_ALPHA = 0.35
 
 export function createBuildingsView(
   layer: Container,
@@ -140,6 +145,12 @@ export function createBuildingsView(
       remove(event.building.id, false)
       add(event.building, 'upgrade')
     }
+    if (event.type === 'buildingMoved') {
+      // Se quita de su sitio y aparece en el nuevo con un rebote
+      for (const { from } of event.moves) remove(from.id, false)
+      for (const { to } of event.moves) add(to, 'upgrade')
+      carried = []
+    }
     if (event.type === 'buildingDemolished') {
       remove(event.building.id, true)
       // Las gradas caen con su campo
@@ -149,8 +160,24 @@ export function createBuildingsView(
       for (const building of event.buildings) remove(building.id, true)
   })
 
+  /** Ids atenuados ahora mismo (lo que se lleva y sus gradas). */
+  let carried: BuildingId[] = []
+  const setCarrying = (buildingId: BuildingId | null): void => {
+    for (const id of carried) {
+      const marker = markers.get(id)?.marker
+      if (marker) marker.alpha = 1
+    }
+    carried =
+      buildingId === null ? [] : [buildingId, ...standsOf(game.state, buildingId).map((s) => s.id)]
+    for (const id of carried) {
+      const marker = markers.get(id)?.marker
+      if (marker) marker.alpha = CARRIED_ALPHA
+    }
+  }
+
   return {
     setHover,
+    setCarrying,
     destroy() {
       unsubscribe()
       for (const id of [...markers.keys()]) remove(id, false)

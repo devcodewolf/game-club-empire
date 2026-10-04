@@ -61,6 +61,19 @@ export function commandForTool(
     }
     case 'demolish':
       return { type: 'demolishAt', tile: cursor }
+    case 'move': {
+      // Sin nada cogido, el clic coge (lo resuelve la UI); con algo, propone soltarlo aquí.
+      const carried = tool.carrying && state.buildings[tool.carrying.buildingId]
+      const def = carried && content.buildings[carried.type]
+      if (!tool.carrying || !def) return null
+      const origin = placementOrigin(cursor, def.size, tool.carrying.rotation)
+      return {
+        type: 'moveBuilding',
+        buildingId: tool.carrying.buildingId,
+        origin,
+        rotation: tool.carrying.rotation,
+      }
+    }
     case 'door':
       return { type: 'placeDoor', tile: cursor, door: tool.door }
     case 'room':

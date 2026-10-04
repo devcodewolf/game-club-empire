@@ -22,6 +22,7 @@ import {
   validateStandUpgrade,
   type StandError,
 } from './buildings/stands'
+import { applyMove, planMove, type Move, type MoveError } from './buildings/move'
 import type { SimContent } from './content'
 import type { FloorId } from './map/floors'
 import {
@@ -73,6 +74,13 @@ export type Command =
       readonly rotation: Rotation
     }
   | { readonly type: 'demolishBuilding'; readonly buildingId: BuildingId }
+  /** Mover un objeto o un campo (con sus gradas) a otro sitio, conservando nivel y uso. */
+  | {
+      readonly type: 'moveBuilding'
+      readonly buildingId: BuildingId
+      readonly origin: TileCoord
+      readonly rotation: Rotation
+    }
   /** Construir una grada (nivel 1) en un hueco de un campo. */
   | {
       readonly type: 'placeStand'
@@ -119,6 +127,11 @@ export type GameEvent =
       readonly demotedId?: BuildingId
     }
   | {
+      readonly type: 'buildingMoved'
+      /** Piezas movidas: la primera es la elegida; detrás, las gradas de un campo. */
+      readonly moves: readonly Move[]
+    }
+  | {
       readonly type: 'buildingDemolished'
       readonly building: PlacedBuilding
       /** Gradas que cayeron con el campo derribado. */
@@ -152,6 +165,7 @@ export type CommandError =
   | StructureError
   | RoomError
   | StandError
+  | MoveError
   | 'needsPitch'
   | 'buildingNotFound'
   | 'notUpgradable'
@@ -180,6 +194,8 @@ export function executeCommand(
       return setPitchRole(state, command, content)
     case 'placeStand':
       return placeStand(state, command, content)
+    case 'moveBuilding':
+      return moveBuilding(state, command, content)
     case 'demolishBuilding':
       return demolishBuilding(state, command.buildingId, content)
     case 'paintFloor':
@@ -364,6 +380,18 @@ function setPitchRole(
     ok: true,
     event: { type: 'pitchRoleChanged', buildingId, role, ...(demotedId ? { demotedId } : {}) },
   }
+}
+
+/** Mueve un objeto o un campo con sus gradas (todo o nada). */
+function moveBuilding(
+  state: MapState,
+  { buildingId, origin, rotation }: Extract<Command, { type: 'moveBuilding' }>,
+  content: SimContent,
+): CommandResult {
+  const check = planMove(state, content, buildingId, origin, rotation)
+  if (!check.ok) return { ok: false, reason: check.reason }
+  applyMove(state, content, check.moves)
+  return { ok: true, event: { type: 'buildingMoved', moves: check.moves } }
 }
 
 function demolishBuilding(
