@@ -19,7 +19,7 @@ Juego 2D en **vista cenital** (desde arriba, estilo visual de Prison Architect) 
 - Vitest para tests
 - Guardado local en IndexedDB
 - Casillas cuadradas de 64×64 px
-- Sprites 2D en estilo plano: fuente en SVG (`assets/src/`), exportados a PNG y empaquetados en atlas por script
+- Arte 2D en estilo plano **pintado por código** con `Graphics` de PixiJS (`src/render/`), horneado a texturas en tiempo de carga y cacheado. Sin pipeline SVG → PNG → atlas
 
 ## Arquitectura (reglas no negociables)
 1. **La simulación no conoce a Pixi ni a Vue.** Vive en `src/sim/` como TypeScript puro, testeable sin navegador.
@@ -35,9 +35,8 @@ src/
   render/     # PixiJS: capas (suelo, edificios, personas, efectos), cámara, sprites
   ui/         # componentes Vue
   save/       # guardado/carga IndexedDB
-assets/src/   # fuentes SVG de los sprites
-assets/dist/  # atlas PNG generados (no editar a mano)
-tools/        # scripts: exportar SVG → PNG y generar atlas
+assets/src/   # SVG puntuales fuera del mapa (hojas de muestra; más adelante logo e iconos de UI)
+tools/        # scripts: capturas de la galería, hojas de muestra
 docs/PLAN.md  # plan por fases
 docs/ASSETS-LICENSES.md # origen y licencia de cada asset
 ```

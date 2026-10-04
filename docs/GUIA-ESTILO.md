@@ -39,7 +39,7 @@ Los colores del club (camisetas, banderas, gradas) los elige el jugador y no for
 
 ## Implementación
 - La paleta vive en `src/render/palette.ts` y es la única fuente de colores para sprites y efectos.
-- Los sprites se dibujan en SVG en `assets/src/` usando solo colores de esta paleta.
+- El arte se pinta por código con `Graphics` de PixiJS en `src/render/` (skill `pixi-artist`), usando solo colores de esta paleta, y se hornea a texturas en tiempo de carga. No hay sprites SVG ni atlas en disco (decisión del 4-oct-2026).
 - Cualquier color nuevo se añade primero aquí y en `palette.ts`.
 
 ## Decisiones de la hoja de muestra (1-oct-2026)

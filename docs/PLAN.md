@@ -88,14 +88,14 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 
 - [x] Hoja de muestra de estilo validada por Raul (escala A de personas; pide más textura y detalle)
 - [ ] Completar `docs/GUIA-ESTILO.md` y `src/render/palette.ts` con pieles, pelo y colores de club
-- [ ] 🧠 Pipeline de assets en `tools/`: SVG → PNG (a 1x y 2x) → atlas, con un solo comando
+- [ ] 🧠 Caché de texturas horneadas: cada pintor se hornea una vez por (id, nivel, colores del club) con `generateTexture` y se dibuja como `Sprite`, con el marcador de color como fallback; prueba de 200 edificios a 60 fps
+  > Decisión (4-oct-2026): se descarta el pipeline SVG → PNG → atlas. Todo el arte se pinta por código con `Graphics` (niveles y colores del club salen por parámetro) y se hornea en tiempo de carga.
 - [x] Texturas de los suelos iniciales con variación por casilla (adelantado a la Fase 1B, bloque A; se pulirán aquí)
-- [ ] Piezas de muro para el autotiling (recto, esquina, T, cruz y final) y puerta
-- [ ] Sprites de los objetos iniciales, cada uno con sus 2-3 detalles característicos y su sombra
-- [ ] Carretera, arcén y entrada
+- [ ] Pintores de piezas de muro para el autotiling (recto, esquina, T, cruz y final) y puerta
+- [ ] Pintores de los objetos iniciales, cada uno con sus 2-3 detalles característicos y su sombra
+- [ ] Pintores de carretera, arcén y entrada
 - [ ] Iconos de líneas blancas para el menú de construcción
-- [ ] ⚡ Cargador de atlas con fallback al marcador de color
-- [ ] ⚡ Crear `docs/ASSETS-LICENSES.md` y registrar cada asset
+- [ ] ⚡ Crear `docs/ASSETS-LICENSES.md` y registrar los recursos externos (Tabler Icons, Patrick Hand y demás fuentes)
 
 **Skill de arte (`.claude/skills/pixi-artist/`)**
 - [x] 🧠 `src/render/style.ts`, validador de colores con baseline, galería `/gallery.html` (solo desarrollo) y `tools/capture.mjs`
@@ -204,9 +204,9 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 ---
 
 ## Fase 6 — Arte y mundo vivo
-> Guía de estilo, pipeline de assets, sprites iniciales y cargador de atlas se adelantaron a la Fase 1C.
+> Guía de estilo, caché de texturas y pintores iniciales se adelantaron a la Fase 1C.
 
-- [ ] Sprites del resto de suelos, muros, objetos, personas y vehículos siguiendo la guía
+- [ ] Pintores del resto de suelos, muros, objetos, personas y vehículos siguiendo la guía
 - [ ] 🧠 Techos que se desvanecen para mostrar el interior de las salas
 - [ ] ⚡ Figuritas caminando (jugadores, staff, afición) con balanceo y rutas simples
 - [ ] ⚡ Terreno: hierba con variaciones, tierra, caminos, árboles y bordes suaves
@@ -214,7 +214,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 
 ✅ **Validar:** el juego se ve coherente y "vivo" en una captura de pantalla.
 
-> El arte lo dibuja Claude en SVG (`assets/src/`) siguiendo `docs/GUIA-ESTILO.md` y Raul lo valida. Prison Architect es solo referencia de estilo: nunca se copian sus assets.
+> El arte lo pinta Claude por código (skill `pixi-artist`) siguiendo `docs/GUIA-ESTILO.md` y Raul lo valida. Prison Architect es solo referencia de estilo: nunca se copian sus assets.
 
 ---
 
