@@ -179,6 +179,20 @@ export const TEST_ECONOMY: EconomyContent = {
   startMoney: 1_000_000,
   refund: { objects: 0.5, structures: 0.25 },
   moveRate: 0.1,
+  start: { division: 'comarcal', members: 60 },
+  divisions: { comarcal: { entry: 5, memberFee: 15, subsidy: 500 } },
+  startupAid: [
+    { fromWeek: 1, toWeek: 4, amount: 1000 },
+    { fromWeek: 5, toWeek: 8, amount: 500 },
+  ],
+  bar: { roomType: 'cafe', perDay: 30 },
+  rental: { perDay: { 7: 30, 11: 50 }, surfaceMultiplier: { dirt: 1 } },
+  maintenance: {
+    objectRate: 0.02,
+    standRate: 0.01,
+    interiorPerTile: 0.2,
+    turfPerTile: { dirt: 0.05 },
+  },
 }
 
 export const TEST_CONTENT: SimContent = {

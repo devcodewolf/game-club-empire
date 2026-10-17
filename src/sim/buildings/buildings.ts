@@ -109,6 +109,8 @@ export interface PlacedBuilding {
   readonly tier: number
   /** Solo campos: para qué se usa. */
   readonly role?: PitchRole
+  /** Solo campos: ¿se alquila a equipos del pueblo los días sin partido? */
+  readonly rental?: boolean
   /** Solo gradas: campo y hueco al que está pegada. */
   readonly attach?: { readonly pitchId: BuildingId; readonly slot: StandSlot }
   /**

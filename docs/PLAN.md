@@ -150,10 +150,10 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 *Se ve:* construir resta dinero con su "−X €". *Prueba:* construir y deshacer deja el saldo igual; demoler devuelve los porcentajes correctos.
 
 **Bloque C — Ingresos y gastos regulares**
-- [ ] 🧠 Subvención con ayuda de arranque, socios, bar, alquiler del campo (interruptor en la ficha del campo)
-- [ ] 🧠 Mantenimiento semanal (objetos, interiores, césped y gradas) y lunes de cuentas
-- [ ] ⚡ Aviso del lunes de cuentas
-- [ ] ⚡ Ficha de sala ampliada con mantenimiento y aportaciones
+- [x] 🧠 Subvención con ayuda de arranque, socios, bar, alquiler del campo (interruptor en la ficha del campo)
+- [x] 🧠 Mantenimiento semanal (objetos, interiores, césped y gradas) y lunes de cuentas
+- [x] ⚡ Aviso del lunes de cuentas
+- [x] ⚡ Ficha de sala ampliada con mantenimiento y aportaciones
 
 *Se ve:* el dinero sube y baja solo. *Prueba:* test de una semana completa que cuadre con las fórmulas.
 
@@ -175,7 +175,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 *Se ve:* cada domingo hay partido con ingresos que flotan sobre sus edificios. *Prueba:* simular 20 partidos con semilla fija; la distribución de resultados es razonable (ni siempre ganar ni siempre perder).
 
 **Bloque F — Tablón, patrocinios y nuevas fuentes**
-- [ ] 🧠 Tablón del vestuario y patrocinios locales con objetivos como datos
+- [ ] 🧠 Tablón del vestuario y patrocinios locales con objetivos como datos. El tablón es el equivalente a la lista "Todo" de Prison Architect: nota de corcho arriba a la izquierda con secciones (próximo partido, patrocinios con sus objetivos tachados al cumplirlos, ofertas, averías, quiebra, lotería) y un contador de pendientes
 - [ ] 🧠 Vallas publicitarias (objeto, colocación en el pasillo perimetral, anunciantes)
 - [ ] 🧠 Escuela de fútbol con monitores
 - [ ] 🧠 Lotería de Navidad
@@ -190,7 +190,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 *Prueba:* forzar el saldo negativo y comprobar los dos rescates y el final.
 
 **Bloque H — Informes**
-- [ ] ⚡ Cuaderno con pestañas: Finanzas, Valoración (con opinión del pueblo), Personal y Partidos
+- [ ] ⚡ Cuaderno con pestañas: Finanzas, Valoración (con opinión del pueblo), Personal y Partidos. Como los Reports de Prison Architect: botón "Informes" abajo a la derecha (icono de carpeta con papeles) que abre una carpeta con hojas de papel, título en recuadro de color, secciones con cabecera y pestañas de colores en vertical a la IZQUIERDA que **aparecen a medida que se desbloquean** sus sistemas. Pestañas futuras: Horario (Fase 3) · Plantilla y personal, Llegadas y fichajes, Trabajos y Necesidades (Fase 4) · Normas y Patrocinios (Fase 5) · Cantera (backlog)
 - [ ] 🧠 Reglas de la opinión del pueblo (cada frase, con su condición, como dato)
 
 **Bloque I — Guardado**

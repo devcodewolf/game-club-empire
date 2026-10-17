@@ -13,7 +13,12 @@ export const TIME: TimeContent = {
   start: { year: 1, month: 8, day: 23, hour: 9 },
   rainChance: 0.35,
   events: [
-    // Lunes de cuentas: los cargos semanales se agrupan aquí (Bloque C)
+    // Lunes de cuentas: subvención y cargos semanales (mantenimiento…)
     { id: 'weeklyAccounts', rule: { every: 'week', weekday: 0, hour: 8 }, stops: true },
+    // Cuotas de socios, el día 1 de cada mes
+    { id: 'monthlyFees', rule: { every: 'month', day: 1, hour: 8 } },
+    // Alquiler de campos y caja del bar, cada noche
+    { id: 'rentalDaily', rule: { every: 'day', hour: 21 } },
+    { id: 'barDaily', rule: { every: 'day', hour: 22 } },
   ],
 }

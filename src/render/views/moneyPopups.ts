@@ -4,6 +4,7 @@
  * se suma al mismo y se reinicia la animación (no se apilan). Tamaño constante
  * en pantalla: se escala con 1/zoom. Solo lee eventos de la simulación.
  */
+import { formatNumber } from '../core/formatNumber'
 import { gsap } from 'gsap'
 import { Container, Text } from 'pixi.js'
 import type { Game } from '@/sim/game'
@@ -28,7 +29,7 @@ const DURATION = 1.2
 const RISE_PX = 28
 
 export function formatMoney(amount: number): string {
-  const body = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Math.abs(amount))
+  const body = formatNumber(Math.abs(amount))
   return `${amount < 0 ? '−' : '+'}${body} €`
 }
 

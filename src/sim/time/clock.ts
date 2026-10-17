@@ -82,7 +82,17 @@ export function advanceClock(
   state: ClockHolder,
   time: TimeContent,
   minutes: number,
-  { stopOnEvent = false }: { readonly stopOnEvent?: boolean } = {},
+  {
+    stopOnEvent = false,
+    onOccurrence,
+  }: {
+    readonly stopOnEvent?: boolean
+    /**
+     * Se llama con cada suceso en su instante (con el reloj ya en esa hora),
+     * para que sus efectos (cobros, clima…) ocurran en orden y con la hora justa.
+     */
+    readonly onOccurrence?: (occurrence: ClockOccurrence) => void
+  } = {},
 ): AdvanceResult {
   const start = state.clock.time
   const end = start + Math.max(0, Math.floor(minutes))
@@ -96,11 +106,19 @@ export function advanceClock(
     let stoppedBy: string | null = null
     for (const event of due.events) {
       if (event === DAY_START) {
-        occurrences.push({ kind: 'weather', weather: rollWeather(state, time), at: due.at })
+        const occurrence: ClockOccurrence = {
+          kind: 'weather',
+          weather: rollWeather(state, time),
+          at: due.at,
+        }
+        occurrences.push(occurrence)
+        onOccurrence?.(occurrence)
         continue
       }
       const stops = event.stops === true
-      occurrences.push({ kind: 'event', id: event.id, at: due.at, stops })
+      const occurrence: ClockOccurrence = { kind: 'event', id: event.id, at: due.at, stops }
+      occurrences.push(occurrence)
+      onOccurrence?.(occurrence)
       if (stops && stoppedBy === null) stoppedBy = event.id
     }
     if (stopOnEvent && stoppedBy !== null) {

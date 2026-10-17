@@ -34,6 +34,8 @@ export interface RoomDef {
     readonly unit: string
   }
   readonly requires?: string
+  /** Qué aporta al club, en una frase para la ficha de sala (p. ej. "30 €/día…"). */
+  readonly benefit?: string
 }
 
 export type RoomCatalog = Readonly<Record<RoomTypeId, RoomDef>>

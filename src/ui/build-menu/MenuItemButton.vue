@@ -1,5 +1,6 @@
 <script setup lang="ts">
 /** Traduce un `MenuItem` del catálogo a un `BlueprintButton`. */
+import { formatNumber } from '@/render/core/formatNumber'
 import { computed } from 'vue'
 import { getBuilding } from '@/content/buildings'
 import { getDoor } from '@/content/doors'
@@ -29,7 +30,7 @@ interface ButtonModel {
 const props = defineProps<{ item: MenuItem; color: MenuColor }>()
 
 /** Importe con separador de miles y símbolo de euro. */
-const formatCost = (amount: number): string => `${amount.toLocaleString('es-ES')} €`
+const formatCost = (amount: number): string => `${formatNumber(amount)} €`
 
 const toolStore = useToolStore()
 const progression = useProgressionStore()
@@ -45,12 +46,12 @@ const model = computed<ButtonModel>(() => {
       : def.stand
         ? 'se pega a un lado de un campo y crece al mejorarla'
         : `${def.size.width}×${def.size.height}`
-    const info = `${def.name} · ${where} · ${def.cost.toLocaleString('es-ES')} €`
+    const info = `${def.name} · ${where} · ${formatNumber(def.cost)} €`
     return {
       label: item.label ?? def.name,
       icon: def.icon,
       color: props.color,
-      badge: def.capacity?.toLocaleString('es-ES'),
+      badge: def.capacity === undefined ? undefined : formatNumber(def.capacity),
       title: reason ? `${info} · ${reason}` : info,
       locked: reason !== null,
       active: toolStore.activeBuilding === item.id,

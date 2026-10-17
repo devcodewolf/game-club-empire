@@ -17,6 +17,14 @@ import { DEFAULT_FLOOR, type FloorCatalog, type FloorId } from './floors'
 import type { ClockState } from '../time/clock'
 import { seedRng } from '../time/rng'
 import type { LedgerEntry } from '../economy/ledger'
+
+/** Datos del club que cambian durante la partida (además del dinero). */
+export interface ClubState {
+  /** Id de la división en la que juega. */
+  division: string
+  /** Socios que pagan cuota mensual. */
+  members: number
+}
 import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
 import { NO_ROOM, type Room, type RoomId } from '../rooms/roomTypes'
 import {
@@ -67,6 +75,8 @@ export interface MapState {
   rng: number
   /** Saldo del club en euros (puede ser negativo). */
   money: number
+  /** Datos del club que no son dinero (división, socios…). */
+  readonly club: ClubState
   /** Libro de cuentas: todos los movimientos de dinero (ver `sim/economy/ledger.ts`). */
   readonly ledger: LedgerEntry[]
 }
@@ -103,6 +113,7 @@ export function createMapState({ size, features }: MapConfig): MapState {
     rng: seedRng(1),
     money: 0,
     ledger: [],
+    club: { division: '', members: 0 },
   }
 
   for (const feature of features) {

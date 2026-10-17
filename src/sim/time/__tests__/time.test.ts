@@ -178,7 +178,11 @@ describe('partida con reloj', () => {
     const result = game.advance(7 * MINUTES_PER_DAY, { stopOnEvent: true })
     expect(result.stoppedBy).toBe('weeklyAccounts')
     expect(events.filter((e) => e.type === 'weatherChanged')).toHaveLength(7)
-    expect(events.at(-1)).toMatchObject({ type: 'timeEvent', id: 'weeklyAccounts', stops: true })
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: 'timeEvent', id: 'weeklyAccounts', stops: true }),
+    )
+    // El lunes de cuentas cierra la semana con su resumen
+    expect(events.at(-1)).toMatchObject({ type: 'weeklyReport' })
   })
 
   it('la misma semilla da el mismo clima', () => {

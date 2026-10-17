@@ -266,6 +266,7 @@ export function commandPrice(state: MapState, content: SimContent, command: Comm
       return { cost: 0, refund, concept: 'demolish', rect: command.rect }
     }
     case 'setPitchRole':
+    case 'setPitchRental':
     case 'designateRoom':
     case 'removeRoom':
     case 'undo':

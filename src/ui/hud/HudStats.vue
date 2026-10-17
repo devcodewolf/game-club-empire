@@ -4,15 +4,19 @@
  * Architect): cada dato en su propia ficha pequeña de papel. De momento, el
  * clima y la fecha; en los Bloques B y E se añaden dinero, socios, afición y fama.
  */
+import { formatNumber } from '@/render/core/formatNumber'
 import { gsap } from 'gsap'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import { useGame } from '@/ui/composables/useGame'
 import { useGameVersion } from '@/ui/composables/useGameVersion'
+import { formatSignedEuros } from '@/ui/composables/formatMoney'
+import { useAccountsStore } from '@/ui/stores/accountsStore'
 import { useTimeStore } from '@/ui/stores/timeStore'
 import { formatDay, formatYear } from '@/ui/time/formatTime'
 
 const time = useTimeStore()
+const accounts = useAccountsStore()
 const raining = computed(() => time.weather === 'rain')
 const weatherLabel = computed(() => (raining.value ? 'Lluvia' : 'Despejado'))
 
@@ -22,10 +26,7 @@ const money = computed(() => (version.value, game.state.money))
 
 /** Cifra mostrada: cuenta hacia el saldo real en ~0,6 s (salta con movimiento reducido). */
 const shown = ref(game.state.money)
-const moneyFormat = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 })
-const moneyText = computed(() =>
-  `${moneyFormat.format(Math.round(shown.value))} €`.replace('-', '−'),
-)
+const moneyText = computed(() => `${formatNumber(shown.value)} €`)
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const counter = { value: shown.value }
 let tween: gsap.core.Tween | null = null
@@ -61,6 +62,13 @@ const chip =
         class="font-data text-xs font-bold tabular-nums"
         :class="money < 0 ? 'text-red-700' : ''"
         >{{ moneyText }}</span
+      >
+      <span
+        v-if="accounts.lastReport"
+        class="font-data text-[10px] font-bold tabular-nums"
+        :class="accounts.lastReport.net < 0 ? 'text-red-700' : 'text-green-700'"
+        title="Neto de la última semana cerrada"
+        >{{ formatSignedEuros(accounts.lastReport.net) }}</span
       >
     </div>
     <div

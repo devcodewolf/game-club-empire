@@ -11,6 +11,7 @@
  *
  * Solo lee el estado (validatePlacement, validateFloorPaint): nunca lo modifica.
  */
+import { formatNumber } from '../core/formatNumber'
 import { Container, Graphics, Text } from 'pixi.js'
 import type { Game } from '@/sim/game'
 import {
@@ -242,7 +243,7 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
     if (broke && price.rect) {
       drawRect(highlight, price.rect, zoom, palette.previewInvalid, palette.previewInvalid, 0.35)
     }
-    costLabel.text = `${amount < 0 ? '−' : '+'}${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Math.abs(amount))} €`
+    costLabel.text = `${amount < 0 ? '−' : '+'}${formatNumber(Math.abs(amount))} €`
     costLabel.style.fill =
       amount > 0 ? palette.previewValid : broke ? palette.previewInvalid : palette.chalk
     costLabel.scale.set(1 / zoom)

@@ -17,6 +17,22 @@ export type LedgerConcept =
   | 'demolish'
   /** Reembolso íntegro al deshacer la última obra. */
   | 'undo'
+  /** Subvención municipal semanal (con la ayuda de arranque). */
+  | 'subsidy'
+  /** Cuotas mensuales de los socios. */
+  | 'memberFees'
+  /** Caja del bar. */
+  | 'bar'
+  /** Alquiler de los campos. */
+  | 'pitchRental'
+  /** Mantenimiento semanal de objetos (2 % de su valor). */
+  | 'maintenanceObjects'
+  /** Mantenimiento semanal de las zonas interiores. */
+  | 'maintenanceInteriors'
+  /** Mantenimiento semanal del césped de los campos. */
+  | 'maintenanceTurf'
+  /** Mantenimiento semanal de las gradas. */
+  | 'maintenanceStands'
 
 export interface LedgerEntry {
   /** Instante (minutos de juego). */
@@ -48,6 +64,36 @@ export interface EconomyContent {
   }
   /** Parte del valor que cuesta mover un campo con su estadio o un bloque (mover un objeto es gratis). */
   readonly moveRate: number
+  /** División con la que empieza el club y socios iniciales. */
+  readonly start: { readonly division: string; readonly members: number }
+  /** Precios por división: entrada, cuota mensual de socio y subvención base semanal. */
+  readonly divisions: Readonly<
+    Record<string, { readonly entry: number; readonly memberFee: number; readonly subsidy: number }>
+  >
+  /** Ayuda de arranque del ayuntamiento: importe extra semanal por tramos de semanas. */
+  readonly startupAid: readonly {
+    readonly fromWeek: number
+    readonly toWeek: number
+    readonly amount: number
+  }[]
+  /** Bar: tipo de sala que cuenta y caja diaria si está completa. */
+  readonly bar: { readonly roomType: string; readonly perDay: number }
+  /** Alquiler de campos: € por día según formato y multiplicador por superficie. */
+  readonly rental: {
+    readonly perDay: Readonly<Record<number, number>>
+    readonly surfaceMultiplier: Readonly<Record<string, number>>
+  }
+  /** Mantenimiento semanal. */
+  readonly maintenance: {
+    /** Parte del valor de cada objeto. */
+    readonly objectRate: number
+    /** Parte del coste acumulado de cada grada. */
+    readonly standRate: number
+    /** € por casilla de zona interior. */
+    readonly interiorPerTile: number
+    /** € por casilla de campo según su superficie. */
+    readonly turfPerTile: Readonly<Record<string, number>>
+  }
 }
 
 /** Anota un movimiento y actualiza el saldo. Devuelve la entrada (o null si el importe es 0). */

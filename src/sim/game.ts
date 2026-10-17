@@ -13,6 +13,7 @@ import { fromDate } from './time/calendar'
 import { advanceClock, rollWeather, type AdvanceResult } from './time/clock'
 import { seedRng } from './time/rng'
 import { commandPrice } from './economy/pricing'
+import { applyEconomyEvent } from './economy/recurring'
 import { record } from './economy/ledger'
 import { captureMap, diffMap, restoreMap, type MapSnapshot } from './map/snapshot'
 
@@ -61,6 +62,8 @@ export function createGame(
   state.rng = seedRng(seed)
   state.clock.time = fromDate(content.time.start)
   state.money = money ?? content.economy.startMoney
+  state.club.division = content.economy.start.division
+  state.club.members = content.economy.start.members
   rollWeather(state, content.time)
   // El escenario de inicio se aplica gratis y sin avisar a nadie (aún no hay suscriptores)
   for (const command of scenario) executeCommand(state, command, content)
@@ -113,15 +116,20 @@ export function createGame(
       return result
     },
     advance(minutes, options) {
-      const result = advanceClock(state, content.time, minutes, options)
-      for (const occurrence of result.occurrences) {
-        if (occurrence.kind === 'weather') {
-          emit({ type: 'weatherChanged', weather: occurrence.weather, at: occurrence.at })
-        } else {
+      return advanceClock(state, content.time, minutes, {
+        ...options,
+        // Cada suceso tiene efecto en su instante: el clima, y los cobros y pagos del calendario
+        onOccurrence(occurrence) {
+          if (occurrence.kind === 'weather') {
+            emit({ type: 'weatherChanged', weather: occurrence.weather, at: occurrence.at })
+            return
+          }
           emit({ type: 'timeEvent', id: occurrence.id, at: occurrence.at, stops: occurrence.stops })
-        }
-      }
-      return result
+          const outcome = applyEconomyEvent(state, content, occurrence.id)
+          for (const entry of outcome.entries) emit({ type: 'transaction', entry })
+          if (outcome.report) emit({ type: 'weeklyReport', report: outcome.report })
+        },
+      })
     },
     canUndo() {
       return undoSlot !== null && undoSlot.revision === revision

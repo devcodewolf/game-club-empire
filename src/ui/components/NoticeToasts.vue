@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Lista de avisos breves, centrada arriba. Cada aviso es una tarjeta de
+ * Lista de avisos breves, bajo el reloj (arriba a la derecha). Cada aviso es una tarjeta de
  * papel que se cierra al hacer clic (o sola, desde el store).
  */
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
@@ -12,7 +12,7 @@ const noticeStore = useNoticeStore()
 <template>
   <TransitionGroup
     tag="div"
-    class="pointer-events-none flex flex-col items-center gap-2"
+    class="pointer-events-none flex flex-col items-end gap-2"
     role="status"
     aria-live="polite"
     enter-active-class="motion-safe:transition motion-safe:duration-200 motion-safe:ease-out"

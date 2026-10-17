@@ -4,10 +4,12 @@
  * operativa, qué le falta y permite quitar su designación.
  */
 import { computed, watch } from 'vue'
+import { roomMaintenance } from '@/sim/economy/recurring'
 import { evaluateRoom } from '@/sim/rooms/rooms'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
 import { buildingName, findRoom } from '@/ui/composables/contentLookup'
+import { formatEuros } from '@/ui/composables/formatMoney'
 import { useGame } from '@/ui/composables/useGame'
 import { useGameVersion } from '@/ui/composables/useGameVersion'
 import { useSelectionStore } from '@/ui/stores/selectionStore'
@@ -55,6 +57,12 @@ const capacityText = computed(() => {
   const unit = def.value?.capacity?.unit
   if (!s || !unit) return null
   return `Capacidad: ${s.capacity} ${unit}`
+})
+
+const maintenanceText = computed(() => {
+  const id = selection.selectedRoomId
+  if (id === null || !status.value) return null
+  return `Mantenimiento: ${formatEuros(roomMaintenance(game.state, game.content, id))}/semana`
 })
 
 // Si la sala deja de existir, se limpia la selección y el panel se cierra.
@@ -120,6 +128,14 @@ function removeRoom(): void {
       </p>
       <p v-if="qualityText" class="font-hand text-[18px] leading-6 text-ink-blue">
         {{ qualityText }}
+      </p>
+
+      <p v-if="maintenanceText" class="font-hand text-[18px] leading-6 text-ink-blue">
+        {{ maintenanceText }}
+      </p>
+      <p v-if="def.benefit" class="font-hand text-[16px] leading-5 text-ink-blue">
+        <span class="text-[18px] text-ink underline underline-offset-2">Qué aporta:</span>
+        {{ def.benefit }}
       </p>
 
       <button

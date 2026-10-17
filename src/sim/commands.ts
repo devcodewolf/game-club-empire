@@ -26,6 +26,7 @@ import { applyMove, planMove, type Move, type MoveError } from './buildings/move
 import type { SimContent } from './content'
 import type { Weather } from './time/clock'
 import type { LedgerEntry } from './economy/ledger'
+import type { WeeklyReport } from './economy/recurring'
 import { applyBlockMove, planBlockMove, type BlockMoveError } from './map/moveBlock'
 import type { FloorId } from './map/floors'
 import {
@@ -105,6 +106,8 @@ export type Command =
   | { readonly type: 'upgradeBuilding'; readonly buildingId: BuildingId }
   /** Cambiar el uso de un campo (principal, filial, entrenamiento). */
   | { readonly type: 'setPitchRole'; readonly buildingId: BuildingId; readonly role: PitchRole }
+  /** Activa o desactiva el alquiler de un campo. */
+  | { readonly type: 'setPitchRental'; readonly buildingId: BuildingId; readonly rental: boolean }
   | { readonly type: 'paintFloor'; readonly rect: TileRect; readonly floor: FloorId }
   | { readonly type: 'buildWalls'; readonly rect: TileRect; readonly wall: WallId }
   | {
@@ -148,6 +151,13 @@ export type GameEvent =
       readonly at: number
       readonly stops: boolean
     }
+  | {
+      readonly type: 'pitchRentalChanged'
+      readonly buildingId: BuildingId
+      readonly rental: boolean
+    }
+  /** Lunes de cuentas: resumen de la semana que se cierra. */
+  | { readonly type: 'weeklyReport'; readonly report: WeeklyReport }
   /** Movimiento de dinero anotado en el libro de cuentas. */
   | { readonly type: 'transaction'; readonly entry: LedgerEntry }
   /**
@@ -243,6 +253,8 @@ export function executeCommand(
       return upgradeBuilding(state, command.buildingId, content)
     case 'setPitchRole':
       return setPitchRole(state, command, content)
+    case 'setPitchRental':
+      return setPitchRental(state, command, content)
     case 'placeStand':
       return placeStand(state, command, content)
     case 'undo':
@@ -463,6 +475,21 @@ function moveBuilding(
   if (!check.ok) return { ok: false, reason: check.reason }
   applyMove(state, content, check.moves)
   return { ok: true, event: { type: 'buildingMoved', moves: check.moves } }
+}
+
+/** Activa o desactiva el alquiler de un campo. */
+function setPitchRental(
+  state: MapState,
+  { buildingId, rental }: Extract<Command, { type: 'setPitchRental' }>,
+  content: SimContent,
+): CommandResult {
+  const building = state.buildings[buildingId]
+  const def = building && content.buildings[building.type]
+  if (!building || !def) return { ok: false, reason: 'buildingNotFound' }
+  if (!def.pitch) return { ok: false, reason: 'notAPitch' }
+  if (Boolean(building.rental) === rental) return { ok: false, reason: 'sameRole' }
+  state.buildings[buildingId] = { ...building, rental }
+  return { ok: true, event: { type: 'pitchRentalChanged', buildingId, rental } }
 }
 
 function demolishBuilding(

@@ -32,6 +32,7 @@ function defineRooms<
 export const ROOMS = defineRooms({
   changingRoom: {
     id: 'changingRoom',
+    benefit: 'Da fuerza al equipo según su calidad. La escuela de fútbol lo exige.',
     name: 'Vestuario',
     icon: 'shirt-sport',
     color: 0x5b8fb9,
@@ -47,6 +48,7 @@ export const ROOMS = defineRooms({
   },
   office: {
     id: 'office',
+    benefit: 'Sede del club: desde aquí se gestionará el personal.',
     name: 'Oficina',
     icon: 'briefcase',
     color: 0xc9a227,
@@ -60,6 +62,7 @@ export const ROOMS = defineRooms({
   },
   reception: {
     id: 'reception',
+    benefit: 'Recibe a los visitantes y a los jugadores que lleguen al club.',
     name: 'Recepción',
     icon: 'ticket',
     color: 0xb5643c,
@@ -71,6 +74,7 @@ export const ROOMS = defineRooms({
   },
   storage: {
     id: 'storage',
+    benefit: 'Guarda el material del club.',
     name: 'Almacén de material',
     icon: 'package',
     color: 0x9b9385,
@@ -80,6 +84,7 @@ export const ROOMS = defineRooms({
   },
   physio: {
     id: 'physio',
+    benefit: '+3 de fuerza en cada partido.',
     name: 'Fisioterapia',
     icon: 'first-aid-kit',
     color: 0x6fb3a0,
@@ -93,6 +98,8 @@ export const ROOMS = defineRooms({
   },
   cafe: {
     id: 'cafe',
+    benefit:
+      '30 €/día y 1,5 € por espectador en cada partido en casa. Sube la satisfacción de la afición.',
     name: 'Cafetería',
     icon: 'coffee',
     color: 0xd9a441,
@@ -106,6 +113,7 @@ export const ROOMS = defineRooms({
   },
   gym: {
     id: 'gym',
+    benefit: '+3 de fuerza en cada partido.',
     name: 'Gimnasio',
     icon: 'barbell',
     color: 0x8c2f39,

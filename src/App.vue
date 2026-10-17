@@ -6,6 +6,8 @@ import NoticeToasts from '@/ui/components/NoticeToasts.vue'
 import HudClock from '@/ui/hud/HudClock.vue'
 import HudStats from '@/ui/hud/HudStats.vue'
 import UndoChip from '@/ui/hud/UndoChip.vue'
+import WeeklyReportNote from '@/ui/hud/WeeklyReportNote.vue'
+import { useAccountsStore } from '@/ui/stores/accountsStore'
 import ObjectPanel from '@/ui/object-panel/ObjectPanel.vue'
 import ContextMenu from '@/ui/context-menu/ContextMenu.vue'
 import RoomPanel from '@/ui/room-panel/RoomPanel.vue'
@@ -14,7 +16,7 @@ import { useProgressionStore } from '@/ui/stores/progressionStore'
 import { useToolShortcuts } from '@/ui/composables/useToolShortcuts'
 import { useGameLoop } from '@/ui/composables/useGameLoop'
 import { useTimeShortcuts } from '@/ui/composables/useTimeShortcuts'
-import { markRaw } from 'vue'
+import { markRaw, onBeforeUnmount } from 'vue'
 import { GAME_CONTENT } from '@/content/gameContent'
 import { MAP_CONFIG } from '@/content/map'
 import { createGame } from '@/sim/game'
@@ -25,6 +27,7 @@ import { START_SCENARIO } from '@/content/start'
 const game = markRaw(createGame(MAP_CONFIG, GAME_CONTENT, { scenario: START_SCENARIO }))
 
 provideGame(game)
+onBeforeUnmount(useAccountsStore().listen(game))
 const { devMode } = useProgressionStore()
 useToolShortcuts()
 useGameLoop(game)
@@ -48,9 +51,16 @@ useTimeShortcuts(game)
             >
               MODO DESARROLLO · todo desbloqueado
             </span>
-            <NoticeToasts />
           </div>
-          <HudClock class="justify-self-end" />
+          <!-- Reloj y, debajo, todo lo que "pasa" (avisos, lunes de cuentas…), flotando
+               sobre lo de abajo para no empujar las fichas laterales al aparecer -->
+          <div class="relative justify-self-end">
+            <HudClock />
+            <div class="absolute top-full right-0 z-30 mt-2 flex flex-col items-end gap-2">
+              <WeeklyReportNote />
+              <NoticeToasts />
+            </div>
+          </div>
         </div>
       </template>
       <template #right>

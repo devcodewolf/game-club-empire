@@ -4,12 +4,15 @@
  * si tiene siguiente nivel, qué cuesta y un botón para mejorarlo.
  * Mismo estilo que la ficha de sala (hoja de libreta).
  */
+import { formatNumber } from '@/render/core/formatNumber'
 import { computed, watch } from 'vue'
 import { maxTier, tierQuality, type PitchRole } from '@/sim/buildings/buildings'
+import { buildingMaintenance, pitchRentalPerDay } from '@/sim/economy/recurring'
 import { pitchCapacity, standCapacity } from '@/sim/buildings/stands'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
 import { findBuilding } from '@/ui/composables/contentLookup'
+import { formatEuros } from '@/ui/composables/formatMoney'
 import { useGame } from '@/ui/composables/useGame'
 import { useGameVersion } from '@/ui/composables/useGameVersion'
 import { upgradeLock } from '@/ui/composables/upgradeLock'
@@ -35,7 +38,7 @@ const def = computed(() => (building.value ? findBuilding(building.value.type) :
 const pitchSeats = computed(() => {
   const b = building.value
   if (!b || !def.value?.pitch) return undefined
-  return pitchCapacity(game.state, game.content, b.id).toLocaleString('es-ES')
+  return formatNumber(pitchCapacity(game.state, game.content, b.id))
 })
 
 /** Aforo actual y del siguiente nivel, solo para gradas. */
@@ -44,7 +47,7 @@ const standInfo = computed(() => {
   const d = def.value
   if (!b || !d?.stand) return undefined
   const next = b.tier + 1
-  const fmt = (n: number) => n.toLocaleString('es-ES')
+  const fmt = formatNumber
   return {
     capacity: fmt(standCapacity(d, b)),
     nextCapacity:
@@ -71,12 +74,34 @@ const info = computed(() => {
     quality: tierQuality(d, b.tier),
     next: next && {
       name: next.name,
-      cost: next.cost.toLocaleString('es-ES'),
+      cost: formatNumber(next.cost),
       quality: next.quality,
       lockReason,
     },
   }
 })
+
+/** Mantenimiento semanal del objeto (césped en los campos). */
+const maintenance = computed(() => {
+  const b = building.value
+  const d = def.value
+  if (!b || !d) return undefined
+  return buildingMaintenance(game.content, d, b)
+})
+
+/** Alquiler del campo: activado y lo que daría por día. */
+const rental = computed(() => {
+  const b = building.value
+  const d = def.value
+  if (!b || !d?.pitch) return undefined
+  return { on: Boolean(b.rental), perDay: pitchRentalPerDay(game.content, d, b) }
+})
+
+function toggleRental(): void {
+  const id = selection.selectedBuildingId
+  if (id === null || !rental.value) return
+  game.dispatch({ type: 'setPitchRental', buildingId: id, rental: !rental.value.on })
+}
 
 /** Estrellitas: ★ llenas hasta el nivel actual, ☆ vacías hasta el máximo. */
 const stars = computed(() => {
@@ -160,6 +185,9 @@ function upgrade(): void {
         </p>
       </template>
       <p class="font-hand text-[18px] leading-6 text-ink-blue">Calidad: {{ info.quality }}</p>
+      <p v-if="maintenance !== undefined" class="font-hand text-[18px] leading-6 text-ink-blue">
+        {{ rental ? 'Césped' : 'Mantenimiento' }}: {{ formatEuros(maintenance) }}/semana
+      </p>
       <p v-if="standInfo" class="font-hand text-[18px] leading-6 text-ink-blue">
         Aforo: {{ standInfo.capacity }} espectadores
       </p>
@@ -195,6 +223,27 @@ function upgrade(): void {
         </div>
         <p class="mt-1 font-hand text-[15px] leading-5 text-ink-blue">
           Solo puede haber un campo principal.
+        </p>
+      </section>
+
+      <section v-if="rental" class="mt-2">
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="rental.on"
+          class="flex w-full cursor-pointer items-center gap-2 text-left focus-visible:outline-2 focus-visible:outline-ink"
+          @click="toggleRental"
+        >
+          <span
+            class="flex h-5 w-5 shrink-0 items-center justify-center border-2 border-ink font-hand text-[16px] leading-none"
+            :class="rental.on ? 'bg-amber-300' : 'bg-transparent'"
+            aria-hidden="true"
+            >{{ rental.on ? '✓' : '' }}</span
+          >
+          <span class="font-hand text-[18px] leading-6">Alquilar a equipos del pueblo</span>
+        </button>
+        <p class="font-hand text-[15px] leading-5 text-ink-blue">
+          +{{ formatEuros(rental.perDay) }}/día, salvo domingos
         </p>
       </section>
 
