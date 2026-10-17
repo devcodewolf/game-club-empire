@@ -35,11 +35,13 @@ export const ROOMS = defineRooms({
     name: 'Vestuario',
     icon: 'shirt-sport',
     color: 0x5b8fb9,
-    minSize: { width: 4, height: 3 },
+    // Taquillas para el equipo titular (11 + 1) y una ducha por cada 4 taquillas;
+    // 6×4 es lo mínimo para que quepan junto a las paredes
+    minSize: { width: 6, height: 4 },
     requirements: [
-      { object: 'locker', min: 4 },
+      { object: 'locker', min: 12 },
       { object: 'changingBench', min: 1 },
-      { object: 'shower', min: 2 },
+      { object: 'shower', min: 3 },
     ],
     capacity: { object: 'locker', per: 1, unit: 'jugadores' },
   },
