@@ -22,7 +22,8 @@ export const TIME: TimeContent = {
     { id: 'barDaily', rule: { every: 'day', hour: 22 } },
     // Cuidado de los campos al final del día (lluvia y jardinero)
     { id: 'pitchNightly', rule: { every: 'day', hour: 23 } },
-    // Partido de la jornada: domingo de 17:00 a 19:00 (solo detiene si hay partido)
+    // Partido de la jornada: previa a las 16:00 y partido de 17:00 a 19:00 (solo detienen si hay partido)
+    { id: 'matchPreview', rule: { every: 'week', weekday: 6, hour: 16 }, stops: true },
     { id: 'matchKickoff', rule: { every: 'week', weekday: 6, hour: 17 }, stops: true },
     { id: 'matchFinal', rule: { every: 'week', weekday: 6, hour: 19 }, stops: true },
   ],

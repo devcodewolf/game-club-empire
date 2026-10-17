@@ -5,6 +5,7 @@
 import type { Component } from 'vue'
 import type { Game } from '@/sim/game'
 import { STAFF_ROLES } from '@/sim/economy/staff'
+import MatchesReport from '@/ui/reports/MatchesReport.vue'
 import StaffReport from '@/ui/reports/StaffReport.vue'
 
 export interface ReportTab {
@@ -26,6 +27,14 @@ export const REPORT_TABS: readonly ReportTab[] = [
     color: '#9fdcae',
     component: StaffReport,
     count: (game) => STAFF_ROLES.reduce((sum, role) => sum + (game.state.club.staff[role] ?? 0), 0),
+    unlocked: () => true,
+  },
+  {
+    id: 'matches',
+    title: 'Partidos',
+    color: '#f4c77d',
+    component: MatchesReport,
+    count: (game) => game.state.club.matches.length,
     unlocked: () => true,
   },
 ]

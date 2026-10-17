@@ -220,6 +220,7 @@ export const TEST_ECONOMY: EconomyContent = {
  */
 export const TEST_MATCH: MatchContent = {
   firstMatch: { month: 9, day: 5 },
+  kickoffEvent: 'matchKickoff',
   offSeasonMonths: [6, 7, 8],
   rivals: ['Rival A', 'Rival B', 'Rival C'],
   changingRoom: { roomType: 'kit', shed: 'shed', qualityScale: 2.5 },
@@ -270,7 +271,10 @@ export const TEST_MATCH: MatchContent = {
     goodVisitorRoom: 5,
   },
   members: { targetShare: 0.25, rate: 0.1 },
-  benches: { cost: 300, strength: 2 },
+  benches: [
+    { name: 'Banco', cost: 300, strength: 2 },
+    { name: 'Con techo', cost: 1500, strength: 3 },
+  ],
 }
 
 export const TEST_CONTENT: SimContent = {

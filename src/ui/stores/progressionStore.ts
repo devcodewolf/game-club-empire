@@ -39,6 +39,20 @@ export function detectTestMoney(): number | undefined {
   return params.has('infinite') ? TEST_MONEY : undefined
 }
 
+/**
+ * Semilla de una partida nueva: al azar (cada partida es distinta) salvo que
+ * la URL pida una con `?seed=N`, para repetir una partida en las pruebas.
+ * La simulación es determinista a partir de ella.
+ */
+export function chooseSeed(): number {
+  const fromUrl =
+    typeof window === 'undefined'
+      ? NaN
+      : Number(new URLSearchParams(window.location.search).get('seed'))
+  if (Number.isInteger(fromUrl) && fromUrl > 0) return fromUrl
+  return crypto.getRandomValues(new Uint32Array(1))[0] ?? 1
+}
+
 export const useProgressionStore = defineStore('progression', () => {
   const division = ref<DivisionId>(STARTING_DIVISION)
 

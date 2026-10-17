@@ -18,7 +18,7 @@ import type { ClockState } from '../time/clock'
 import { seedRng } from '../time/rng'
 import type { LedgerEntry } from '../economy/ledger'
 import type { StaffRole } from '../economy/staff'
-import type { MatchResult } from '../club/match'
+import type { MatchPreview, MatchResult } from '../club/match'
 import type { RoomTypeId } from '../rooms/roomTypes'
 
 /** Datos del club que cambian durante la partida (además del dinero). */
@@ -41,6 +41,8 @@ export interface ClubState {
   readonly matches: MatchResult[]
   /** Partido en juego (entre el inicio y el final del domingo), si lo hay. */
   currentMatch: MatchResult | null
+  /** Partido anunciado que aún no ha empezado (domingo de 16:00 a 17:00). */
+  nextMatch: MatchPreview | null
   /** Tipos de sala que ya se completaron alguna vez (+1 de fama la primera). */
   readonly roomsCompleted: RoomTypeId[]
 }
@@ -142,6 +144,7 @@ export function createMapState({ size, features }: MapConfig): MapState {
       satisfaction: 0,
       matches: [],
       currentMatch: null,
+      nextMatch: null,
       roomsCompleted: [],
     },
   }

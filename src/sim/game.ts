@@ -16,13 +16,17 @@ import { commandPrice } from './economy/pricing'
 import { applyEconomyEvent } from './economy/recurring'
 import { record } from './economy/ledger'
 import { captureMap, diffMap, restoreMap, type MapSnapshot } from './map/snapshot'
-import { finishMatch, startMatch } from './club/match'
+import { announceMatch, finishMatch, startMatch } from './club/match'
 import { awardFirstRooms, weeklyClubUpdate } from './club/fans'
 
 export type GameListener = (event: GameEvent) => void
 
 /** Ids de los eventos del calendario del partido (los programa `content.time.events`). */
-export const MATCH_EVENT = { kickoff: 'matchKickoff', final: 'matchFinal' } as const
+export const MATCH_EVENT = {
+  preview: 'matchPreview',
+  kickoff: 'matchKickoff',
+  final: 'matchFinal',
+} as const
 
 export interface Game {
   /** Estado de solo lectura para quien no sea la simulación. */
@@ -141,6 +145,18 @@ export function createGame(
           if (occurrence.kind === 'weather') {
             emit({ type: 'weatherChanged', weather: occurrence.weather, at: occurrence.at })
             return
+          }
+          if (occurrence.id === MATCH_EVENT.preview) {
+            const preview = announceMatch(state, content)
+            if (!preview) return false
+            emit({
+              type: 'timeEvent',
+              id: occurrence.id,
+              at: occurrence.at,
+              stops: occurrence.stops,
+            })
+            emit({ type: 'matchAnnounced', preview })
+            return true
           }
           if (occurrence.id === MATCH_EVENT.kickoff) {
             const kickoff = startMatch(state, content)

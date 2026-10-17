@@ -7,7 +7,7 @@ Juego 2D en **vista cenital** (desde arriba, estilo visual de Prison Architect) 
 - Los jugadores **llegan** atraídos por la fama del club y las instalaciones (o vía agentes), y tienen **necesidades por nivel** (como los ciudadanos de Anno). Si no se cubren, rinden peor o se van.
 - Los partidos se simulan rápido; el resultado depende de lo construido (moral, cansancio, instalaciones, afición).
 - Ascender de división desbloquea edificios y sistemas nuevos.
-- Todo el contenido es ficticio: nada de clubes, ligas, escudos ni jugadores reales.
+- Todo el contenido es ficticio: nada de clubes, ligas, escudos ni jugadores reales. Los rivales pueden llevar nombres de ciudades, pueblos y barrios reales ("Oviedo", "Vallecas", "Getafe"), nunca el nombre de un club que exista ("Real Oviedo", "Getafe C.F.").
 
 ## Stack
 - Vite + Vue 3 (Composition API, `<script setup>`) + TypeScript estricto

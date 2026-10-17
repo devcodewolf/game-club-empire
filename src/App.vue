@@ -10,6 +10,7 @@ import UndoChip from '@/ui/hud/UndoChip.vue'
 import WeeklyReportNote from '@/ui/hud/WeeklyReportNote.vue'
 import { useAccountsStore } from '@/ui/stores/accountsStore'
 import { useMatchStore } from '@/ui/stores/matchStore'
+import MatchPreview from '@/ui/match/MatchPreview.vue'
 import MatchResult from '@/ui/match/MatchResult.vue'
 import ObjectPanel from '@/ui/object-panel/ObjectPanel.vue'
 import ContextMenu from '@/ui/context-menu/ContextMenu.vue'
@@ -17,7 +18,7 @@ import RoomPanel from '@/ui/room-panel/RoomPanel.vue'
 import ReportsButton from '@/ui/reports/ReportsButton.vue'
 import ReportsFolder from '@/ui/reports/ReportsFolder.vue'
 import { provideGame } from '@/ui/composables/useGame'
-import { detectTestMoney, useProgressionStore } from '@/ui/stores/progressionStore'
+import { chooseSeed, detectTestMoney, useProgressionStore } from '@/ui/stores/progressionStore'
 import { useToolShortcuts } from '@/ui/composables/useToolShortcuts'
 import { useGameLoop } from '@/ui/composables/useGameLoop'
 import { useTimeShortcuts } from '@/ui/composables/useTimeShortcuts'
@@ -32,7 +33,11 @@ import { START_SCENARIO } from '@/content/start'
 // `?infinite` o `?money=N` en la URL: dinero de pruebas (ver `detectTestMoney`)
 const testMoney = detectTestMoney()
 const game = markRaw(
-  createGame(MAP_CONFIG, GAME_CONTENT, { scenario: START_SCENARIO, money: testMoney }),
+  createGame(MAP_CONFIG, GAME_CONTENT, {
+    scenario: START_SCENARIO,
+    money: testMoney,
+    seed: chooseSeed(),
+  }),
 )
 
 provideGame(game)
@@ -51,7 +56,12 @@ useTimeShortcuts(game)
       <template #top>
         <!-- Sin capturar el ratón en los huecos: solo las fichas y el reloj reciben clics -->
         <div class="pointer-events-none! grid w-full grid-cols-[1fr_auto_1fr] items-start gap-3">
-          <div />
+          <!-- Avisos de arriba a la izquierda: el partido en juego y el lunes de cuentas.
+               Aquí irá también el tablón con eventos y objetivos de subvenciones. -->
+          <div class="flex flex-col items-start gap-2">
+            <MatchChip />
+            <WeeklyReportNote />
+          </div>
           <div class="flex flex-col items-center gap-2">
             <HudStats />
             <UndoChip />
@@ -67,8 +77,6 @@ useTimeShortcuts(game)
           <div class="relative justify-self-end">
             <HudClock />
             <div class="absolute top-full right-0 z-30 mt-2 flex flex-col items-end gap-2">
-              <MatchChip />
-              <WeeklyReportNote />
               <NoticeToasts />
             </div>
           </div>
@@ -85,6 +93,7 @@ useTimeShortcuts(game)
     </GameLayout>
     <ContextMenu />
     <ReportsFolder />
+    <MatchPreview />
     <MatchResult />
   </main>
 </template>

@@ -22,7 +22,9 @@ import {
   expectedGoals,
   homeAttendance,
   isMatchDay,
+  matchClock,
   samplePoisson,
+  scoreAt,
   teamStrength,
   type MatchResult,
 } from '../match'
@@ -49,6 +51,7 @@ const TIME: TimeContent = {
   ...TEST_TIME,
   events: [
     ...TEST_TIME.events,
+    { id: 'matchPreview', rule: { every: 'week', weekday: 6, hour: 16 }, stops: true },
     { id: 'matchKickoff', rule: { every: 'week', weekday: 6, hour: 17 }, stops: true },
     { id: 'matchFinal', rule: { every: 'week', weekday: 6, hour: 19 }, stops: true },
   ],
@@ -182,9 +185,11 @@ describe('calendario de partidos', () => {
     expect(isMatchDay(game.state, CONTENT)).toBe(false)
   })
 
-  it('"próximo evento" para el lunes de cuentas y luego en el partido, no el domingo 29', () => {
+  it('"próximo evento" para el lunes de cuentas y luego en la previa y el partido, no el domingo 29', () => {
     const game = newGame([PITCH])
     expect(game.advance(30 * 24 * HOUR, { stopOnEvent: true }).stoppedBy).toBe('weeklyAccounts')
+    expect(game.advance(30 * 24 * HOUR, { stopOnEvent: true }).stoppedBy).toBe('matchPreview')
+    expect(game.state.clock.time).toBe(FIRST_KICKOFF - HOUR)
     const second = game.advance(30 * 24 * HOUR, { stopOnEvent: true })
     expect(second.stoppedBy).toBe('matchKickoff')
     expect(game.state.clock.time).toBe(FIRST_KICKOFF)
@@ -223,6 +228,25 @@ describe('fuerza y goles', () => {
     })
   })
 
+  it('los banquillos se mejoran por niveles hasta el último', () => {
+    const game = newGame([PITCH])
+    expect(game.dispatch({ type: 'upgradeBenches', buildingId: 1 })).toEqual({
+      ok: false,
+      reason: 'noBenches',
+    })
+    game.dispatch({ type: 'buildBenches', buildingId: 1 })
+    const before = game.state.money
+    expect(game.dispatch({ type: 'upgradeBenches', buildingId: 1 }).ok).toBe(true)
+    expect(game.state.money).toBe(before - 1500)
+    expect(game.state.buildings[1]?.benches).toBe(1)
+    expect(teamStrength(game.state, CONTENT, true).benches).toBe(3)
+    expect(game.state.ledger.at(-1)?.concept).toBe('upgrade')
+    expect(game.dispatch({ type: 'upgradeBenches', buildingId: 1 })).toEqual({
+      ok: false,
+      reason: 'maxTier',
+    })
+  })
+
   it('poner banquillos se puede deshacer con reembolso íntegro', () => {
     const game = newGame([PITCH])
     const before = game.state.money
@@ -245,6 +269,37 @@ describe('fuerza y goles', () => {
     for (let i = 0; i < n; i++) total += samplePoisson(mutable(game), 1.6, 20)
     expect(total / n).toBeGreaterThan(1.5)
     expect(total / n).toBeLessThan(1.7)
+  })
+})
+
+describe('previa del partido', () => {
+  it('a las 16:00 se anuncia el rival; el partido de las 17:00 es contra el mismo', () => {
+    const game = newGame([PITCH])
+    const events = collect(game)
+    game.advance(FIRST_KICKOFF - HOUR - START)
+    const announced = events.find((e) => e.type === 'matchAnnounced')
+    expect(announced?.type === 'matchAnnounced' && announced.preview).toMatchObject({
+      number: 1,
+      home: true,
+      kickoff: FIRST_KICKOFF,
+    })
+    const preview = game.state.club.nextMatch!
+    game.advance(HOUR)
+    expect(game.state.club.nextMatch).toBeNull()
+    expect(game.state.club.currentMatch).toMatchObject({
+      opponent: preview.opponent,
+      rivalStrength: preview.rivalStrength,
+    })
+  })
+
+  it('sin previa (calendario sin ella) el partido se anuncia al empezar', () => {
+    const noPreview: SimContent = {
+      ...CONTENT,
+      time: { ...TIME, events: TIME.events.filter((e) => e.id !== 'matchPreview') },
+    }
+    const game = createGame(TEST_MAP_CONFIG, noPreview, { money: 100_000, scenario: [PITCH] })
+    game.advance(FIRST_KICKOFF - START)
+    expect(game.state.club.currentMatch?.number).toBe(1)
   })
 })
 
@@ -358,6 +413,26 @@ describe('partido en la partida', () => {
     for (let i = 1; i < matches.length; i++) {
       expect(matches[i]?.opponent).not.toBe(matches[i - 1]?.opponent)
     }
+  })
+
+  it('marcador en vivo: los goles tienen minuto y el reloj sigue las dos partes', () => {
+    const game = newGame([PITCH], 3)
+    game.advance(FIRST_KICKOFF - START)
+    const match = game.state.club.currentMatch!
+    expect(match.goals).toHaveLength(match.goalsFor + match.goalsAgainst)
+    expect(match.goals.filter((g) => g.ours)).toHaveLength(match.goalsFor)
+    const minutes = match.goals.map((g) => g.minute)
+    expect(minutes).toEqual([...minutes].sort((a, b) => a - b))
+    for (const minute of minutes) expect(minute).toBeGreaterThanOrEqual(1)
+    expect(scoreAt(match, 0)).toEqual({ ours: 0, theirs: 0 })
+    expect(scoreAt(match, 90)).toEqual({ ours: match.goalsFor, theirs: match.goalsAgainst })
+
+    expect(matchClock(match, match.at)).toEqual({ phase: 'first', minute: 1 })
+    expect(matchClock(match, match.at + 44)).toEqual({ phase: 'first', minute: 45 })
+    expect(matchClock(match, match.at + 50)).toEqual({ phase: 'break', minute: 45 })
+    expect(matchClock(match, match.at + 60)).toEqual({ phase: 'second', minute: 46 })
+    expect(matchClock(match, match.at + 104)).toEqual({ phase: 'second', minute: 90 })
+    expect(matchClock(match, match.at + 110)).toEqual({ phase: 'added', minute: 90 })
   })
 
   it('misma semilla, mismos resultados', () => {

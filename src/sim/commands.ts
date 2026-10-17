@@ -28,7 +28,7 @@ import type { Weather } from './time/clock'
 import type { LedgerEntry } from './economy/ledger'
 import type { WeeklyReport } from './economy/recurring'
 import type { StaffRole } from './economy/staff'
-import type { MatchResult } from './club/match'
+import type { MatchPreview, MatchResult } from './club/match'
 import { isChangingRoom, type ChangingRoomUse } from './club/changingRooms'
 import { applyPitchRepair, pitchMaxConditionAfterUpgrade } from './economy/upkeep'
 import { applyBlockMove, planBlockMove, type BlockMoveError } from './map/moveBlock'
@@ -119,8 +119,10 @@ export type Command =
   | { readonly type: 'repairBuilding'; readonly buildingId: BuildingId }
   /** Uso de un vestuario: local o visitante. */
   | { readonly type: 'setRoomUse'; readonly roomId: RoomId; readonly use: ChangingRoomUse }
-  /** Poner banquillos de madera junto a la banda de un campo (de pago). */
+  /** Poner banquillos (primer nivel) junto a la banda de un campo (de pago). */
   | { readonly type: 'buildBenches'; readonly buildingId: BuildingId }
+  /** Mejorar los banquillos de un campo al nivel siguiente (de pago). */
+  | { readonly type: 'upgradeBenches'; readonly buildingId: BuildingId }
   /** Activa o desactiva el alquiler de un campo. */
   | { readonly type: 'setPitchRental'; readonly buildingId: BuildingId; readonly rental: boolean }
   | { readonly type: 'paintFloor'; readonly rect: TileRect; readonly floor: FloorId }
@@ -173,8 +175,10 @@ export type GameEvent =
     }
   | { readonly type: 'staffChanged'; readonly role: StaffRole; readonly count: number }
   | { readonly type: 'roomUseChanged'; readonly roomId: RoomId; readonly use: ChangingRoomUse }
-  /** Se pusieron banquillos en un campo (ya con `benches`). */
+  /** Se pusieron o mejoraron los banquillos de un campo (ya con su nivel nuevo). */
   | { readonly type: 'benchesBuilt'; readonly building: PlacedBuilding }
+  /** Se anunció el partido de la jornada (la previa, una hora antes). */
+  | { readonly type: 'matchAnnounced'; readonly preview: MatchPreview }
   /** Empezó el partido de la jornada (el resultado se enseña al terminar). */
   | { readonly type: 'matchStarted'; readonly match: MatchResult }
   /** Terminó el partido: resultado, dinero del día y cambios de fama y afición. */
@@ -275,6 +279,8 @@ export type CommandError =
   | 'roomNotFound'
   /** El campo ya tiene banquillos. */
   | 'hasBenches'
+  /** El campo no tiene banquillos que mejorar. */
+  | 'noBenches'
 
 export type CommandResult =
   | { readonly ok: true; readonly event: GameEvent }
@@ -331,13 +337,20 @@ export function executeCommand(
       state.rooms[room.id] = { ...room, use: command.use }
       return { ok: true, event: { type: 'roomUseChanged', roomId: room.id, use: command.use } }
     }
-    case 'buildBenches': {
+    case 'buildBenches':
+    case 'upgradeBenches': {
       const building = state.buildings[command.buildingId]
       const def = building && content.buildings[building.type]
       if (!building || !def) return { ok: false, reason: 'buildingNotFound' }
       if (!def.pitch) return { ok: false, reason: 'notAPitch' }
-      if (building.benches) return { ok: false, reason: 'hasBenches' }
-      const withBenches: PlacedBuilding = { ...building, benches: true }
+      const current = building.benches
+      if (command.type === 'buildBenches' && current !== undefined)
+        return { ok: false, reason: 'hasBenches' }
+      if (command.type === 'upgradeBenches' && current === undefined)
+        return { ok: false, reason: 'noBenches' }
+      const next = current === undefined ? 0 : current + 1
+      if (next >= content.match.benches.length) return { ok: false, reason: 'maxTier' }
+      const withBenches: PlacedBuilding = { ...building, benches: next }
       state.buildings[building.id] = withBenches
       return { ok: true, event: { type: 'benchesBuilt', building: withBenches } }
     }

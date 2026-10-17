@@ -102,7 +102,7 @@ export function createBuildingsView(
     const marker = createBuildingMarker(def, building.rotation, assets, {
       tier: building.tier,
       role: building.role,
-      benches: building.benches === true,
+      benches: building.benches,
       size,
     })
     const origin = tileToWorld(building.origin)

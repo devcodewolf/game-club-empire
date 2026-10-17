@@ -49,10 +49,10 @@ En el tablón y en la pestaña Subvenciones del cuaderno, los objetivos se tacha
 - Sin recinto cerrado entra gente sin pagar ("colados"): la taquilla recauda menos.
 - El día de partido, la afición llega por la carretera y hace cola en los tornos (con las personas de la Fase 4).
 
-### Banquillos en zonas fijas junto al campo · Banco de madera en la Fase 2, Bloque E; mejoras en la Fase 3 · En el plan
+### Banquillos en zonas fijas junto al campo · Fase 2, Bloque E · Hecho
 - Cada campo trae **dos zonas acotadas** a la altura del centro del campo, fuera de la línea de banda (local y visitante), marcadas en el césped. Solo ahí se pueden poner banquillos, igual que las vallas publicitarias del Bloque F van pegadas al campo.
 - El banquillo es un dato del campo, no un objeto suelto: se mueve, gira y se mejora con él.
-- **Mejoras por niveles**, desbloqueadas por fase o división: banco de madera → banquillo con techo de chapa → banquillo cubierto con asientos acolchados → banquillo de estadio con calefacción.
+- **Mejoras por niveles** desde la ficha del campo, desbloqueadas por división: banco de madera (+2 de fuerza en casa) → techo de chapa (+3, Regional) → cubierto con asientos (+4, Autonómica) → de estadio con calefacción (+5, Nacional B).
 - Efecto: un pequeño extra de moral y fuerza en casa con el banquillo local, y satisfacción con el visitante. Sin banquillos, el partido se juega igual, con una nota en el tablón ("Los suplentes se sientan en el suelo").
 
 ### Túnel de vestuarios hasta el campo · Fase 3 · En el plan
@@ -60,6 +60,32 @@ En el tablón y en la pestaña Subvenciones del cuaderno, los objetivos se tacha
 - **Calidades y precios** por casilla: pasillo de lona → túnel de obra → túnel con iluminación y escudo.
 - Efecto: con túnel, el equipo sale al campo sin mojarse ni cruzarse con la afición, con un extra de moral que sube con la calidad. En la Fase 4 los jugadores lo recorren de verdad el día de partido.
 - Enlaza con el acceso de la afición (Fase 3): el túnel separa jugadores y público dentro del recinto cerrado.
+
+### Pestaña de Partidos con clasificación y temporadas anteriores · Fase 2 (resultados) y Fase 3 (clasificación) · En el plan
+- En el cuaderno, la pestaña **Partidos**: próximo partido, resumen de la temporada (jugados, ganados, empatados, perdidos, goles y puntos) y la lista de resultados. Hecha en la Fase 2.
+- La **clasificación** llega con la liga en la Fase 3.
+- **Temporadas anteriores:** no hace falta guardarlas enteras. Propuesta de Claude: una línea por temporada (división, puesto, puntos y si se ascendió), como un pequeño palmarés. Es barato de guardar y da sensación de historia.
+
+### La fuerza del equipo también depende de los jugadores · Fase 4 · En el plan
+- Cuando lleguen los jugadores (Fase 4), su nivel, moral y cansancio entran en la fuerza del equipo, además de las instalaciones.
+- En el cuaderno, pestañas de **Plantilla** (jugadores) y **Personal** (ya existe).
+
+### Pestaña de entrenamientos · Fase 3 (horario del equipo) y Fase 4 (por jugador) · En el plan
+- Una pestaña **Entrenamientos** (como el "Regime" de Prison Architect) para repartir la semana: qué días se entrena y cuántas horas de **campo**, **táctica**, **gimnasio** y **físico**.
+- Cada tipo suma algo distinto a la fuerza del partido: táctica y campo, el juego; gimnasio y físico, aguantar el partido y lesionarse menos. Necesita las salas correspondientes (gimnasio, sala de vídeo o táctica).
+- **Pero entrenar mucho cansa y baja la moral y el contento**: hay que dejar días de descanso, sobre todo antes del partido. Es una decisión con equilibrio, no "cuanto más, mejor".
+- En la Fase 3 se aplica al equipo entero; en la Fase 4, cada jugador lo nota según sus necesidades.
+
+### Pantalla de inicio con el nombre del club · Fase 2, Bloque I · En el plan
+- Al empezar una partida nueva se elige el **nombre del club** y otras cosas que se decidirán en su momento (colores, escudo dibujado, dificultad…). Hasta entonces el club se llama "Tu club".
+- Va junto al guardado: la pantalla de inicio ofrece nueva partida, continuar y cargar.
+- **El guardado se analiza antes con Claude chat** (qué se guarda, ranuras, autoguardado, versiones y migraciones), como se hizo con el diseño de la Fase 2.
+
+### Rivales con nombres de ciudades reales en las categorías altas · Fase 3 · En el plan
+- Raul propone: equipos inventados en las categorías bajas y, a partir de Tercera, nombres de capitales y ciudades importantes de las comunidades autónomas (Oviedo, Madrid, Sevilla, Langreo, Mieres…).
+- **Choca con una regla de CLAUDE.md:** "Todo el contenido es ficticio: nada de clubes, ligas, escudos ni jugadores reales". Los nombres de ciudades no son de nadie, pero los de clubes sí (Atlético de Madrid, Sevilla F.C., U.P. Langreo, Real Oviedo… son marcas registradas). Si el juego se publica, usarlos es un riesgo.
+- **Decisión de Raul:** nombres de **ciudades, pueblos y barrios** reales, nunca de clubes. Más grandes cuanto más alta la división: pueblos inventados en las categorías bajas y, desde Tercera, ciudades medianas y grandes y barrios de las capitales ("Oviedo", "Langreo", "Mieres", "Chamartín", "Vallecas", "Getafe", "Madrid"…).
+- El nombre va **solo**, sin siglas. Ojo: añadir "C.F." o "Real" puede dar justo el nombre de un club que existe ("Getafe C.F.", "Real Oviedo"). Si se quiere variedad, sufijos que no coincidan con ninguno, comprobando cada nombre antes de usarlo.
 
 ---
 

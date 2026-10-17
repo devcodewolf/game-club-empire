@@ -15,6 +15,7 @@ const PARKING_SPACES = ENTRANCE_PROPS.reduce(
 export const MATCH: MatchContent = {
   // Primer partido: domingo 5 de septiembre (dos semanas para preparar el club)
   firstMatch: { month: 9, day: 5 },
+  kickoffEvent: 'matchKickoff',
   offSeasonMonths: [6, 7, 8],
   // Equipos de pueblos inventados
   rivals: [
@@ -89,7 +90,18 @@ export const MATCH: MatchContent = {
     goodVisitorRoom: 5,
   },
   members: { targetShare: 0.25, rate: 0.1 },
-  benches: { cost: 300, strength: 2 },
+  // Banquillos del campo principal: se ponen y se mejoran desde la ficha del campo
+  benches: [
+    { name: 'Banco de madera', cost: 300, strength: 2 },
+    { name: 'Banquillo con techo de chapa', cost: 1500, strength: 3, requires: 'regional' },
+    { name: 'Banquillo cubierto con asientos', cost: 6000, strength: 4, requires: 'autonomica' },
+    {
+      name: 'Banquillo de estadio con calefacción',
+      cost: 25_000,
+      strength: 5,
+      requires: 'nacionalB',
+    },
+  ],
 }
 
 /**

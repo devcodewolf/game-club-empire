@@ -4,6 +4,7 @@
  * si tiene siguiente nivel, qué cuesta y un botón para mejorarlo.
  * Mismo estilo que la ficha de sala (hoja de libreta).
  */
+import { IconLock } from '@tabler/icons-vue'
 import { formatNumber } from '@/render/core/formatNumber'
 import { computed, watch } from 'vue'
 import { maxTier, tierQuality, type PitchRole } from '@/sim/buildings/buildings'
@@ -126,12 +127,28 @@ const pitchState = computed(() => {
   }
 })
 
-/** Banquillos del campo: precio, si ya los tiene y qué aportan. */
+/** Banquillos del campo: nivel actual y siguiente (con su bloqueo por división). */
 const benches = computed(() => {
   const b = building.value
   if (!b || !def.value?.pitch) return undefined
-  const { cost, strength } = game.content.match.benches
-  return { has: b.benches === true, cost, strength, canAfford: game.state.money >= cost }
+  const tiers = game.content.match.benches
+  const level = b.benches
+  const current = level === undefined ? undefined : tiers[level]
+  const next = tiers[level === undefined ? 0 : level + 1]
+  return {
+    current,
+    stars: level === undefined ? '' : '★'.repeat(level + 1) + '☆'.repeat(tiers.length - level - 1),
+    level: (level ?? -1) + 1,
+    total: tiers.length,
+    next: next && {
+      name: next.name,
+      cost: next.cost,
+      strength: next.strength,
+      gain: next.strength - (current?.strength ?? 0),
+      canAfford: game.state.money >= next.cost,
+      lockReason: progression.lockReason(next.requires),
+    },
+  }
 })
 
 /** La caseta vieja como vestuario: qué hace ahora. */
@@ -145,10 +162,13 @@ const shedUse = computed(() => {
   return 'No se usa: ya hay vestuarios'
 })
 
+/** Pone los banquillos o los mejora un nivel; sin fondos avisa. */
 function buildBenches(): void {
   const id = selection.selectedBuildingId
-  if (id === null) return
-  const result = game.dispatch({ type: 'buildBenches', buildingId: id })
+  const info = benches.value
+  if (id === null || !info?.next || info.next.lockReason) return
+  const type = info.current ? 'upgradeBenches' : 'buildBenches'
+  const result = game.dispatch({ type, buildingId: id })
   if (!result.ok && result.reason === 'notEnoughMoney')
     notices.show('💸', 'No hay dinero suficiente para los banquillos.')
 }
@@ -315,22 +335,46 @@ function upgrade(): void {
       <p v-if="shedUse" class="font-hand text-[18px] leading-6 text-ink-blue">{{ shedUse }}</p>
 
       <section v-if="benches" class="mt-2" aria-label="Banquillos">
-        <p v-if="benches.has" class="font-hand text-[18px] leading-6 text-green-700">
-          Banquillos de madera ✓
+        <p v-if="benches.current" class="font-hand text-[18px] leading-6 text-ink-blue">
+          Banquillos: {{ benches.current.name }} · +{{ benches.current.strength }} de fuerza en casa
+          <span
+            v-if="benches.total > 1"
+            class="ml-1 text-amber-600"
+            :aria-label="`${benches.level} de ${benches.total} estrellas`"
+            >{{ benches.stars }}</span
+          >
         </p>
-        <template v-else>
+        <template v-if="benches.next">
           <button
             type="button"
             class="w-full cursor-pointer border-2 border-[#7a5320] bg-[#a8742f] px-2 py-1 font-hand text-[17px] text-white shadow-[3px_3px_0_rgba(0,0,0,0.35)] hover:bg-[#b9843b] focus-visible:outline-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#a8742f]"
-            :disabled="!benches.canAfford"
+            :class="{ 'mt-1': benches.current }"
+            :disabled="!benches.next.canAfford || benches.next.lockReason !== null"
             @click="buildBenches"
           >
-            Poner banquillos ({{ formatEuros(benches.cost) }})
+            <IconLock
+              v-if="benches.next.lockReason"
+              :size="16"
+              class="mr-1 inline-block -translate-y-px"
+              aria-hidden="true"
+            />{{
+              benches.current
+                ? `Mejorar a ${benches.next.name} (${formatEuros(benches.next.cost)})`
+                : `Poner banquillos: ${benches.next.name} (${formatEuros(benches.next.cost)})`
+            }}
           </button>
           <p class="font-hand text-[15px] leading-5 text-ink-blue">
-            +{{ benches.strength }} de fuerza en los partidos en casa
+            {{
+              benches.current
+                ? `+${benches.next.gain} de fuerza en casa (${benches.next.strength} en total)`
+                : `+${benches.next.strength} de fuerza en casa`
+            }}
+          </p>
+          <p v-if="benches.next.lockReason" class="font-hand text-[16px] leading-5 text-red-700">
+            {{ benches.next.lockReason }}
           </p>
         </template>
+        <p v-else class="font-hand text-[18px] leading-6 text-green-700">Nivel máximo ★</p>
       </section>
 
       <section v-if="breakdown" class="mt-2" aria-label="Avería">

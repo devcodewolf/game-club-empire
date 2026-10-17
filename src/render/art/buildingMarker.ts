@@ -31,8 +31,8 @@ export interface MarkerOptions {
   readonly tier?: number
   /** Solo campos: rótulo de uso. */
   readonly role?: PitchRole
-  /** Solo campos: ¿tiene banquillos? */
-  readonly benches?: boolean
+  /** Solo campos: nivel de sus banquillos (sin dato, no tiene). */
+  readonly benches?: number
   /** Tamaño sin girar si no es el del catálogo (gradas). */
   readonly size?: GridSize
 }
@@ -45,7 +45,7 @@ export function createBuildingMarker(
   def: BuildingDef,
   rotation: Rotation,
   assets?: RenderAssets,
-  { tier = 0, role, benches = false, size = def.size }: MarkerOptions = {},
+  { tier = 0, role, benches, size = def.size }: MarkerOptions = {},
 ): Container {
   // Los terrenos de juego tienen su propio dibujo (superficie + líneas de cal).
   if (def.pitch) {

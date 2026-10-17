@@ -170,7 +170,10 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [x] 🧠 Partido semanal con fuerza, goles por Poisson, asistencia, taquilla, bar y aparcamiento
 - [x] 🧠 Fama, afición, satisfacción y socios
 - [x] 🧠 Vestuario local y visitante: uso elegible en la ficha (como el de los campos); la fuerza usa el local; sin visitante, multa de la federación y −1 de fama al jugar en casa; la caseta vieja puede hacer de visitante (idea de Raul)
-- [x] 🧠 Banquillos de madera: dos zonas fijas de cal junto a la banda del campo; se compran desde la ficha del campo y dan un poco de fuerza en casa (idea de Raul; las mejoras, en la Fase 3)
+- [x] 🧠 Banquillos: dos zonas fijas de cal junto a la banda del campo; se ponen y se mejoran por niveles desde la ficha del campo (madera → techo de chapa → cubiertos con asientos → de estadio) y dan fuerza en casa (idea de Raul)
+- [x] 🧠 Previa del partido: el domingo a las 16:00 se anuncia el rival y el juego se para con una pizarra (fuerzas, público esperado, avisos) hasta pulsar "¡A jugar!" (idea de Raul)
+- [x] ⚡ Avisos del partido y del lunes de cuentas arriba a la izquierda, donde irá el tablón (idea de Raul)
+- [x] ⚡ Pestaña Partidos del cuaderno: próximo partido, resumen de la temporada y resultados (idea de Raul; la clasificación, en la Fase 3)
 - [x] ⚡ Pantalla de resultado del partido
 - [x] ⚡ Socios, afición y fama en el HUD
 - [x] ⚡ Banderines en las farolas según la afición
@@ -198,7 +201,9 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] ⚡ Cuaderno con pestañas: Finanzas, Valoración (con opinión del pueblo), Personal y Partidos. Como los Reports de Prison Architect: botón "Informes" abajo a la derecha (icono de carpeta con papeles) que abre una carpeta con hojas de papel, título en recuadro de color, secciones con cabecera y pestañas de colores en vertical a la IZQUIERDA que **aparecen a medida que se desbloquean** sus sistemas. Pestañas futuras: Horario (Fase 3) · Plantilla y personal, Llegadas y fichajes, Trabajos y Necesidades (Fase 4) · Normas y Patrocinios (Fase 5) · Cantera (backlog)
 - [ ] 🧠 Reglas de la opinión del pueblo (cada frase, con su condición, como dato)
 
-**Bloque I — Guardado**
+**Bloque I — Guardado y pantalla de inicio**
+> Antes de empezar este bloque, analizar con Claude chat el guardado (qué se guarda, ranuras, autoguardado, versiones y migraciones) y la pantalla de inicio (decisión de Raul). Se prepara un prompt en `docs/prompts/` como el de la Fase 2.
+- [ ] 🧠 Pantalla de inicio: nueva partida (nombre del club y lo que se decida en su momento: colores, escudo, dificultad…), continuar y cargar. El nombre sustituye al provisional "Tu club" (idea de Raul)
 - [ ] 🧠 Partidas con número de versión y migraciones; autoguardado cada lunes y guardado manual (IndexedDB tras una interfaz `SaveRepository`)
 - [ ] ⚡ Exportar e importar `.json`
 
@@ -237,7 +242,10 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] ⚡ Día de partido animado: afición llegando por la carretera, focos, sonido de grada (placeholder)
 - [ ] 🧠 Peñas de aficionados: con suficiente afición nace una peña con nombre que pide mejoras; si se cumplen, sube la afición y anima en casa
 - [ ] 🧠 Rival fijo del pueblo vecino: el derbi llena el estadio y vale el doble de fama
-- [ ] 🧠 Banquillos por niveles (techo de chapa → cubiertos y acolchados → de estadio con calefacción) y túnel de vestuarios hasta el campo con calidades y precios (ideas de Raul; ver `docs/IDEAS.md`)
+- [ ] 🧠 Túnel de vestuarios hasta el campo con calidades y precios (idea de Raul; ver `docs/IDEAS.md`)
+- [ ] 🧠 Entrenamientos (pestaña del cuaderno, como el "Regime" de PA): días y horas de campo, táctica, gimnasio y físico; suben la fuerza pero cansan y bajan la moral si se abusa (idea de Raul; ver `docs/IDEAS.md`)
+- [ ] ⚡ Palmarés: una línea por temporada terminada (división, puesto, puntos, ascenso) en la pestaña Partidos
+- [ ] 🧠 Nombres de los rivales por división: pueblos inventados abajo y, desde Tercera, ciudades y barrios reales sin siglas de club ("Oviedo", "Vallecas"), nunca nombres de clubes (decisión de Raul; ver `docs/IDEAS.md`)
 - [ ] 🧠 Acceso de la afición como en un estadio real: recinto cerrado con muros o vallas, puertas de acceso con tornos (objeto nuevo) y taquilla; los tornos limitan la asistencia y sin recinto cerrado hay "colados" que no pagan (idea de Raul)
 
 ✅ **Validar MVP:** jugar una temporada entera, ascender y usar algo desbloqueado. **Aquí decidimos juntos si el bucle es divertido antes de seguir.**

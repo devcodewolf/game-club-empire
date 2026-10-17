@@ -1,8 +1,9 @@
 /**
  * Partido semanal (Fase 2, Bloque E; docs/prompts/FASE2-ESPECIFICACION.md §4.6).
  *
- * Cada domingo de la temporada a las 17:00 empieza un partido, alternando
- * casa y fuera, contra un rival inventado. Al empezar se cobra la taquilla, el
+ * Cada domingo de la temporada a las 16:00 se anuncia el partido (rival y
+ * casa o fuera; la interfaz enseña la previa) y a las 17:00 empieza,
+ * alternando casa y fuera, contra un rival inventado. Al empezar se cobra la taquilla, el
  * bar y el aparcamiento (en casa) o se paga el desplazamiento (fuera), y se
  * decide el resultado con el PRNG de la partida:
  *
@@ -35,6 +36,8 @@ import { addFame, fansAfterMatch, matchSatisfaction, type Outcome } from './fans
 export interface MatchContent {
   /** Primer domingo de partido de la temporada del año de inicio. */
   readonly firstMatch: { readonly month: number; readonly day: number }
+  /** Id del evento del calendario que inicia el partido (para saber su hora en la previa). */
+  readonly kickoffEvent: string
   /** Meses sin partidos (verano). */
   readonly offSeasonMonths: readonly number[]
   /** Rivales inventados. */
@@ -119,8 +122,29 @@ export interface MatchContent {
     readonly goodVisitorRoom: number
   }
   readonly members: { readonly targetShare: number; readonly rate: number }
-  /** Banquillos de madera junto al campo principal. */
-  readonly benches: { readonly cost: number; readonly strength: number }
+  /** Niveles de los banquillos del campo principal (el primero es el que se pone). */
+  readonly benches: readonly BenchTier[]
+}
+
+/** Un nivel de banquillos. */
+export interface BenchTier {
+  readonly name: string
+  /** Coste de poner (el primero) o de mejorar hasta este nivel. */
+  readonly cost: number
+  /** Fuerza que suman en casa. */
+  readonly strength: number
+  /** División a partir de la cual se puede alcanzar (la comprueba la interfaz, como las mejoras). */
+  readonly requires?: string
+}
+
+/** Partido anunciado (la previa), antes de empezar. */
+export interface MatchPreview {
+  readonly number: number
+  /** Hora de inicio (minutos de juego). */
+  readonly kickoff: number
+  readonly home: boolean
+  readonly opponent: string
+  readonly rivalStrength: number
 }
 
 /** De dónde sale la fuerza del club en un partido. */
@@ -157,6 +181,13 @@ export interface MatchMoney {
   readonly fine: number
 }
 
+/** Un gol del partido: minuto (1-90) y de quién. */
+export interface MatchGoal {
+  readonly minute: number
+  /** ¿Lo marcó el club? */
+  readonly ours: boolean
+}
+
 export interface MatchResult {
   /** Jornada (1, 2, 3…). */
   readonly number: number
@@ -166,6 +197,8 @@ export interface MatchResult {
   readonly opponent: string
   readonly goalsFor: number
   readonly goalsAgainst: number
+  /** Goles en orden de minuto (para el marcador en vivo). */
+  readonly goals: readonly MatchGoal[]
   readonly outcome: Outcome
   readonly strength: StrengthBreakdown
   readonly rivalStrength: number
@@ -223,7 +256,8 @@ export function teamStrength(
   const facilities = Math.min(rules.facilitiesMax, changingRoom + surface + rooms)
   const atHome = home && main !== null && mainDef !== undefined && mainDef !== null
   const pitch = atHome ? pitchCondition(content, mainDef, main) / rules.pitchDivisor : 0
-  const benches = atHome && main.benches ? content.match.benches.strength : 0
+  const benches =
+    atHome && main.benches !== undefined ? (content.match.benches[main.benches]?.strength ?? 0) : 0
   const homeBonus = atHome ? rules.home : 0
   const total = rules.base + facilities + pitch + homeBonus + benches
   return {
@@ -294,6 +328,81 @@ function hasCoveredStand(state: MapState, content: SimContent, pitch: PlacedBuil
   return standsOf(state, pitch.id).some((stand) => stand.tier >= tier)
 }
 
+/** Hora del partido de hoy (la del evento de inicio del calendario). */
+function kickoffTime(state: MapState, content: SimContent): number {
+  const event = content.time.events.find((e) => e.id === content.match.kickoffEvent)
+  const hour = event && 'hour' in event.rule ? event.rule.hour : 17
+  const date = toDate(state.clock.time)
+  return fromDate({ year: date.year, month: date.month, day: date.day, hour })
+}
+
+/**
+ * Domingo 16:00: anuncia el partido de la jornada (si toca): rival, casa o
+ * fuera y su fuerza. Lo guarda para que el inicio juegue contra el mismo.
+ */
+export function announceMatch(state: MapState, content: SimContent): MatchPreview | null {
+  if (!isMatchDay(state, content) || state.club.currentMatch) return null
+  if (state.club.nextMatch) return state.club.nextMatch
+  const rules = content.match
+  const number = state.club.matches.length + 1
+  // Sin campo principal, el partido "en casa" se juega fuera
+  const home = number % 2 === 1 && mainPitch(state, content) !== null
+  const opponent = pickRival(state, content)
+  const rivalStrength =
+    rules.strength.rival.base +
+    randomInt(state, -rules.strength.rival.spread, rules.strength.rival.spread)
+  const preview: MatchPreview = {
+    number,
+    kickoff: kickoffTime(state, content),
+    home,
+    opponent,
+    rivalStrength,
+  }
+  state.club.nextMatch = preview
+  return preview
+}
+
+/** Minuto de cada gol (1-90), al azar, en orden. */
+function goalMinutes(state: MapState, goalsFor: number, goalsAgainst: number): MatchGoal[] {
+  const goals: MatchGoal[] = []
+  for (let i = 0; i < goalsFor; i++) goals.push({ minute: randomInt(state, 1, 90), ours: true })
+  for (let i = 0; i < goalsAgainst; i++)
+    goals.push({ minute: randomInt(state, 1, 90), ours: false })
+  return goals.sort((a, b) => a.minute - b.minute)
+}
+
+/** Minutos de juego de la primera parte y del descanso (el partido dura 2 horas de juego). */
+const HALF = 45
+const BREAK = 15
+
+/** Momento del partido: parte, descanso o descuento, y el minuto que marca el reloj del estadio. */
+export interface MatchClock {
+  readonly phase: 'first' | 'break' | 'second' | 'added'
+  /** Minuto del partido (1-90); en el descanso, 45; en el descuento, 90. */
+  readonly minute: number
+}
+
+/** Reloj del estadio a partir del instante actual (minutos de juego desde el inicio). */
+export function matchClock(match: MatchResult, now: number): MatchClock {
+  const elapsed = Math.max(0, now - match.at)
+  if (elapsed < HALF) return { phase: 'first', minute: elapsed + 1 }
+  if (elapsed < HALF + BREAK) return { phase: 'break', minute: HALF }
+  if (elapsed < 2 * HALF + BREAK) return { phase: 'second', minute: elapsed - BREAK + 1 }
+  return { phase: 'added', minute: 2 * HALF }
+}
+
+/** Marcador hasta un minuto (incluido): goles del club y del rival. */
+export function scoreAt(match: MatchResult, minute: number): { ours: number; theirs: number } {
+  let ours = 0
+  let theirs = 0
+  for (const goal of match.goals) {
+    if (goal.minute > minute) break
+    if (goal.ours) ours++
+    else theirs++
+  }
+  return { ours, theirs }
+}
+
 export interface KickoffOutcome {
   readonly match: MatchResult
   readonly entries: readonly LedgerEntry[]
@@ -309,15 +418,15 @@ export interface KickoffOutcome {
 export function startMatch(state: MapState, content: SimContent): KickoffOutcome | null {
   if (!isMatchDay(state, content) || state.club.currentMatch) return null
   const rules = content.match
-  const number = state.club.matches.length + 1
+  // Si no se anunció (p. ej. al cargar a media tarde), se anuncia ahora
+  const preview = state.club.nextMatch ?? announceMatch(state, content)
+  if (!preview) return null
+  state.club.nextMatch = null
+  const { number, opponent, rivalStrength } = preview
   const main = mainPitch(state, content)
   const mainDef = main && content.buildings[main.type]
-  // Sin campo principal, el partido "en casa" se juega fuera
-  const home = number % 2 === 1 && main !== null && Boolean(mainDef)
-  const opponent = pickRival(state, content)
-  const rivalStrength =
-    rules.strength.rival.base +
-    randomInt(state, -rules.strength.rival.spread, rules.strength.rival.spread)
+  // Si desde el anuncio se quitó el campo principal, se juega fuera
+  const home = preview.home && main !== null && Boolean(mainDef)
   const strength = teamStrength(state, content, home)
   const goalsFor = samplePoisson(
     state,
@@ -331,6 +440,7 @@ export function startMatch(state: MapState, content: SimContent): KickoffOutcome
   )
   const outcome: Outcome =
     goalsFor > goalsAgainst ? 'win' : goalsFor < goalsAgainst ? 'loss' : 'draw'
+  const goals = goalMinutes(state, goalsFor, goalsAgainst)
   const raining = state.clock.weather === 'rain'
 
   const entries: LedgerEntry[] = []
@@ -396,6 +506,7 @@ export function startMatch(state: MapState, content: SimContent): KickoffOutcome
     opponent,
     goalsFor,
     goalsAgainst,
+    goals,
     outcome,
     strength,
     rivalStrength,

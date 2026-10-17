@@ -268,14 +268,19 @@ export function commandPrice(state: MapState, content: SimContent, command: Comm
     }
     case 'setRoomUse':
       return FREE
-    case 'buildBenches': {
+    case 'buildBenches':
+    case 'upgradeBenches': {
       const building = state.buildings[command.buildingId]
       const def = building && buildings[building.type]
-      if (!building || !def?.pitch || building.benches) return FREE
+      if (!building || !def?.pitch) return FREE
+      const upgrading = command.type === 'upgradeBenches'
+      if (upgrading !== (building.benches !== undefined)) return FREE
+      const tier = content.match.benches[upgrading ? (building.benches ?? 0) + 1 : 0]
+      if (!tier) return FREE
       return {
-        cost: content.match.benches.cost,
+        cost: tier.cost,
         refund: 0,
-        concept: 'construction',
+        concept: upgrading ? 'upgrade' : 'construction',
         rect: buildingFootprint(building, def),
       }
     }
