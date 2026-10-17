@@ -10,6 +10,7 @@ import type { FloorCatalog } from './map/floors'
 import type { RoomCatalog } from './rooms/roomTypes'
 import type { DoorCatalog, WallCatalog } from './map/structureTypes'
 import type { TimeContent } from './time/clock'
+import type { EconomyContent } from './economy/ledger'
 
 export interface SimContent {
   readonly buildings: BuildingCatalog
@@ -19,4 +20,6 @@ export interface SimContent {
   readonly rooms: RoomCatalog
   /** Ritmo del tiempo, fecha de inicio, clima y eventos del calendario. */
   readonly time: TimeContent
+  /** Dinero inicial, reembolsos al demoler y coste de mover. */
+  readonly economy: EconomyContent
 }

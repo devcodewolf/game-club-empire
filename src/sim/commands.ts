@@ -25,6 +25,7 @@ import {
 import { applyMove, planMove, type Move, type MoveError } from './buildings/move'
 import type { SimContent } from './content'
 import type { Weather } from './time/clock'
+import type { LedgerEntry } from './economy/ledger'
 import { applyBlockMove, planBlockMove, type BlockMoveError } from './map/moveBlock'
 import type { FloorId } from './map/floors'
 import {
@@ -120,6 +121,8 @@ export type Command =
   | { readonly type: 'demolishAt'; readonly tile: TileCoord }
   /** Arrasar una zona entera. */
   | { readonly type: 'demolishArea'; readonly rect: TileRect }
+  /** Deshacer la última obra (la partida guarda cómo estaba el mapa antes). */
+  | { readonly type: 'undo' }
 
 // ── Resultados ───────────────────────────────────────────────────
 
@@ -144,6 +147,20 @@ export type GameEvent =
       readonly id: string
       readonly at: number
       readonly stops: boolean
+    }
+  /** Movimiento de dinero anotado en el libro de cuentas. */
+  | { readonly type: 'transaction'; readonly entry: LedgerEntry }
+  /**
+   * Se deshizo una obra: el mapa volvió a como estaba. `rect` abarca las
+   * casillas que cambiaron (o null si solo cambiaron objetos).
+   */
+  | {
+      readonly type: 'restored'
+      readonly rect: TileRect | null
+      /** Objetos que desaparecen (o cambian) al restaurar. */
+      readonly removed: readonly PlacedBuilding[]
+      /** Objetos que vuelven (o recuperan su versión anterior). */
+      readonly added: readonly PlacedBuilding[]
     }
   /** Empezó un día nuevo y se tiró su clima. */
   | { readonly type: 'weatherChanged'; readonly weather: Weather; readonly at: number }
@@ -203,6 +220,10 @@ export type CommandError =
   | 'notAPitch'
   | 'sameRole'
   | 'nothingToDemolish'
+  /** No hay dinero suficiente para la obra. */
+  | 'notEnoughMoney'
+  /** No hay ninguna obra reciente que deshacer. */
+  | 'nothingToUndo'
 
 export type CommandResult =
   | { readonly ok: true; readonly event: GameEvent }
@@ -224,6 +245,9 @@ export function executeCommand(
       return setPitchRole(state, command, content)
     case 'placeStand':
       return placeStand(state, command, content)
+    case 'undo':
+      // Deshacer necesita la copia del mapa que guarda la partida (game.ts)
+      return { ok: false, reason: 'nothingToUndo' }
     case 'moveBlock':
       return moveBlock(state, command, content)
     case 'moveBuilding':

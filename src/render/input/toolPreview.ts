@@ -41,6 +41,8 @@ import { moveTargetAt, planMove, type Move } from '@/sim/buildings/move'
 import { planBlockMove, type BlockTile } from '@/sim/map/moveBlock'
 import { DEFAULT_FLOOR } from '@/sim/map/floors'
 import { NO_DOOR, NO_WALL } from '@/sim/map/structureTypes'
+import { commandPrice } from '@/sim/economy/pricing'
+import type { Command } from '@/sim/commands'
 import { shade } from '../core/color'
 import { createBuildingMarker, destroyBuildingMarker } from '../art/buildingMarker'
 import type { PlacedBuilding } from '@/sim/buildings/buildings'
@@ -80,7 +82,20 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
     resolution: 2,
   })
   sizeLabel.anchor.set(0.5, 1)
-  root.addChild(highlight, sizeLabel)
+  /** Coste de la obra propuesta ("−120 €"), junto al cursor. */
+  const costLabel = new Text({
+    text: '',
+    style: {
+      fontSize: 18,
+      fill: palette.chalk,
+      stroke: { color: palette.outline, width: 6 },
+      fontFamily: 'Trebuchet MS, sans-serif',
+      fontWeight: 'bold',
+    },
+    resolution: 2,
+  })
+  costLabel.anchor.set(0, 1)
+  root.addChild(highlight, sizeLabel, costLabel)
   layer.addChild(root)
 
   let tool: Tool = NO_TOOL
@@ -212,7 +227,31 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
     root.addChildAt(ghost, 0)
   }
 
+  /** Comando propuesto en la última pasada de `paint` (null si no hay). */
+  let proposed: Command | null = null
+
+  /** Dibuja la vista previa y, encima, el coste (rojo si no hay fondos). */
   const redraw = (): void => {
+    paint()
+    costLabel.visible = false
+    if (!proposed || !hover) return
+    const price = commandPrice(game.state, game.content, proposed)
+    const amount = price.cost > 0 ? -price.cost : price.refund
+    if (amount === 0) return
+    const broke = price.cost > game.state.money
+    if (broke && price.rect) {
+      drawRect(highlight, price.rect, zoom, palette.previewInvalid, palette.previewInvalid, 0.35)
+    }
+    costLabel.text = `${amount < 0 ? '−' : '+'}${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(Math.abs(amount))} €`
+    costLabel.style.fill =
+      amount > 0 ? palette.previewValid : broke ? palette.previewInvalid : palette.chalk
+    costLabel.scale.set(1 / zoom)
+    costLabel.position.set((hover.x + 1) * TILE_SIZE + 8 / zoom, hover.y * TILE_SIZE)
+    costLabel.visible = true
+  }
+
+  const paint = (): void => {
+    proposed = null
     syncGhost()
     highlight.clear()
     sizeLabel.visible = false
@@ -247,6 +286,7 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
       ? commandForDrag(tool, dragStart, hover, game.state)
       : commandForTool(tool, hover, game.state, game.content)
     if (!command) return
+    proposed = command
 
     switch (command.type) {
       case 'placeBuilding': {

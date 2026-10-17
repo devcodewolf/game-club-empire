@@ -280,7 +280,10 @@ function pieceSize(def: BuildingDef, tier: number): GridSize {
 
 /** Escena de vecinos: una partida en miniatura dibujada con las vistas del juego. */
 function sceneView(scene: GalleryScene, scale: number, assets: RenderAssets): Placed {
-  const game = createGame({ size: scene.size, features: [] }, GAME_CONTENT)
+  // Sin límite de dinero: las escenas montan estadios enteros
+  const game = createGame({ size: scene.size, features: [] }, GAME_CONTENT, {
+    money: Number.MAX_SAFE_INTEGER,
+  })
   for (const command of scene.commands) {
     const result = game.dispatch(command)
     if (!result.ok) console.warn(`Galería: comando de escena rechazado (${result.reason})`, command)

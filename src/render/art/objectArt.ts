@@ -874,6 +874,83 @@ const cafeTable: ObjectPainter = (g, w, h, rnd, _tier, club = DEFAULT_CLUB_COLOR
   g.circle(w / 2 + 7, h / 2 - 5, 3).fill(palette.mudDeep)
 }
 
+// ── Caseta vieja ─────────────────────────────────────────────────
+
+/**
+ * Caseta del club vista desde arriba (4×3, frente abajo). Nivel 1: tejado de
+ * chapa ondulada con óxido y musgo, un parche de tablas y puerta con escalón.
+ * Nivel 2 (reformada): tejado de pizarra limpio, chimenea y puerta del club.
+ */
+const oldShed: ObjectPainter = (g, w, h, rnd, tier = 0, club = DEFAULT_CLUB_COLORS) => {
+  const roof = { x: 4, y: 4, w: w - 8, h: h - 26 }
+  // Escalón y puerta asomando bajo el alero (el frente mira abajo)
+  const doorX = w / 2 - 18
+  box(g, doorX - 6, h - 22, 48, 14, palette.stone, 2)
+  g.rect(doorX, h - 26, 36, 8)
+    .fill(tier === 0 ? palette.wood : club.primary)
+    .stroke({ color: O, width: OUTLINE_DETAIL })
+  if (tier === 0) {
+    // Chapa ondulada: base gris con ondas en dos tonos, parche de tablas, óxido y musgo
+    const metal = shade(palette.stone, -0.05)
+    g.rect(roof.x, roof.y, roof.w, roof.h).fill(metal).stroke({ color: O, width: OUTLINE })
+    for (let x = roof.x + 6; x < roof.x + roof.w - 2; x += 12) {
+      g.rect(x, roof.y + 2, 4, roof.h - 4).fill(shade(metal, 0.14))
+      g.rect(x + 5, roof.y + 2, 2, roof.h - 4).fill(shade(metal, -0.18))
+    }
+    // Cumbrera
+    g.rect(roof.x, roof.y + roof.h / 2 - 3, roof.w, 6).fill(shade(metal, -0.25))
+    // Parche de tablas clavado encima
+    const patch = { x: roof.x + roof.w * 0.62, y: roof.y + 10, w: 56, h: 34 }
+    g.rect(patch.x, patch.y, patch.w, patch.h)
+      .fill(palette.wood)
+      .stroke({ color: O, width: OUTLINE_DETAIL })
+    for (let i = 1; i < 3; i++)
+      line(
+        g,
+        patch.x,
+        patch.y + (patch.h * i) / 3,
+        patch.x + patch.w,
+        patch.y + (patch.h * i) / 3,
+        shade(palette.wood, -0.3),
+        OUTLINE_DETAIL,
+      )
+    // Óxido y musgo en manchas irregulares
+    for (let i = 0; i < 5; i++) {
+      g.ellipse(
+        roof.x + rnd.range(16, roof.w - 16),
+        roof.y + rnd.range(10, roof.h - 10),
+        rnd.range(6, 14),
+        rnd.range(4, 8),
+      ).fill({ color: palette.mud, alpha: 0.55 })
+    }
+    for (let i = 0; i < 3; i++) {
+      g.ellipse(
+        roof.x + rnd.range(10, roof.w * 0.5),
+        roof.y + roof.h - rnd.range(6, 16),
+        rnd.range(8, 16),
+        rnd.range(4, 7),
+      ).fill({ color: palette.treeLight, alpha: 0.7 })
+    }
+    // Rejilla de ventilación
+    box(g, roof.x + 18, roof.y + 12, 18, 12, palette.stoneDark, 2)
+  } else {
+    // Pizarra: hileras desalineadas, cumbrera de piedra y chimenea
+    g.rect(roof.x, roof.y, roof.w, roof.h).fill(palette.slate).stroke({ color: O, width: OUTLINE })
+    for (let y = roof.y + 10; y < roof.y + roof.h - 4; y += 10) {
+      line(g, roof.x + 2, y, roof.x + roof.w - 2, y, palette.slateRows, OUTLINE_DETAIL)
+      const offset = ((y / 10) % 2) * 9
+      for (let x = roof.x + 10 + offset; x < roof.x + roof.w - 4; x += 18) {
+        line(g, x, y - 10, x, y, palette.slateRows, OUTLINE_DETAIL)
+      }
+    }
+    g.rect(roof.x, roof.y + roof.h / 2 - 3, roof.w, 6).fill(palette.stone)
+    box(g, roof.x + roof.w - 40, roof.y + 8, 20, 18, palette.stoneDark, 2)
+    g.rect(roof.x + roof.w - 36, roof.y + 12, 12, 6).fill(O)
+  }
+  // Alero: sombra fina bajo el borde delantero del tejado
+  g.rect(roof.x, roof.y + roof.h, roof.w, 3).fill({ color: O, alpha: 0.35 })
+}
+
 /** Pintores por id de objeto. Los que no estén aquí usan el marcador genérico. */
 export const OBJECT_ART: Readonly<Record<string, ObjectPainter>> = {
   locker,
@@ -905,4 +982,5 @@ export const OBJECT_ART: Readonly<Record<string, ObjectPainter>> = {
   cafeTable,
   stand: standPainter,
   standCorner: standCornerPainter,
+  oldShed,
 }

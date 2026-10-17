@@ -3,6 +3,7 @@
  *
  * Usan un catálogo de prueba propio, independiente de `src/content/`.
  */
+import type { EconomyContent } from '../economy/ledger'
 import type { TimeContent } from '../time/clock'
 import type { BuildingCatalog } from '../buildings/buildings'
 import type { SimContent } from '../content'
@@ -170,6 +171,16 @@ export const TEST_TIME: TimeContent = {
   events: [{ id: 'weeklyAccounts', rule: { every: 'week', weekday: 0, hour: 8 }, stops: true }],
 }
 
+/**
+ * Economía de prueba: mucho dinero para que los tests de construcción no se
+ * queden sin fondos; mismos porcentajes que el juego.
+ */
+export const TEST_ECONOMY: EconomyContent = {
+  startMoney: 1_000_000,
+  refund: { objects: 0.5, structures: 0.25 },
+  moveRate: 0.1,
+}
+
 export const TEST_CONTENT: SimContent = {
   buildings: TEST_CATALOG,
   floors: TEST_FLOORS,
@@ -177,6 +188,7 @@ export const TEST_CONTENT: SimContent = {
   doors: TEST_DOORS,
   rooms: TEST_ROOMS,
   time: TEST_TIME,
+  economy: TEST_ECONOMY,
 }
 
 /**

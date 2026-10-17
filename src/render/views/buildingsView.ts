@@ -152,6 +152,11 @@ export function createBuildingsView(
       for (const { to } of event.moves) add(to, 'drop')
       carried = []
     }
+    if (event.type === 'restored') {
+      // Deshacer: lo nuevo se va con polvo y lo anterior vuelve a su sitio
+      for (const building of event.removed) remove(building.id, true)
+      for (const building of event.added) add(building, false)
+    }
     if (event.type === 'buildingDemolished') {
       remove(event.building.id, true)
       // Las gradas caen con su campo

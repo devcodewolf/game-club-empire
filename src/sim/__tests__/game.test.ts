@@ -27,8 +27,10 @@ describe('createGame · dispatch', () => {
     const result = game.dispatch(validCommand)
 
     expect(result.ok).toBe(true)
-    expect(listener).toHaveBeenCalledTimes(1)
-    expect(listener).toHaveBeenCalledWith({
+    // El evento de la obra y, detrás, el movimiento de dinero que la paga
+    expect(listener).toHaveBeenCalledTimes(2)
+    expect(listener.mock.calls[1]?.[0]).toMatchObject({ type: 'transaction' })
+    expect(listener).toHaveBeenNthCalledWith(1, {
       type: 'buildingPlaced',
       building: { id: 1, type: 'small', origin: { x: 1, y: 1 }, rotation: 0, tier: 0 },
     })
@@ -54,9 +56,9 @@ describe('createGame · dispatch', () => {
 
     game.dispatch(validCommand)
 
-    expect(a).toHaveBeenCalledTimes(1)
-    expect(b).toHaveBeenCalledTimes(1)
-    expect(a.mock.calls[0]).toEqual(b.mock.calls[0])
+    expect(a).toHaveBeenCalledTimes(2)
+    expect(b).toHaveBeenCalledTimes(2)
+    expect(a.mock.calls).toEqual(b.mock.calls)
   })
 
   it('la función de baja deja de avisar al suscriptor', () => {
@@ -80,7 +82,7 @@ describe('createGame · dispatch', () => {
     game.dispatch(validCommand)
 
     expect(baja).not.toHaveBeenCalled()
-    expect(activo).toHaveBeenCalledTimes(1)
+    expect(activo).toHaveBeenCalledTimes(2)
   })
 
   it('state refleja los cambios tras el dispatch', () => {
@@ -118,8 +120,9 @@ describe('createGame · paintFloor', () => {
     const result = game.dispatch(paintCommand)
 
     expect(result.ok).toBe(true)
-    expect(listener).toHaveBeenCalledTimes(1)
-    expect(listener).toHaveBeenCalledWith({
+    // floorPainted y, detrás, el pago del suelo
+    expect(listener).toHaveBeenCalledTimes(2)
+    expect(listener).toHaveBeenNthCalledWith(1, {
       type: 'floorPainted',
       rect: { x: 1, y: 1, width: 2, height: 3 },
       floor: 'dirt',

@@ -141,11 +141,11 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 *Se ve:* el reloj avanza a cada velocidad, "próximo evento" salta al lunes y se detiene. *Prueba:* 1 día a ×1 dura 12 min (cronometrar a ×10: 72 s).
 
 **Bloque B — Libro de cuentas y costes**
-- [ ] 🧠 Libro de cuentas: cada movimiento con fecha, concepto, importe y origen (edificio o club). Será la fuente de Finanzas
-- [ ] 🧠 Cobro de construcción, mejoras, mover, demoler y deshacer (mover objeto gratis, bloque o campo 10 %; demoler devuelve 50 % objetos y 25 % suelos, muros y gradas; deshacer 10 s al 100 %); bloqueo sin fondos
-- [ ] 🧠 Inicio de partida: caseta vieja, campo de tierra, recursos iniciales
-- [ ] ⚡ Dinero en el HUD con cifra animada
-- [ ] ⚡ Textos flotantes con agrupación
+- [x] 🧠 Libro de cuentas: cada movimiento con fecha, concepto, importe y origen (edificio o club). Será la fuente de Finanzas
+- [x] 🧠 Cobro de construcción, mejoras, mover, demoler y deshacer (mover objeto gratis, bloque o campo 10 %; demoler devuelve 50 % objetos y 25 % suelos, muros y gradas; deshacer 10 s al 100 %); bloqueo sin fondos
+- [x] 🧠 Inicio de partida: caseta vieja, campo de tierra, recursos iniciales
+- [x] ⚡ Dinero en el HUD con cifra animada
+- [x] ⚡ Textos flotantes con agrupación
 
 *Se ve:* construir resta dinero con su "−X €". *Prueba:* construir y deshacer deja el saldo igual; demoler devuelve los porcentajes correctos.
 

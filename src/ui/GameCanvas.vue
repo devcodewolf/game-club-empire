@@ -32,6 +32,9 @@ let disposed = false
 
 function onCommand(command: Command): void {
   const result = props.game.dispatch(command)
+  if (!result.ok && result.reason === 'notEnoughMoney') {
+    noticeStore.show('💸', 'No hay dinero suficiente para esta obra.')
+  }
   // Mover: si se soltó bien, la herramienta vuelve a estar lista para coger otra cosa
   if (result.ok && (command.type === 'moveBuilding' || command.type === 'moveBlock')) {
     toolStore.putDown()

@@ -69,6 +69,8 @@ import cloudRainSvg from '@tabler/icons/outline/cloud-rain.svg?raw'
 import playerPauseSvg from '@tabler/icons/outline/player-pause.svg?raw'
 import playerPlaySvg from '@tabler/icons/outline/player-play.svg?raw'
 import playerTrackNextSvg from '@tabler/icons/outline/player-track-next.svg?raw'
+import coinEuroSvg from '@tabler/icons/outline/coin-euro.svg?raw'
+import arrowBackUpSvg from '@tabler/icons/outline/arrow-back-up.svg?raw'
 
 const SVG_SOURCES = {
   'soccer-field': soccerFieldSvg,
@@ -130,6 +132,8 @@ const SVG_SOURCES = {
   'player-pause': playerPauseSvg,
   'player-play': playerPlaySvg,
   'player-track-next': playerTrackNextSvg,
+  'coin-euro': coinEuroSvg,
+  'arrow-back-up': arrowBackUpSvg,
 } satisfies Record<IconName, string>
 
 /** Rasterizado a 4× (96 px para un icono de 24): nítido hasta zoom ×2. */

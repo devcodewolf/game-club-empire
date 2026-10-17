@@ -16,6 +16,7 @@ import {
 import { DEFAULT_FLOOR, type FloorCatalog, type FloorId } from './floors'
 import type { ClockState } from '../time/clock'
 import { seedRng } from '../time/rng'
+import type { LedgerEntry } from '../economy/ledger'
 import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
 import { NO_ROOM, type Room, type RoomId } from '../rooms/roomTypes'
 import {
@@ -64,6 +65,10 @@ export interface MapState {
   readonly clock: ClockState
   /** Estado del PRNG sembrado de la partida (ver `sim/time/rng.ts`). */
   rng: number
+  /** Saldo del club en euros (puede ser negativo). */
+  money: number
+  /** Libro de cuentas: todos los movimientos de dinero (ver `sim/economy/ledger.ts`). */
+  readonly ledger: LedgerEntry[]
 }
 
 /** Elemento fijo del mundo: una zona con un suelo dado, opcionalmente intocable. */
@@ -96,6 +101,8 @@ export function createMapState({ size, features }: MapConfig): MapState {
     nextBuildingId: 1,
     clock: { time: 0, weather: 'dry' },
     rng: seedRng(1),
+    money: 0,
+    ledger: [],
   }
 
   for (const feature of features) {

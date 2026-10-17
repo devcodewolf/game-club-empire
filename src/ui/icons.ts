@@ -64,6 +64,8 @@ import {
   IconPlayerPause,
   IconPlayerPlay,
   IconPlayerTrackNext,
+  IconCoinEuro,
+  IconArrowBackUp,
 } from '@tabler/icons-vue'
 import type { IconName } from '@/content/icons'
 
@@ -127,4 +129,6 @@ export const ICON_COMPONENTS = {
   'player-pause': IconPlayerPause,
   'player-play': IconPlayerPlay,
   'player-track-next': IconPlayerTrackNext,
+  'coin-euro': IconCoinEuro,
+  'arrow-back-up': IconArrowBackUp,
 } satisfies Record<IconName, Component>

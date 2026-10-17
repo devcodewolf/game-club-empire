@@ -5,6 +5,7 @@ import BuildMenu from '@/ui/build-menu/BuildMenu.vue'
 import NoticeToasts from '@/ui/components/NoticeToasts.vue'
 import HudClock from '@/ui/hud/HudClock.vue'
 import HudStats from '@/ui/hud/HudStats.vue'
+import UndoChip from '@/ui/hud/UndoChip.vue'
 import ObjectPanel from '@/ui/object-panel/ObjectPanel.vue'
 import ContextMenu from '@/ui/context-menu/ContextMenu.vue'
 import RoomPanel from '@/ui/room-panel/RoomPanel.vue'
@@ -17,10 +18,11 @@ import { markRaw } from 'vue'
 import { GAME_CONTENT } from '@/content/gameContent'
 import { MAP_CONFIG } from '@/content/map'
 import { createGame } from '@/sim/game'
+import { START_SCENARIO } from '@/content/start'
 
 // markRaw: la simulación no debe ser reactiva (Vue la envolvería en Proxies
 // y cada lectura del estado sería más lenta). La UI se entera por eventos.
-const game = markRaw(createGame(MAP_CONFIG, GAME_CONTENT))
+const game = markRaw(createGame(MAP_CONFIG, GAME_CONTENT, { scenario: START_SCENARIO }))
 
 provideGame(game)
 const { devMode } = useProgressionStore()
@@ -39,6 +41,7 @@ useTimeShortcuts(game)
           <div />
           <div class="flex flex-col items-center gap-2">
             <HudStats />
+            <UndoChip />
             <span
               v-if="devMode"
               class="rounded-sm bg-amber-400 px-2 py-0.5 text-xs font-bold text-stone-900"

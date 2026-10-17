@@ -38,6 +38,7 @@ export function createRoomsView(layer: Container, game: Game): RoomsView {
       event.type === 'buildingDemolished' ||
       event.type === 'buildingMoved' ||
       event.type === 'blockMoved' ||
+      event.type === 'restored' ||
       event.type === 'structuresChanged' ||
       event.type === 'areaDemolished'
     if (affectsRooms) redraw()

@@ -22,6 +22,7 @@ import { drawGridLines, drawGround } from './views/drawGrid'
 import { expansionAt } from './views/expansions'
 import { createExpansionsView } from './views/expansionsView'
 import { drawEntrance } from './views/entranceView'
+import { createMoneyPopups } from './views/moneyPopups'
 import { createFloorsView } from './views/floorsView'
 import { createWallsView } from './views/wallsView'
 import { createRoomsView } from './views/roomsView'
@@ -40,15 +41,19 @@ import { TILE_SIZE } from './core/grid'
 extensions.add(CullerPlugin)
 
 /**
- * Zoom inicial ×0,5 (32 px por casilla): en 1920×1080 se ven ~60×34 casillas,
- * como el zoom por defecto de Prison Architect. Más lejos los objetos son
- * ilegibles; la vista de conjunto sigue a mano alejando con la rueda.
+ * Zoom inicial ×0,2 (unos 13 px por casilla): vista de conjunto en la que se
+ * ven a la vez el campo de inicio y la entrada. Para construir se acerca con
+ * la rueda o Q/E (×0,5 es la escala de juego de Prison Architect).
  */
-const INITIAL_SCALE = 0.5
+const INITIAL_SCALE = 0.2
 
-/** Al empezar, la cámara mira a la entrada (borde derecho), donde está la carretera. */
+/**
+ * Al empezar, la cámara mira entre el campo de inicio y la entrada: se ven el
+ * campo con la caseta y, a la derecha, el aparcamiento y la carretera.
+ */
 const INITIAL_FOCUS = {
-  x: (ROAD.x - 24) * TILE_SIZE,
+  // Entre el centro del campo (x≈120) y el aparcamiento (x≈188)
+  x: (ROAD.x - 82) * TILE_SIZE,
   y: (ENTRANCE.y + ENTRANCE.height / 2) * TILE_SIZE,
 }
 
@@ -120,6 +125,7 @@ export async function createGameRenderer(
   const walls = createWallsView(layers.structures, game, assets.walls)
   const buildings = createBuildingsView(layers.buildings, layers.effects, game, assets)
   const preview = createToolPreview(layers.overlay, game, assets)
+  const moneyPopups = createMoneyPopups(layers.effects, game)
 
   let tool: Tool = NO_TOOL
   /** Casilla donde empezó el arrastre en curso (null si no se arrastra o se canceló). */
@@ -142,6 +148,7 @@ export async function createGameRenderer(
       // Elementos de interfaz con tamaño constante en pantalla
       preview.setZoom(view.scale)
       expansions.setZoom(view.scale)
+      moneyPopups.setZoom(view.scale)
     },
   })
 
@@ -254,6 +261,7 @@ export async function createGameRenderer(
       motion.destroy()
       app.renderer.off('resize', onResize)
       preview.destroy()
+      moneyPopups.destroy()
       buildings.destroy()
       floors.destroy()
       walls.destroy()

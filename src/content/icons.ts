@@ -73,6 +73,8 @@ export const ICON_NAMES = [
   'player-pause',
   'player-play',
   'player-track-next',
+  'coin-euro',
+  'arrow-back-up',
 ] as const
 
 export type IconName = (typeof ICON_NAMES)[number]

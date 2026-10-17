@@ -157,6 +157,20 @@ export const BUILDINGS = defineBuildings({
   },
 
   // Vestuario
+  // Caseta vieja: el vestuario precario con el que empieza el club (no está en el
+  // menú). Cuenta como vestuario de calidad 1 para el partido; se puede reformar.
+  oldShed: {
+    id: 'oldShed',
+    name: 'Caseta vieja',
+    size: { width: 4, height: 3 },
+    cost: 600,
+    markerColor: 0x8a6a48,
+    icon: 'archive',
+    tiers: [
+      { name: 'Caseta vieja', cost: 600, quality: 1 },
+      { name: 'Caseta reformada', cost: 1500, quality: 2 },
+    ],
+  },
   locker: {
     id: 'locker',
     name: 'Taquilla',
