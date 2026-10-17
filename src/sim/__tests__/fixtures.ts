@@ -5,6 +5,7 @@
  */
 import type { EconomyContent } from '../economy/ledger'
 import type { MatchContent } from '../club/match'
+import type { GrantsContent } from '../club/grants'
 import type { TimeContent } from '../time/clock'
 import type { BuildingCatalog } from '../buildings/buildings'
 import type { SimContent } from '../content'
@@ -277,6 +278,56 @@ export const TEST_MATCH: MatchContent = {
   ],
 }
 
+/** Subvenciones de prueba: una inicial con una sala 'kit', otra encadenada y una oculta. */
+export const TEST_GRANTS: GrantsContent = {
+  maxActive: 2,
+  cancelRate: 1.1,
+  list: [
+    {
+      id: 'first',
+      name: 'Primera',
+      from: 'Ayuntamiento',
+      pitch: '',
+      advance: 1000,
+      bonus: 2000,
+      fame: 1,
+      objectives: [{ kind: 'room', roomType: 'kit' }],
+    },
+    {
+      id: 'second',
+      name: 'Segunda',
+      from: 'Ayuntamiento',
+      pitch: '',
+      advance: 0,
+      bonus: 500,
+      fame: 1,
+      requires: ['first'],
+      objectives: [{ kind: 'members', min: 61 }],
+    },
+    {
+      id: 'loose',
+      name: 'Suelta',
+      from: 'Ayuntamiento',
+      pitch: '',
+      advance: 200,
+      bonus: 300,
+      fame: 0,
+      objectives: [{ kind: 'staff', role: 'gardener', min: 1 }],
+    },
+    {
+      id: 'rescue',
+      name: 'Rescate',
+      from: 'Ayuntamiento',
+      pitch: '',
+      advance: 0,
+      bonus: 0,
+      fame: 0,
+      hidden: true,
+      objectives: [],
+    },
+  ],
+}
+
 export const TEST_CONTENT: SimContent = {
   buildings: TEST_CATALOG,
   floors: TEST_FLOORS,
@@ -286,6 +337,7 @@ export const TEST_CONTENT: SimContent = {
   time: TEST_TIME,
   economy: TEST_ECONOMY,
   match: TEST_MATCH,
+  grants: TEST_GRANTS,
 }
 
 /**

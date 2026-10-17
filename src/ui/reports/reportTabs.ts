@@ -5,6 +5,7 @@
 import type { Component } from 'vue'
 import type { Game } from '@/sim/game'
 import { STAFF_ROLES } from '@/sim/economy/staff'
+import GrantsReport from '@/ui/reports/GrantsReport.vue'
 import MatchesReport from '@/ui/reports/MatchesReport.vue'
 import StaffReport from '@/ui/reports/StaffReport.vue'
 
@@ -35,6 +36,14 @@ export const REPORT_TABS: readonly ReportTab[] = [
     color: '#f4c77d',
     component: MatchesReport,
     count: (game) => game.state.club.matches.length,
+    unlocked: () => true,
+  },
+  {
+    id: 'grants',
+    title: 'Subvenciones',
+    color: '#c9b6e8',
+    component: GrantsReport,
+    count: (game) => game.state.club.grants.active.length,
     unlocked: () => true,
   },
 ]

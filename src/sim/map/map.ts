@@ -20,6 +20,7 @@ import type { LedgerEntry } from '../economy/ledger'
 import type { StaffRole } from '../economy/staff'
 import type { MatchPreview, MatchResult } from '../club/match'
 import type { RoomTypeId } from '../rooms/roomTypes'
+import type { GrantsState } from '../club/grants'
 
 /** Datos del club que cambian durante la partida (además del dinero). */
 export interface ClubState {
@@ -45,6 +46,8 @@ export interface ClubState {
   nextMatch: MatchPreview | null
   /** Tipos de sala que ya se completaron alguna vez (+1 de fama la primera). */
   readonly roomsCompleted: RoomTypeId[]
+  /** Subvenciones aceptadas y cumplidas. */
+  readonly grants: GrantsState
 }
 import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
 import { NO_ROOM, type Room, type RoomId } from '../rooms/roomTypes'
@@ -146,6 +149,7 @@ export function createMapState({ size, features }: MapConfig): MapState {
       currentMatch: null,
       nextMatch: null,
       roomsCompleted: [],
+      grants: { active: [], completed: [] },
     },
   }
 

@@ -12,6 +12,7 @@ import type { DoorCatalog, WallCatalog } from './map/structureTypes'
 import type { TimeContent } from './time/clock'
 import type { EconomyContent } from './economy/ledger'
 import type { MatchContent } from './club/match'
+import type { GrantsContent } from './club/grants'
 
 export interface SimContent {
   readonly buildings: BuildingCatalog
@@ -25,4 +26,6 @@ export interface SimContent {
   readonly economy: EconomyContent
   /** Partido semanal, fama, afición y vestuarios. */
   readonly match: MatchContent
+  /** Subvenciones del ayuntamiento con objetivos. */
+  readonly grants: GrantsContent
 }

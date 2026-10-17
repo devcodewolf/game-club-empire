@@ -24,7 +24,7 @@ El ayuntamiento (y más adelante la federación) ofrece **subvenciones con objet
 
 Ejemplos de la cadena inicial:
 1. **"Un club en regla"** (inicial): vestuario completo + oficina completa → 2.000 € al aceptar + 3.000 € al cumplir.
-2. **"Campo digno"**: contratar un jardinero + estado del campo ≥ 70 durante 2 semanas → 0 + 3.000 €.
+2. **"Campo digno"**: contratar un jardinero + estado del campo ≥ 55 durante una semana seguida → 0 + 3.000 €. (Con 70 y dos semanas era imposible: la tierra llega a 60 y cada partido en casa le quita 8.)
 3. **"Escuela del pueblo"** (se abre al cumplir la 1): abrir la escuela + 30 alumnos → 1.000 + 4.000 €.
 4. **"Casa llena"** (se abre al cumplir la 2): aforo ≥ 600 + un partido sin gente fuera → 2.000 + 5.000 €.
 5. **"Rescate municipal"** (oculta): solo aparece en quiebra (Bloque G).

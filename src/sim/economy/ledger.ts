@@ -46,6 +46,8 @@ export type LedgerConcept =
   | 'travel'
   /** Multas de la federación (jugar sin vestuario visitante). */
   | 'fines'
+  /** Subvenciones con objetivos: adelanto, bonus y devolución al cancelar. */
+  | 'grants'
 
 export interface LedgerEntry {
   /** Instante (minutos de juego). */

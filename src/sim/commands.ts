@@ -30,6 +30,12 @@ import type { WeeklyReport } from './economy/recurring'
 import type { StaffRole } from './economy/staff'
 import type { MatchPreview, MatchResult } from './club/match'
 import { isChangingRoom, type ChangingRoomUse } from './club/changingRooms'
+import {
+  applyAcceptGrant,
+  applyCancelGrant,
+  validateAcceptGrant,
+  type GrantError,
+} from './club/grants'
 import { applyPitchRepair, pitchMaxConditionAfterUpgrade } from './economy/upkeep'
 import { applyBlockMove, planBlockMove, type BlockMoveError } from './map/moveBlock'
 import type { FloorId } from './map/floors'
@@ -123,6 +129,9 @@ export type Command =
   | { readonly type: 'buildBenches'; readonly buildingId: BuildingId }
   /** Mejorar los banquillos de un campo al nivel siguiente (de pago). */
   | { readonly type: 'upgradeBenches'; readonly buildingId: BuildingId }
+  /** Aceptar una subvención (cobra el adelanto) o cancelarla (devuelve el adelanto con recargo). */
+  | { readonly type: 'acceptGrant'; readonly grantId: string }
+  | { readonly type: 'cancelGrant'; readonly grantId: string }
   /** Activa o desactiva el alquiler de un campo. */
   | { readonly type: 'setPitchRental'; readonly buildingId: BuildingId; readonly rental: boolean }
   | { readonly type: 'paintFloor'; readonly rect: TileRect; readonly floor: FloorId }
@@ -183,6 +192,12 @@ export type GameEvent =
   | { readonly type: 'matchStarted'; readonly match: MatchResult }
   /** Terminó el partido: resultado, dinero del día y cambios de fama y afición. */
   | { readonly type: 'matchPlayed'; readonly match: MatchResult }
+  | { readonly type: 'grantAccepted'; readonly grantId: string }
+  | { readonly type: 'grantCancelled'; readonly grantId: string }
+  /** Se tachó algún objetivo de una subvención (o se cumplió alguna). */
+  | { readonly type: 'grantsProgress' }
+  /** Se cumplió una subvención: bonus y fama ya aplicados. */
+  | { readonly type: 'grantCompleted'; readonly grantId: string }
   /** Cambiaron la fama, la afición o los socios. */
   | { readonly type: 'clubChanged' }
   /** Primera sala completa de estos tipos (+1 de fama cada una). */
@@ -259,6 +274,7 @@ export type CommandError =
   | StandError
   | MoveError
   | BlockMoveError
+  | GrantError
   | 'needsPitch'
   | 'buildingNotFound'
   | 'notUpgradable'
@@ -354,6 +370,15 @@ export function executeCommand(
       state.buildings[building.id] = withBenches
       return { ok: true, event: { type: 'benchesBuilt', building: withBenches } }
     }
+    case 'acceptGrant': {
+      const error = validateAcceptGrant(state, content, command.grantId)
+      if (error) return { ok: false, reason: error }
+      applyAcceptGrant(state, content, command.grantId)
+      return { ok: true, event: { type: 'grantAccepted', grantId: command.grantId } }
+    }
+    case 'cancelGrant':
+      if (!applyCancelGrant(state, command.grantId)) return { ok: false, reason: 'grantNotActive' }
+      return { ok: true, event: { type: 'grantCancelled', grantId: command.grantId } }
     case 'placeStand':
       return placeStand(state, command, content)
     case 'undo':

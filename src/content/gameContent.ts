@@ -9,6 +9,7 @@ import { FLOORS } from './floors'
 import { ROOMS } from './rooms'
 import { ECONOMY } from './economy'
 import { MATCH } from './match'
+import { GRANTS } from './grants'
 import { TIME } from './time'
 import { WALLS } from './walls'
 
@@ -21,4 +22,5 @@ export const GAME_CONTENT: SimContent = {
   time: TIME,
   economy: ECONOMY,
   match: MATCH,
+  grants: GRANTS,
 }

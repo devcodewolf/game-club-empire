@@ -10,16 +10,20 @@ import { executeCommand, type Command, type CommandResult, type GameEvent } from
 import type { SimContent } from './content'
 import { createMapState, type MapConfig, type MapState } from './map/map'
 import { fromDate } from './time/calendar'
-import { advanceClock, rollWeather, type AdvanceResult } from './time/clock'
+import { advanceClock, rollWeather, type AdvanceResult, type ClockOccurrence } from './time/clock'
 import { seedRng } from './time/rng'
 import { commandPrice } from './economy/pricing'
 import { applyEconomyEvent } from './economy/recurring'
-import { record } from './economy/ledger'
+import { record, type LedgerConcept } from './economy/ledger'
+import { updateGrants } from './club/grants'
 import { captureMap, diffMap, restoreMap, type MapSnapshot } from './map/snapshot'
 import { announceMatch, finishMatch, startMatch } from './club/match'
 import { awardFirstRooms, weeklyClubUpdate } from './club/fans'
 
 export type GameListener = (event: GameEvent) => void
+
+/** Solo las obras se pueden deshacer; reparaciones, subvenciones… son gastos, no obras. */
+const UNDOABLE: ReadonlySet<LedgerConcept> = new Set(['construction', 'upgrade', 'move'])
 
 /** Ids de los eventos del calendario del partido (los programa `content.time.events`). */
 export const MATCH_EVENT = {
@@ -87,6 +91,76 @@ export function createGame(
   const emit = (event: GameEvent): void => {
     for (const listener of listeners) listener(event)
   }
+  /** Comprueba los objetivos de las subvenciones y avisa de lo que cambie. */
+  const checkGrants = (): void => {
+    const update = updateGrants(state, content)
+    if (!update.changed) return
+    for (const entry of update.entries) emit({ type: 'transaction', entry })
+    for (const grant of update.completed) emit({ type: 'grantCompleted', grantId: grant.id })
+    if (update.completed.length) emit({ type: 'clubChanged' })
+    emit({ type: 'grantsProgress' })
+  }
+
+  /**
+   * Efecto de cada suceso del reloj en su instante: el clima, el partido y los
+   * cobros y pagos del calendario. Devuelve false si el evento no tuvo efecto
+   * (un domingo sin partido), para que no detenga el "próximo evento".
+   */
+  const handleOccurrence = (occurrence: ClockOccurrence): boolean => {
+    if (occurrence.kind === 'weather') {
+      emit({ type: 'weatherChanged', weather: occurrence.weather, at: occurrence.at })
+      return true
+    }
+    if (occurrence.id === MATCH_EVENT.preview) {
+      const preview = announceMatch(state, content)
+      if (!preview) return false
+      emit({
+        type: 'timeEvent',
+        id: occurrence.id,
+        at: occurrence.at,
+        stops: occurrence.stops,
+      })
+      emit({ type: 'matchAnnounced', preview })
+      return true
+    }
+    if (occurrence.id === MATCH_EVENT.kickoff) {
+      const kickoff = startMatch(state, content)
+      if (!kickoff) return false
+      emit({
+        type: 'timeEvent',
+        id: occurrence.id,
+        at: occurrence.at,
+        stops: occurrence.stops,
+      })
+      for (const entry of kickoff.entries) emit({ type: 'transaction', entry })
+      if (kickoff.pitchesChanged) emit({ type: 'pitchesChanged' })
+      emit({ type: 'matchStarted', match: kickoff.match })
+      return true
+    }
+    if (occurrence.id === MATCH_EVENT.final) {
+      const match = finishMatch(state)
+      if (!match) return false
+      emit({
+        type: 'timeEvent',
+        id: occurrence.id,
+        at: occurrence.at,
+        stops: occurrence.stops,
+      })
+      emit({ type: 'matchPlayed', match })
+      emit({ type: 'clubChanged' })
+      return true
+    }
+    emit({ type: 'timeEvent', id: occurrence.id, at: occurrence.at, stops: occurrence.stops })
+    const outcome = applyEconomyEvent(state, content, occurrence.id)
+    for (const entry of outcome.entries) emit({ type: 'transaction', entry })
+    if (outcome.broken) emit({ type: 'buildingsBroken', buildings: outcome.broken })
+    if (outcome.pitchesChanged) emit({ type: 'pitchesChanged' })
+    if (outcome.report) {
+      if (weeklyClubUpdate(state, content)) emit({ type: 'clubChanged' })
+      emit({ type: 'weeklyReport', report: outcome.report })
+    }
+    return true
+  }
   /** Obras con éxito hechas hasta ahora (para saber si la última se puede deshacer). */
   let revision = 0
   let undoSlot: UndoSlot | null = null
@@ -114,7 +188,7 @@ export function createGame(
       if (price.cost > 0 && price.cost > state.money) return { ok: false, reason: 'notEnoughMoney' }
       // Solo las obras que cuestan algo (construir, mejorar, mover) se pueden deshacer;
       // las reparaciones no: son un gasto, no una obra que se pueda retirar
-      const undoable = price.cost > 0 && price.concept !== 'repairs'
+      const undoable = price.cost > 0 && UNDOABLE.has(price.concept)
       const snapshot = undoable ? captureMap(state) : null
 
       const result = executeCommand(state, command, content)
@@ -130,71 +204,22 @@ export function createGame(
       }
       for (const [amount, concept] of [
         [-price.cost, price.concept],
-        [price.refund, 'demolish'],
+        [price.refund, price.refundConcept ?? 'demolish'],
       ] as const) {
         const entry = record(state, concept, amount, price.rect)
         if (entry) emit({ type: 'transaction', entry })
       }
+      checkGrants()
       return result
     },
     advance(minutes, options) {
       return advanceClock(state, content.time, minutes, {
         ...options,
-        // Cada suceso tiene efecto en su instante: el clima, y los cobros y pagos del calendario
+        // Cada suceso tiene efecto en su instante; después se miran los objetivos de las subvenciones
         onOccurrence(occurrence) {
-          if (occurrence.kind === 'weather') {
-            emit({ type: 'weatherChanged', weather: occurrence.weather, at: occurrence.at })
-            return
-          }
-          if (occurrence.id === MATCH_EVENT.preview) {
-            const preview = announceMatch(state, content)
-            if (!preview) return false
-            emit({
-              type: 'timeEvent',
-              id: occurrence.id,
-              at: occurrence.at,
-              stops: occurrence.stops,
-            })
-            emit({ type: 'matchAnnounced', preview })
-            return true
-          }
-          if (occurrence.id === MATCH_EVENT.kickoff) {
-            const kickoff = startMatch(state, content)
-            if (!kickoff) return false
-            emit({
-              type: 'timeEvent',
-              id: occurrence.id,
-              at: occurrence.at,
-              stops: occurrence.stops,
-            })
-            for (const entry of kickoff.entries) emit({ type: 'transaction', entry })
-            if (kickoff.pitchesChanged) emit({ type: 'pitchesChanged' })
-            emit({ type: 'matchStarted', match: kickoff.match })
-            return true
-          }
-          if (occurrence.id === MATCH_EVENT.final) {
-            const match = finishMatch(state)
-            if (!match) return false
-            emit({
-              type: 'timeEvent',
-              id: occurrence.id,
-              at: occurrence.at,
-              stops: occurrence.stops,
-            })
-            emit({ type: 'matchPlayed', match })
-            emit({ type: 'clubChanged' })
-            return true
-          }
-          emit({ type: 'timeEvent', id: occurrence.id, at: occurrence.at, stops: occurrence.stops })
-          const outcome = applyEconomyEvent(state, content, occurrence.id)
-          for (const entry of outcome.entries) emit({ type: 'transaction', entry })
-          if (outcome.broken) emit({ type: 'buildingsBroken', buildings: outcome.broken })
-          if (outcome.pitchesChanged) emit({ type: 'pitchesChanged' })
-          if (outcome.report) {
-            if (weeklyClubUpdate(state, content)) emit({ type: 'clubChanged' })
-            emit({ type: 'weeklyReport', report: outcome.report })
-          }
-          return true
+          const happened = handleOccurrence(occurrence)
+          if (happened !== false) checkGrants()
+          return happened
         },
       })
     },

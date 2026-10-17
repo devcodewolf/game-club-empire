@@ -24,6 +24,7 @@ import { planBlockMove } from '../map/moveBlock'
 import { NO_DOOR, NO_WALL } from '../map/structureTypes'
 import type { LedgerConcept } from './ledger'
 import { buildingRepairCost, pitchRepairCost } from './upkeep'
+import { grantDef } from '../club/grants'
 
 export interface CommandPrice {
   /** Lo que se paga (≥ 0). */
@@ -31,6 +32,8 @@ export interface CommandPrice {
   /** Lo que se recupera (≥ 0). */
   readonly refund: number
   readonly concept: LedgerConcept
+  /** Concepto de lo que se recupera o se cobra (por defecto, demoler). */
+  readonly refundConcept?: LedgerConcept
   /** Zona del mapa a la que se asocia el movimiento (para el texto flotante). */
   readonly rect?: TileRect
 }
@@ -268,6 +271,17 @@ export function commandPrice(state: MapState, content: SimContent, command: Comm
     }
     case 'setRoomUse':
       return FREE
+    case 'acceptGrant': {
+      // El adelanto entra como un cobro
+      const grant = grantDef(content, command.grantId)
+      return { cost: 0, refund: grant?.advance ?? 0, concept: 'grants', refundConcept: 'grants' }
+    }
+    case 'cancelGrant': {
+      const grant = grantDef(content, command.grantId)
+      const active = state.club.grants.active.some((a) => a.id === command.grantId)
+      if (!grant || !active) return { ...FREE, concept: 'grants' }
+      return { cost: grant.advance * content.grants.cancelRate, refund: 0, concept: 'grants' }
+    }
     case 'buildBenches':
     case 'upgradeBenches': {
       const building = state.buildings[command.buildingId]

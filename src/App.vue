@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import GameCanvas from '@/ui/GameCanvas.vue'
 import GameLayout from '@/ui/GameLayout.vue'
+import NoticeBoard from '@/ui/board/NoticeBoard.vue'
 import BuildMenu from '@/ui/build-menu/BuildMenu.vue'
 import NoticeToasts from '@/ui/components/NoticeToasts.vue'
 import HudClock from '@/ui/hud/HudClock.vue'
@@ -56,9 +57,9 @@ useTimeShortcuts(game)
       <template #top>
         <!-- Sin capturar el ratón en los huecos: solo las fichas y el reloj reciben clics -->
         <div class="pointer-events-none! grid w-full grid-cols-[1fr_auto_1fr] items-start gap-3">
-          <!-- Avisos de arriba a la izquierda: el partido en juego y el lunes de cuentas.
-               Aquí irá también el tablón con eventos y objetivos de subvenciones. -->
+          <!-- Arriba a la izquierda: el tablón (plegable), el partido en juego y el lunes de cuentas -->
           <div class="flex flex-col items-start gap-2">
+            <NoticeBoard />
             <MatchChip />
             <WeeklyReportNote />
           </div>
