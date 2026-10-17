@@ -1,9 +1,10 @@
 <script setup lang="ts">
 /**
  * Marcador del partido en juego (arriba a la izquierda), como el de un campo
- * de pueblo: caja oscura con los nombres en placas, cifras de luz ámbar y el
- * minuto en rojo. Va contando el resultado minuto a minuto con los goles que
- * la simulación decidió al empezar, y celebra cada gol con un "¡GOL!".
+ * de pueblo: tablero de madera pintado de verde, nombres rotulados a mano y
+ * los goles en placas blancas colgadas de un clavo, que giran al cambiar.
+ * Va contando el resultado minuto a minuto con los goles que la simulación
+ * decidió al empezar, y celebra cada gol con una tira de papel.
  */
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { matchClock, scoreAt } from '@/sim/club/match'
@@ -37,7 +38,7 @@ const board = computed(() => {
 const minuteText = computed(() => {
   const clock = board.value?.clock
   if (!clock) return ''
-  if (clock.phase === 'break') return 'DESC.'
+  if (clock.phase === 'break') return 'Descanso'
   return clock.phase === 'added' ? "90+'" : `${clock.minute}'`
 })
 
@@ -71,47 +72,72 @@ onBeforeUnmount(() => clearTimeout(flashTimer))
   >
     <div
       v-if="board"
-      class="scoreboard pointer-events-auto w-[340px] rounded-md border-2 border-ink p-1.5 text-white shadow-[3px_3px_0_rgb(0_0_0/0.4)]"
+      class="pointer-events-auto relative w-[340px]"
       role="status"
-      :aria-label="`En juego: ${board.left.name} ${board.left.goals}, ${board.right.name} ${board.right.goals}, minuto ${minuteText}`"
+      :aria-label="`En juego: ${board.left.name} ${board.left.goals}, ${board.right.name} ${board.right.goals}, ${minuteText}`"
     >
-      <!-- Cabecera: en directo y minuto -->
-      <div class="flex items-center justify-between px-1 pb-1">
-        <span class="flex items-center gap-1.5 font-data text-[10px] font-bold tracking-[0.18em]">
-          <span class="live-dot h-2 w-2 rounded-full bg-red-500" aria-hidden="true" />
-          EN JUEGO
-        </span>
-        <span class="led led--red font-data text-sm font-bold tabular-nums">{{ minuteText }}</span>
+      <div class="scoreboard rounded-md px-3 pt-1.5 pb-2 text-white">
+        <!-- Cabecera rotulada: en juego y el minuto en su placa -->
+        <div class="flex items-center justify-between">
+          <span class="flex items-center gap-1.5 font-hand text-[15px] leading-5 tracking-wide">
+            <span class="live-dot h-2 w-2 rounded-full bg-[#ff5a4a]" aria-hidden="true" />
+            En juego
+          </span>
+          <span
+            class="minute rounded-sm px-1.5 font-data text-[13px] leading-5 font-bold text-ink tabular-nums"
+            >{{ minuteText }}</span
+          >
+        </div>
+
+        <!-- Nombres pintados y placas de los goles -->
+        <div class="mt-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <div class="min-w-0 text-right">
+            <p class="truncate font-hand text-[17px] leading-5" :title="board.left.name">
+              {{ board.left.name }}
+            </p>
+            <p class="font-data text-[9px] tracking-[0.2em] text-white/55">LOCAL</p>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <span v-for="side in SIDES" :key="side" class="card-slot relative">
+              <span
+                class="nail absolute -top-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full"
+                aria-hidden="true"
+              />
+              <Transition
+                mode="out-in"
+                enter-active-class="motion-safe:transition motion-safe:duration-200 motion-safe:ease-out"
+                enter-from-class="motion-safe:[transform:rotateX(90deg)]"
+                leave-active-class="motion-safe:transition motion-safe:duration-150 motion-safe:ease-in"
+                leave-to-class="motion-safe:[transform:rotateX(-90deg)]"
+              >
+                <span
+                  :key="board[side].goals"
+                  class="card flex h-10 w-8 items-center justify-center rounded-[3px] font-data text-[26px] font-bold text-ink tabular-nums"
+                  >{{ board[side].goals }}</span
+                >
+              </Transition>
+            </span>
+          </div>
+          <div class="min-w-0">
+            <p class="truncate font-hand text-[17px] leading-5" :title="board.right.name">
+              {{ board.right.name }}
+            </p>
+            <p class="font-data text-[9px] tracking-[0.2em] text-white/55">VISITANTE</p>
+          </div>
+        </div>
       </div>
 
-      <!-- Placas con los nombres y el marcador -->
-      <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
-        <span class="plate truncate text-right" :title="board.left.name">{{
-          board.left.name
-        }}</span>
-        <span class="digits flex items-center gap-1 rounded-sm px-1.5 font-data tabular-nums">
-          <span class="led led--amber w-5 text-center text-2xl leading-8 font-bold">{{
-            board.left.goals
-          }}</span>
-          <span class="text-lg text-white/40">-</span>
-          <span class="led led--amber w-5 text-center text-2xl leading-8 font-bold">{{
-            board.right.goals
-          }}</span>
-        </span>
-        <span class="plate truncate" :title="board.right.name">{{ board.right.name }}</span>
-      </div>
-
-      <!-- ¡GOL! -->
+      <!-- ¡GOL!: tira de papel pegada a la derecha del marcador, sobre el mapa -->
       <Transition
         enter-active-class="motion-safe:transition motion-safe:duration-200 motion-safe:ease-out"
-        enter-from-class="motion-safe:scale-75 opacity-0"
+        enter-from-class="motion-safe:-translate-x-2 opacity-0"
         leave-active-class="motion-safe:transition motion-safe:duration-300"
         leave-to-class="opacity-0"
       >
         <p
           v-if="goal"
-          class="goal mt-1.5 rounded-sm py-0.5 text-center font-hand text-[20px] leading-6"
-          :class="goal === 'ours' ? 'bg-green-700' : 'bg-red-800'"
+          class="goal absolute top-1/2 left-full z-10 ml-3 px-4 py-0.5 font-hand text-[20px] leading-6 whitespace-nowrap shadow-[2px_2px_0_rgb(0_0_0/0.3)]"
+          :class="goal === 'ours' ? 'bg-[#f7e27d] text-ink' : 'bg-paper text-red-800'"
         >
           {{ goal === 'ours' ? `¡GOL de ${CLUB_NAME}!` : `Gol de ${store.current?.opponent}` }}
         </p>
@@ -120,42 +146,54 @@ onBeforeUnmount(() => clearTimeout(flashTimer))
   </Transition>
 </template>
 
+<script lang="ts">
+/** Lados del marcador, de izquierda (local) a derecha (visitante). */
+const SIDES = ['left', 'right'] as const
+</script>
+
 <style scoped>
-/* Caja del marcador: chapa oscura con un ribete más claro arriba */
+/* Tablero: madera pintada de verde con vetas, marco de madera y sombra plana */
 .scoreboard {
-  background: linear-gradient(#2b3138, #1d2126);
+  background:
+    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.07) 0 1px, transparent 1px 13px),
+    linear-gradient(#2f5a3b, #264b31);
+  border: 4px solid #8a5a2b;
   box-shadow:
+    0 0 0 2px #4a2d12,
     inset 0 1px 0 rgb(255 255 255 / 0.12),
-    3px 3px 0 rgb(0 0 0 / 0.4);
+    3px 4px 0 rgb(0 0 0 / 0.4);
+  text-shadow: 1px 1px 0 rgb(0 0 0 / 0.35);
 }
 
-/* Placa con el nombre del equipo, como letras blancas sobre chapa */
-.plate {
-  border: 1px solid rgb(255 255 255 / 0.12);
-  border-radius: 2px;
-  background: #3a424b;
-  padding: 2px 6px;
-  font-family: var(--font-data);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+/* Placa del minuto: chapa crema */
+.minute {
+  background: #f1ead7;
+  box-shadow:
+    0 0 0 1px #2e2a26,
+    1px 1px 0 rgb(0 0 0 / 0.35);
+  text-shadow: none;
 }
 
-/* Ventana negra de las cifras */
-.digits {
-  background: #0d0f12;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+/* Placas de los goles: cartón blanco con una raya en medio (giran al cambiar) */
+.card-slot {
+  perspective: 300px;
+}
+.card {
+  background: linear-gradient(#ffffff 0 49%, #e2dccc 49% 51%, #f6f3ea 51%);
+  box-shadow:
+    0 0 0 1.5px #2e2a26,
+    2px 2px 0 rgb(0 0 0 / 0.35);
+  text-shadow: none;
+}
+.nail {
+  z-index: 1;
+  background: radial-gradient(circle at 35% 35%, #d9d4c7, #6d6659);
+  box-shadow: 0 0 0 1px #2e2a26;
 }
 
-/* Cifras de luz, con un leve resplandor */
-.led--amber {
-  color: #ffc14d;
-  text-shadow: 0 0 6px rgb(255 170 40 / 0.65);
-}
-.led--red {
-  color: #ff6b5b;
-  text-shadow: 0 0 5px rgb(255 80 60 / 0.6);
+/* La tira del gol, algo torcida, como pegada con prisa */
+.goal {
+  transform: translateY(-50%) rotate(-3deg);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -163,7 +201,7 @@ onBeforeUnmount(() => clearTimeout(flashTimer))
     animation: live 1.2s ease-in-out infinite;
   }
   .goal {
-    animation: goal-pulse 0.5s ease-in-out 3;
+    animation: goal-wiggle 0.45s ease-in-out 3;
   }
 }
 @keyframes live {
@@ -171,9 +209,9 @@ onBeforeUnmount(() => clearTimeout(flashTimer))
     opacity: 0.25;
   }
 }
-@keyframes goal-pulse {
+@keyframes goal-wiggle {
   50% {
-    transform: scale(1.06);
+    transform: translateY(-50%) rotate(1deg) scale(1.08);
   }
 }
 </style>
