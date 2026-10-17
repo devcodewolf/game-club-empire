@@ -1,5 +1,6 @@
 /**
- * Estado de UI del tiempo: velocidad, pausa y "próximo evento", más una copia
+ * Estado de UI del tiempo: velocidad, pausa y "próximo evento" (salta de golpe
+ * al siguiente evento destacado y se detiene), más una copia
  * reactiva del instante y el clima para el HUD (la simulación no es reactiva;
  * el bucle de juego la actualiza cada fotograma).
  */
@@ -12,32 +13,32 @@ export const useTimeStore = defineStore('time', () => {
   const speed = ref(1)
   /** La partida empieza en pausa. */
   const paused = ref(true)
-  /** "Próximo evento": corre a la velocidad máxima hasta el siguiente evento que detenga. */
-  const fastForward = ref(false)
+  /** "Próximo evento" pedido: el bucle salta al siguiente evento destacado en el próximo fotograma. */
+  const jumpRequested = ref(false)
   /** Copia del instante de la simulación (minutos desde el 1 de enero del año 1). */
   const time = ref(0)
   const weather = ref<Weather>('dry')
 
   function togglePause(): void {
-    fastForward.value = false
+    jumpRequested.value = false
     paused.value = !paused.value
   }
 
-  /** Elegir una velocidad la pone en marcha (y cancela el "próximo evento"). */
+  /** Elegir una velocidad la pone en marcha. */
   function setSpeed(value: number): void {
     speed.value = value
-    fastForward.value = false
+    jumpRequested.value = false
     paused.value = false
   }
 
+  /** Salta al siguiente evento destacado (partido, lunes de cuentas…) y se queda en pausa. */
   function nextEvent(): void {
-    fastForward.value = true
-    paused.value = false
+    jumpRequested.value = true
   }
 
-  /** Lo llama el bucle cuando el "próximo evento" llega a su evento. */
+  /** Lo llama el bucle tras el salto: la partida queda en pausa en el evento. */
   function stopAtEvent(): void {
-    fastForward.value = false
+    jumpRequested.value = false
     paused.value = true
   }
 
@@ -49,7 +50,7 @@ export const useTimeStore = defineStore('time', () => {
   return {
     speed,
     paused,
-    fastForward,
+    jumpRequested,
     time,
     weather,
     togglePause,

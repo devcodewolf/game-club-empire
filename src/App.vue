@@ -3,6 +3,8 @@ import GameCanvas from '@/ui/GameCanvas.vue'
 import GameLayout from '@/ui/GameLayout.vue'
 import BuildMenu from '@/ui/build-menu/BuildMenu.vue'
 import NoticeToasts from '@/ui/components/NoticeToasts.vue'
+import HudClock from '@/ui/hud/HudClock.vue'
+import HudStats from '@/ui/hud/HudStats.vue'
 import ObjectPanel from '@/ui/object-panel/ObjectPanel.vue'
 import ContextMenu from '@/ui/context-menu/ContextMenu.vue'
 import RoomPanel from '@/ui/room-panel/RoomPanel.vue'
@@ -32,15 +34,20 @@ useTimeShortcuts(game)
     <GameCanvas :game="game" />
     <GameLayout>
       <template #top>
-        <div class="flex flex-col items-center gap-2">
-          <span class="pointer-events-none! text-sm font-bold text-amber-400">Grassroots</span>
-          <span
-            v-if="devMode"
-            class="pointer-events-none! rounded-sm bg-amber-400 px-2 py-0.5 text-xs font-bold text-stone-900"
-          >
-            MODO DESARROLLO · todo desbloqueado
-          </span>
-          <NoticeToasts />
+        <!-- Sin capturar el ratón en los huecos: solo las fichas y el reloj reciben clics -->
+        <div class="pointer-events-none! grid w-full grid-cols-[1fr_auto_1fr] items-start gap-3">
+          <div />
+          <div class="flex flex-col items-center gap-2">
+            <HudStats />
+            <span
+              v-if="devMode"
+              class="rounded-sm bg-amber-400 px-2 py-0.5 text-xs font-bold text-stone-900"
+            >
+              MODO DESARROLLO · todo desbloqueado
+            </span>
+            <NoticeToasts />
+          </div>
+          <HudClock class="justify-self-end" />
         </div>
       </template>
       <template #right>

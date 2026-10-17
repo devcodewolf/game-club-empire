@@ -132,11 +132,11 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 > Especificación completa (cifras, fórmulas e interfaz): [`docs/prompts/FASE2-ESPECIFICACION.md`](prompts/FASE2-ESPECIFICACION.md). Todas las cifras son datos en `src/content/`; toda aleatoriedad usa el PRNG sembrado de la partida. Cada bloque termina con algo visible y se valida antes de pasar al siguiente.
 
 **Bloque A — Reloj y tema visual**
-- [ ] 🧠 Bucle de ticks (1 tick = 1 min de juego) con `MINUTOS_REALES_POR_DIA`, velocidades ×1/×3/×5/×10 y pausa. Calendario con fecha, hora y día de la semana
-- [ ] 🧠 Planificador de eventos (por hora, día, semana, mes y fecha concreta) y "próximo evento"
-- [ ] 🧠 Clima diario sembrado
-- [ ] ⚡ Tokens del tema "carpeta del míster" en Tailwind (madera, papel, corcho, tipografías)
-- [ ] ⚡ HUD: fecha, hora, clima y velocidades, con teclas
+- [x] 🧠 Bucle de ticks (1 tick = 1 min de juego) con `MINUTOS_REALES_POR_DIA`, velocidades ×1/×3/×5/×10 y pausa. Calendario con fecha, hora y día de la semana
+- [x] 🧠 Planificador de eventos (por hora, día, semana, mes y fecha concreta) y "próximo evento"
+- [x] 🧠 Clima diario sembrado
+- [x] ⚡ Tokens del tema "carpeta del míster" en Tailwind (madera, papel, corcho, tipografías)
+- [x] ⚡ HUD: fecha, hora, clima y velocidades, con teclas
 
 *Se ve:* el reloj avanza a cada velocidad, "próximo evento" salta al lunes y se detiene. *Prueba:* 1 día a ×1 dura 12 min (cronometrar a ×10: 72 s).
 

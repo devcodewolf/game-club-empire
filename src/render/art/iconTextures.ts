@@ -64,6 +64,11 @@ import clipboardSvg from '@tabler/icons/outline/clipboard.svg?raw'
 import deviceCctvSvg from '@tabler/icons/outline/device-cctv.svg?raw'
 import lockSvg from '@tabler/icons/outline/lock.svg?raw'
 import rotateClockwiseSvg from '@tabler/icons/outline/rotate-clockwise.svg?raw'
+import sunSvg from '@tabler/icons/outline/sun.svg?raw'
+import cloudRainSvg from '@tabler/icons/outline/cloud-rain.svg?raw'
+import playerPauseSvg from '@tabler/icons/outline/player-pause.svg?raw'
+import playerPlaySvg from '@tabler/icons/outline/player-play.svg?raw'
+import playerTrackNextSvg from '@tabler/icons/outline/player-track-next.svg?raw'
 
 const SVG_SOURCES = {
   'soccer-field': soccerFieldSvg,
@@ -120,6 +125,11 @@ const SVG_SOURCES = {
   'device-cctv': deviceCctvSvg,
   lock: lockSvg,
   'rotate-clockwise': rotateClockwiseSvg,
+  sun: sunSvg,
+  'cloud-rain': cloudRainSvg,
+  'player-pause': playerPauseSvg,
+  'player-play': playerPlaySvg,
+  'player-track-next': playerTrackNextSvg,
 } satisfies Record<IconName, string>
 
 /** Rasterizado a 4× (96 px para un icono de 24): nítido hasta zoom ×2. */

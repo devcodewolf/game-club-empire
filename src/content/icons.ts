@@ -68,6 +68,11 @@ export const ICON_NAMES = [
   // Interfaz
   'lock',
   'rotate-clockwise',
+  'sun',
+  'cloud-rain',
+  'player-pause',
+  'player-play',
+  'player-track-next',
 ] as const
 
 export type IconName = (typeof ICON_NAMES)[number]

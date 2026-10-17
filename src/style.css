@@ -11,6 +11,11 @@
   --color-paper-margin: #e08a8a;
   --color-ink: #2e2a26;
   --color-ink-blue: #2f4f7a;
+  /* Corcho del tablón del vestuario (Bloque F). Solo interfaz */
+  --color-cork: #c49a62;
+  --color-cork-dark: #8a6538;
+  /* Cifras y datos: legible, con cifras tabulares (usar con tabular-nums) */
+  --font-data: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
 }
 
 /* Base: la app ocupa toda la ventana, sin scroll */

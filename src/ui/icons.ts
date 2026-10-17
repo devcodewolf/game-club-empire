@@ -59,6 +59,11 @@ import {
   IconDeviceCctv,
   IconLock,
   IconRotateClockwise,
+  IconSun,
+  IconCloudRain,
+  IconPlayerPause,
+  IconPlayerPlay,
+  IconPlayerTrackNext,
 } from '@tabler/icons-vue'
 import type { IconName } from '@/content/icons'
 
@@ -117,4 +122,9 @@ export const ICON_COMPONENTS = {
   'device-cctv': IconDeviceCctv,
   lock: IconLock,
   'rotate-clockwise': IconRotateClockwise,
+  sun: IconSun,
+  'cloud-rain': IconCloudRain,
+  'player-pause': IconPlayerPause,
+  'player-play': IconPlayerPlay,
+  'player-track-next': IconPlayerTrackNext,
 } satisfies Record<IconName, Component>
