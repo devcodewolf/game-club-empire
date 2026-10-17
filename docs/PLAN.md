@@ -160,6 +160,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 **Bloque D — Personal y estado del campo**
 - [ ] 🧠 Personal abstracto con cobertura (jardinero, limpieza, mantenimiento)
 - [ ] 🧠 Estado del campo y averías
+- [ ] 🧠 Ficha del campo con su estado (barra 0-100 y por qué baja) y botón "Reparar el césped" de pago: recupera estado de golpe y deja el campo unos días sin alquilar (idea de Raul, ver `docs/IDEAS.md`)
 - [ ] ⚡ Pestaña Personal del cuaderno
 - [ ] ⚡ Icono de avería sobre el objeto y botón de reparar en su ficha
 
@@ -168,6 +169,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 **Bloque E — Partido mínimo, fama y afición**
 - [ ] 🧠 Partido semanal con fuerza, goles por Poisson, asistencia, taquilla, bar y aparcamiento
 - [ ] 🧠 Fama, afición, satisfacción y socios
+- [ ] 🧠 Vestuario local y visitante: uso elegible en la ficha (como el de los campos); la fuerza usa el local; sin visitante, multa de la federación y −1 de fama al jugar en casa; la caseta vieja puede hacer de visitante (idea de Raul)
 - [ ] ⚡ Pantalla de resultado del partido
 - [ ] ⚡ Socios, afición y fama en el HUD
 - [ ] ⚡ Banderines en las farolas según la afición
@@ -175,6 +177,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 *Se ve:* cada domingo hay partido con ingresos que flotan sobre sus edificios. *Prueba:* simular 20 partidos con semilla fija; la distribución de resultados es razonable (ni siempre ganar ni siempre perder).
 
 **Bloque F — Tablón, patrocinios y nuevas fuentes**
+- [ ] 🧠 Subvenciones del ayuntamiento como las de Prison Architect: lista encadenada con objetivos, adelanto al aceptar y bonus al cumplir, 2 activas, se tachan los objetivos al cumplirlos (idea de Raul; cadena inicial en `docs/IDEAS.md`)
 - [ ] 🧠 Tablón del vestuario y patrocinios locales con objetivos como datos. El tablón es el equivalente a la lista "Todo" de Prison Architect: nota de corcho arriba a la izquierda con secciones (próximo partido, patrocinios con sus objetivos tachados al cumplirlos, ofertas, averías, quiebra, lotería) y un contador de pendientes
 - [ ] 🧠 Vallas publicitarias (objeto, colocación en el pasillo perimetral, anunciantes)
 - [ ] 🧠 Escuela de fútbol con monitores
@@ -225,6 +228,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] 🧠 Desbloqueos por ascenso conectados con el menú de construcción (p. ej. césped natural y grada mediana)
 - [ ] ⚡ Tests: una temporada completa simulada sin errores
 - [ ] ⚡ Día de partido animado: afición llegando por la carretera, focos, sonido de grada (placeholder)
+- [ ] 🧠 Acceso de la afición como en un estadio real: recinto cerrado con muros o vallas, puertas de acceso con tornos (objeto nuevo) y taquilla; los tornos limitan la asistencia y sin recinto cerrado hay "colados" que no pagan (idea de Raul)
 
 ✅ **Validar MVP:** jugar una temporada entera, ascender y usar algo desbloqueado. **Aquí decidimos juntos si el bucle es divertido antes de seguir.**
 
