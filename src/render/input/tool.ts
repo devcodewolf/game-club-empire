@@ -6,7 +6,7 @@
  */
 import type { BuildingId, BuildingTypeId } from '@/sim/buildings/buildings'
 import type { FloorId } from '@/sim/map/floors'
-import type { Rotation } from '@/sim/geometry'
+import type { Rotation, TileRect } from '@/sim/geometry'
 import type { RoomTypeId } from '@/sim/rooms/roomTypes'
 import type { DoorId, WallId } from '@/sim/map/structureTypes'
 
@@ -23,6 +23,14 @@ export type Tool =
   | {
       readonly kind: 'move'
       readonly carrying: { readonly buildingId: BuildingId; readonly rotation: Rotation } | null
+    }
+  /**
+   * Mover bloque: sin `carrying`, se arrastra un rectángulo para seleccionar;
+   * con `carrying`, el bloque va en fantasma (R gira) y un clic lo suelta.
+   */
+  | {
+      readonly kind: 'moveBlock'
+      readonly carrying: { readonly rect: TileRect; readonly rotation: Rotation } | null
     }
   | { readonly kind: 'paintFloor'; readonly floor: FloorId }
   | { readonly kind: 'foundation'; readonly wall: WallId; readonly floor: FloorId }
@@ -49,6 +57,9 @@ export function dragShape(tool: Tool): 'rect' | 'line' | null {
       return 'rect'
     case 'wall':
       return 'line'
+    case 'moveBlock':
+      // Solo se arrastra para seleccionar; llevando el bloque, se suelta con un clic.
+      return tool.carrying ? null : 'rect'
     default:
       return null
   }

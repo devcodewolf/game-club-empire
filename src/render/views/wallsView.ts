@@ -99,6 +99,10 @@ export function createWallsView(layer: Container, game: Game, textures: WallText
   const unsubscribe = game.subscribe((event) => {
     if (event.type === 'structuresChanged' || event.type === 'areaDemolished')
       redrawRect(event.rect)
+    if (event.type === 'blockMoved') {
+      redrawRect(event.from)
+      redrawRect(event.to)
+    }
   })
 
   return {

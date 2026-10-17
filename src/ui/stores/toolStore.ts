@@ -7,7 +7,7 @@ import { computed, ref } from 'vue'
 import type { BuildingId, BuildingTypeId } from '@/sim/buildings/buildings'
 import type { RoomTypeId } from '@/sim/rooms/roomTypes'
 import type { FloorId } from '@/sim/map/floors'
-import { nextRotation, type Rotation } from '@/sim/geometry'
+import { nextRotation, type Rotation, type TileRect } from '@/sim/geometry'
 import { NO_TOOL, type Tool } from '@/render/input/tool'
 import type { DoorId, WallId } from '@/sim/map/structureTypes'
 
@@ -64,6 +64,17 @@ export const useToolStore = defineStore('tool', () => {
    */
   let moveOnce = false
 
+  /** Herramienta Mover bloque, todavía sin nada seleccionado. */
+  function selectMoveBlock(): void {
+    tool.value = tool.value.kind === 'moveBlock' ? NO_TOOL : { kind: 'moveBlock', carrying: null }
+  }
+
+  /** Coge el bloque seleccionado para moverlo (sin girar). */
+  function pickUpBlock(rect: TileRect): void {
+    if (tool.value.kind !== 'moveBlock') return
+    tool.value = { kind: 'moveBlock', carrying: { rect, rotation: 0 } }
+  }
+
   /** Coge un objeto o campo para moverlo, con su giro actual. */
   function pickUp(buildingId: BuildingId, current: Rotation, once = false): void {
     if (tool.value.kind !== 'move') return
@@ -73,6 +84,10 @@ export const useToolStore = defineStore('tool', () => {
 
   /** Suelta lo que se lleva (tras moverlo o al cancelar); la herramienta sigue activa salvo en un solo uso. */
   function putDown(): void {
+    if (tool.value.kind === 'moveBlock') {
+      tool.value = { kind: 'moveBlock', carrying: null }
+      return
+    }
     if (tool.value.kind !== 'move') return
     if (moveOnce) return clear()
     tool.value = { kind: 'move', carrying: null }
@@ -80,7 +95,9 @@ export const useToolStore = defineStore('tool', () => {
 
   /** Escape / clic derecho: si se lleva algo, lo deja donde estaba; si no, suelta la herramienta. */
   function cancel(): void {
-    if (tool.value.kind === 'move' && tool.value.carrying) return putDown()
+    const current = tool.value
+    if ((current.kind === 'move' || current.kind === 'moveBlock') && current.carrying)
+      return putDown()
     clear()
   }
 
@@ -113,6 +130,12 @@ export const useToolStore = defineStore('tool', () => {
   function rotate(): void {
     const current = tool.value
     // Al mover, se gira lo que se lleva (sin tocar el giro recordado para construir).
+    if (current.kind === 'moveBlock') {
+      if (!current.carrying) return
+      const carrying = { ...current.carrying, rotation: nextRotation(current.carrying.rotation) }
+      tool.value = { kind: 'moveBlock', carrying }
+      return
+    }
     if (current.kind === 'move') {
       if (!current.carrying) return
       const carrying = { ...current.carrying, rotation: nextRotation(current.carrying.rotation) }
@@ -143,6 +166,8 @@ export const useToolStore = defineStore('tool', () => {
     selectFloor,
     selectDemolish,
     selectMove,
+    selectMoveBlock,
+    pickUpBlock,
     pickUp,
     putDown,
     cancel,

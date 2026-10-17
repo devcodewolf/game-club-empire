@@ -127,6 +127,19 @@ export function playUpgrade(marker: Container, rect: PxRect, effects: Container)
   dustPuff(effects, rect, 0.5)
 }
 
+/** Al soltar un objeto movido: cae algo más grande y translúcido, rebota y levanta polvo al tocar suelo. */
+export function playDrop(marker: Container, rect: PxRect, effects: Container): void {
+  if (prefersReducedMotion()) return
+
+  marker.scale.set(1.12)
+  marker.alpha = 0.7
+  gsap
+    .timeline()
+    .to(marker, { alpha: 1, duration: 0.15 }, 0)
+    .to(marker.scale, { x: 1, y: 1, duration: 0.35, ease: 'back.out(2.5)' }, 0)
+    .call(() => dustPuff(effects, rect, 0.6), [], 0.12)
+}
+
 /** Derribo: polvo, el marcador se hunde un poco y se desvanece; luego se destruye. */
 export function playDemolish(
   marker: Container,

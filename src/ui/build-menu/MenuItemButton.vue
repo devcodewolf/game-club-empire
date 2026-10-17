@@ -162,6 +162,19 @@ const model = computed<ButtonModel>(() => {
     }
   }
 
+  if (item.kind === 'moveBlock') {
+    return {
+      label: 'Mover bloque',
+      icon: 'marquee-2',
+      color: 'blue',
+      title:
+        'Arrastrar: selecciona un edificio o zona entera (muros, suelos, salas y objetos) · R: girar · Clic: soltar · Esc: cancelar',
+      locked: false,
+      active: toolStore.tool.kind === 'moveBlock',
+      select: () => toolStore.selectMoveBlock(),
+    }
+  }
+
   if (item.kind === 'demolish') {
     return {
       label: 'Demoler',

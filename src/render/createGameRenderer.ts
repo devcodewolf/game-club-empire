@@ -9,7 +9,10 @@ import { ENTRANCE_PROPS } from '@/content/entrance'
 import { ENTRANCE, ROAD, type ExpansionSide } from '@/content/map'
 import type { Command } from '@/sim/commands'
 import type { Game } from '@/sim/game'
-import type { TileCoord } from '@/sim/geometry'
+import { clipRectToGrid, rectFromCorners, type TileCoord, type TileRect } from '@/sim/geometry'
+import type { BuildingId } from '@/sim/buildings/buildings'
+import { standsOf } from '@/sim/buildings/stands'
+import { planBlockMove } from '@/sim/map/moveBlock'
 import { createBuildingsView } from './views/buildingsView'
 import { gridLineAlpha } from './camera/camera'
 import { createCameraController } from './camera/cameraController'
@@ -58,6 +61,8 @@ export interface GameRendererOptions {
   readonly onExpansionClick: (side: ExpansionSide) => void
   /** Clic con la herramienta Mover sin nada cogido. */
   readonly onPickUp: (tile: TileCoord) => void
+  /** Mover bloque: rectángulo seleccionado arrastrando. */
+  readonly onBlockSelected: (rect: TileRect) => void
   /** Clic derecho sin herramienta: menú contextual del objeto (posición en la ventana). */
   readonly onContextMenu: (tile: TileCoord, client: { x: number; y: number }) => void
   /** Clic sin herramienta: el jugador quiere inspeccionar lo que hay en la casilla. */
@@ -79,6 +84,7 @@ export async function createGameRenderer(
     onInspect,
     onPickUp,
     onContextMenu,
+    onBlockSelected,
   }: GameRendererOptions,
 ): Promise<GameRenderer> {
   const app = new Application()
@@ -146,8 +152,13 @@ export async function createGameRenderer(
 
   // Polvo al levantar o derribar muros y cimientos, o al arrasar una zona
   const unsubscribeDust = game.subscribe((event) => {
-    if (event.type !== 'structuresChanged' && event.type !== 'areaDemolished') return
-    const { rect } = event
+    if (
+      event.type !== 'structuresChanged' &&
+      event.type !== 'areaDemolished' &&
+      event.type !== 'blockMoved'
+    )
+      return
+    const rect = event.type === 'blockMoved' ? event.to : event.rect
     dustPuff(
       layers.effects,
       {
@@ -187,6 +198,13 @@ export async function createGameRenderer(
     onDragMove: (tile) => preview.setHover(tile),
     onDragEnd: (tile) => {
       if (!dragStart) return
+      if (tool.kind === 'moveBlock' && !tool.carrying) {
+        // El arrastre selecciona el bloque (recortado al mapa); no propone un comando
+        const rect = clipRectToGrid(rectFromCorners(dragStart, tile), grid)
+        setDragStart(null)
+        if (rect) onBlockSelected(rect)
+        return
+      }
       const command = commandForDrag(tool, dragStart, tile, game.state)
       setDragStart(null)
       if (command) onCommand(command)
@@ -204,6 +222,20 @@ export async function createGameRenderer(
     },
   })
 
+  /** Objetos que se llevan con Mover o Mover bloque (se atenúan en su sitio). */
+  const carriedIds = (current: Tool): BuildingId[] => {
+    if (current.kind === 'move' && current.carrying) {
+      const id = current.carrying.buildingId
+      return [id, ...standsOf(game.state, id).map((stand) => stand.id)]
+    }
+    if (current.kind === 'moveBlock' && current.carrying) {
+      const { rect } = current.carrying
+      const check = planBlockMove(game.state, game.content, rect, rect, 0)
+      return (check.ok ? check.moves : (check.moves ?? [])).map(({ from }) => from.id)
+    }
+    return []
+  }
+
   const onResize = (): void => {
     camera.resize({ width: app.screen.width, height: app.screen.height })
   }
@@ -214,7 +246,7 @@ export async function createGameRenderer(
       tool = next
       dragStart = null
       preview.setTool(next)
-      buildings.setCarrying(next.kind === 'move' ? (next.carrying?.buildingId ?? null) : null)
+      buildings.setCarrying(carriedIds(next))
     },
     destroy(): void {
       unbindInput()

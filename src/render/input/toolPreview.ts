@@ -4,6 +4,8 @@
  *  - demoler: huella roja del edificio bajo el cursor
  *  - mover: sin nada cogido, borde claro de lo que se cogería; llevando algo,
  *    fantasma de la pieza (un campo, con todo su estadio) y huellas verde/roja
+ *  - mover bloque: rectángulo de selección; llevándolo, origen discontinuo,
+ *    casillas de destino verdes (rojas las que chocan) y fantasma de los objetos y miniatura de suelos, muros y puertas
  *  - pintar suelo: rectángulo del arrastre con el color del suelo, borde verde
  *    o rojo y su tamaño ("12×8")
  *
@@ -11,8 +13,20 @@
  */
 import { Container, Graphics, Text } from 'pixi.js'
 import type { Game } from '@/sim/game'
-import { footprint, perimeterTiles, type TileCoord, type TileRect } from '@/sim/geometry'
-import { buildingAt, buildingFootprint, validateFloorPaint, validatePlacement } from '@/sim/map/map'
+import {
+  footprint,
+  perimeterTiles,
+  rectFromCorners,
+  type TileCoord,
+  type TileRect,
+} from '@/sim/geometry'
+import {
+  buildingAt,
+  buildingFootprint,
+  tileIndex,
+  validateFloorPaint,
+  validatePlacement,
+} from '@/sim/map/map'
 import { doorAxis, validateDoor, validateFoundation, validateWalls } from '@/sim/map/structures'
 import { regionFrom, roomAt, validateDesignateRoom } from '@/sim/rooms/rooms'
 import { demolishTargetAt } from '@/sim/map/demolish'
@@ -24,6 +38,10 @@ import {
   validatePlaceStand,
 } from '@/sim/buildings/stands'
 import { moveTargetAt, planMove, type Move } from '@/sim/buildings/move'
+import { planBlockMove, type BlockTile } from '@/sim/map/moveBlock'
+import { DEFAULT_FLOOR } from '@/sim/map/floors'
+import { NO_DOOR, NO_WALL } from '@/sim/map/structureTypes'
+import { shade } from '../core/color'
 import { createBuildingMarker, destroyBuildingMarker } from '../art/buildingMarker'
 import type { PlacedBuilding } from '@/sim/buildings/buildings'
 import { TILE_SIZE } from '../core/grid'
@@ -83,24 +101,78 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
    * Recrea el fantasma solo si cambia la pieza o su giro: las gradas quedan
    * siempre en el mismo sitio respecto al campo, así que basta con moverlo.
    */
-  const syncCarryGhost = (key: string, moves: readonly Move[]): void => {
+  const syncCarryGhost = (key: string, moves: readonly Move[], anchor: TileCoord): void => {
     if (key === carryGhostKey) return
     if (carryGhost) carryGhost.destroy({ children: true })
     carryGhostKey = key
-    const main = moves[0]?.to
-    carryGhost = main ? new Container({ label: 'carryGhost' }) : null
-    if (!carryGhost || !main) return
+    carryGhost = new Container({ label: 'carryGhost' })
     for (const { to } of moves) {
       const piece = markerFor(to)
       if (!piece) continue
-      piece.position.set(
-        (to.origin.x - main.origin.x) * TILE_SIZE,
-        (to.origin.y - main.origin.y) * TILE_SIZE,
-      )
+      piece.position.set((to.origin.x - anchor.x) * TILE_SIZE, (to.origin.y - anchor.y) * TILE_SIZE)
       carryGhost.addChild(piece)
     }
     carryGhost.alpha = GHOST_ALPHA
     root.addChildAt(carryGhost, 0)
+  }
+
+  /** Coloca el fantasma con su ancla en `anchor` y lo muestra. */
+  const showCarryGhost = (anchor: TileCoord): void => {
+    if (!carryGhost) return
+    carryGhost.visible = true
+    carryGhost.position.set(anchor.x * TILE_SIZE, anchor.y * TILE_SIZE)
+  }
+
+  /** Miniatura de suelos, muros y puertas del bloque, relativa a su esquina de destino. */
+  let blockGhost: Graphics | null = null
+  let blockGhostKey = ''
+
+  const syncBlockGhost = (key: string, tiles: readonly BlockTile[], anchor: TileCoord): void => {
+    if (key === blockGhostKey) return
+    blockGhost?.destroy()
+    blockGhostKey = key
+    const g = new Graphics()
+    const { state, content } = game
+    // Remate del muro: un poco más pequeño que la casilla, sobre la cara del material
+    const cap = TILE_SIZE * 0.18
+    // Casillas de destino con muro: el remate se estira hacia los muros vecinos (como el autotiling)
+    const wallAt = new Set(
+      tiles
+        .filter(({ from }) => (state.walls[tileIndex(state, from)] ?? NO_WALL) !== NO_WALL)
+        .map(({ to }) => `${to.x},${to.y}`),
+    )
+    const joins = (x: number, y: number): boolean => wallAt.has(`${x},${y}`)
+    for (const { from, to } of tiles) {
+      const index = tileIndex(state, from)
+      const x = (to.x - anchor.x) * TILE_SIZE
+      const y = (to.y - anchor.y) * TILE_SIZE
+      const floor = state.floors[index]
+      if (floor && floor !== DEFAULT_FLOOR) {
+        const color = content.floors[floor]?.color
+        if (color !== undefined) g.rect(x, y, TILE_SIZE, TILE_SIZE).fill({ color })
+      }
+      const door = state.doors[index]
+      const wall = state.walls[index]
+      if (door && door !== NO_DOOR) {
+        const color = content.doors[door]?.color ?? palette.wood
+        g.rect(x, y, TILE_SIZE, TILE_SIZE).fill({ color: shade(color, 0.2) })
+      } else if (wall && wall !== NO_WALL) {
+        // Casilla entera con la cara del material y el remate encima: las vecinas
+        // se unen y se lee como una pared continua, no como cuadros sueltos
+        const def = content.walls[wall]
+        g.rect(x, y, TILE_SIZE, TILE_SIZE).fill({ color: def?.faceColor ?? palette.stoneDark })
+        const left = joins(to.x - 1, to.y) ? 0 : cap
+        const right = joins(to.x + 1, to.y) ? 0 : cap
+        const top = joins(to.x, to.y - 1) ? 0 : cap
+        const bottom = joins(to.x, to.y + 1) ? 0 : cap
+        g.rect(x + left, y + top, TILE_SIZE - left - right, TILE_SIZE - top - bottom).fill({
+          color: def?.capColor ?? palette.stone,
+        })
+      }
+    }
+    g.alpha = GHOST_ALPHA
+    blockGhost = g
+    root.addChildAt(g, 0)
   }
 
   const markerFor = (building: PlacedBuilding): Container | null => {
@@ -147,7 +219,18 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
     if (ghost) ghost.visible = false
     if (standGhost) standGhost.visible = false
     if (carryGhost) carryGhost.visible = false
+    if (blockGhost) blockGhost.visible = false
     if (!hover) return
+
+    // Mover bloque: mientras se arrastra, el rectángulo de selección con su tamaño
+    if (tool.kind === 'moveBlock' && !tool.carrying) {
+      if (!dragStart)
+        return drawRect(highlight, { ...hover, width: 1, height: 1 }, zoom, palette.chalk)
+      const rect = rectFromCorners(dragStart, hover)
+      drawRect(highlight, rect, zoom, palette.chalk, palette.chalk, 0.15)
+      showSize(sizeLabel, rect, zoom)
+      return
+    }
 
     // Mover sin nada cogido: se marca lo que se cogería (un campo, con su estadio)
     if (tool.kind === 'move' && !tool.carrying) {
@@ -229,11 +312,8 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
         const moves = check.ok ? check.moves : (check.moves ?? [])
         const main = moves[0]?.to
         if (!main) return
-        syncCarryGhost(`${command.buildingId}:${command.rotation}`, moves)
-        if (carryGhost) {
-          carryGhost.visible = true
-          carryGhost.position.set(main.origin.x * TILE_SIZE, main.origin.y * TILE_SIZE)
-        }
+        syncCarryGhost(`${command.buildingId}:${command.rotation}`, moves, main.origin)
+        showCarryGhost(main.origin)
         // Soltar en el mismo sitio no es un error: se ve en blanco, no en rojo
         const color = check.ok
           ? palette.previewValid
@@ -244,6 +324,48 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
           const def = game.content.buildings[to.type]
           if (def) drawRect(highlight, buildingFootprint(to, def), zoom, color)
         }
+        return
+      }
+      case 'moveBlock': {
+        const check = planBlockMove(
+          game.state,
+          game.content,
+          command.rect,
+          command.to,
+          command.rotation,
+        )
+        const tiles = check.tiles ?? []
+        const target = check.target
+        if (!target) return
+        const { x, y, width, height } = command.rect
+        syncCarryGhost(
+          `block:${x},${y},${width},${height}:${command.rotation}`,
+          check.moves ?? [],
+          target,
+        )
+        showCarryGhost(target)
+        syncBlockGhost(`block:${x},${y},${width},${height}:${command.rotation}`, tiles, target)
+        if (blockGhost) {
+          blockGhost.visible = true
+          blockGhost.position.set(target.x * TILE_SIZE, target.y * TILE_SIZE)
+        }
+        // Origen en discontinuo; destino: casillas con contenido en verde o rojo
+        drawDashedRect(highlight, command.rect, zoom, palette.chalk)
+        const samePlace = !check.ok && check.reason === 'samePlace'
+        const color = check.ok
+          ? palette.previewValid
+          : samePlace
+            ? palette.chalk
+            : palette.previewInvalid
+        for (const { to } of tiles) {
+          highlight.rect(to.x * TILE_SIZE, to.y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+        }
+        highlight.fill({ color, alpha: 0.28 })
+        for (const tile of check.ok ? [] : (check.conflicts ?? [])) {
+          highlight.rect(tile.x * TILE_SIZE, tile.y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+        }
+        highlight.fill({ color: palette.previewInvalid, alpha: 0.5 })
+        drawRect(highlight, target, zoom, color, color, 0)
         return
       }
       case 'demolishBuilding': {
@@ -410,7 +532,10 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
   }
 
   // Si el estado cambia bajo el cursor (p. ej. se acaba de construir), refresca.
-  const unsubscribe = game.subscribe(redraw)
+  const unsubscribe = game.subscribe(() => {
+    blockGhostKey = '' // el contenido del bloque pudo cambiar
+    redraw()
+  })
 
   return {
     setTool(next) {

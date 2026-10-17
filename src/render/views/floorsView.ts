@@ -70,6 +70,10 @@ export function createFloorsView(
     if (event.type === 'floorPainted') redrawRect(event.rect)
     if (event.type === 'structuresChanged' && event.cause === 'foundation') redrawRect(event.rect)
     if (event.type === 'areaDemolished') redrawRect(event.rect)
+    if (event.type === 'blockMoved') {
+      redrawRect(event.from)
+      redrawRect(event.to)
+    }
   })
 
   return {

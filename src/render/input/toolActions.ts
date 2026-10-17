@@ -61,6 +61,12 @@ export function commandForTool(
     }
     case 'demolish':
       return { type: 'demolishAt', tile: cursor }
+    case 'moveBlock': {
+      // Sin bloque cogido no hay comando (el arrastre lo selecciona); con él, se suelta aquí.
+      if (!tool.carrying) return null
+      const { rect, rotation } = tool.carrying
+      return { type: 'moveBlock', rect, to: placementOrigin(cursor, rect, rotation), rotation }
+    }
     case 'move': {
       // Sin nada cogido, el clic coge (lo resuelve la UI); con algo, propone soltarlo aquí.
       const carried = tool.carrying && state.buildings[tool.carrying.buildingId]

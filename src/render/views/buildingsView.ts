@@ -11,7 +11,6 @@ import type { Game } from '@/sim/game'
 import { rotateSize } from '@/sim/geometry'
 import { gsap } from 'gsap'
 import { buildingAt } from '@/sim/map/map'
-import { standsOf } from '@/sim/buildings/stands'
 import type { TileCoord } from '@/sim/geometry'
 import {
   createBuildingMarker,
@@ -22,6 +21,7 @@ import {
 import {
   playBuild,
   playDemolish,
+  playDrop,
   playUpgrade,
   prefersReducedMotion,
   stopEffects,
@@ -33,8 +33,8 @@ import type { RenderAssets } from '../core/renderAssets'
 export interface BuildingsView {
   /** Casilla bajo el ratón: desvanece la visera de la grada que haya ahí. */
   setHover(tile: TileCoord | null): void
-  /** Objeto o campo que se lleva con Mover: se atenúa en su sitio (con sus gradas). */
-  setCarrying(buildingId: BuildingId | null): void
+  /** Objetos que se llevan con Mover o Mover bloque: se atenúan en su sitio. */
+  setCarrying(buildingIds: readonly BuildingId[]): void
   destroy(): void
 }
 
@@ -58,7 +58,7 @@ export function createBuildingsView(
   const shadows = new RenderLayer()
   layer.addChildAt(shadows, 0)
 
-  const add = (building: PlacedBuilding, animate: boolean | 'upgrade'): void => {
+  const add = (building: PlacedBuilding, animate: boolean | 'upgrade' | 'drop'): void => {
     const def = game.content.buildings[building.type]
     if (!def) return
 
@@ -84,6 +84,7 @@ export function createBuildingsView(
     if (shadow) shadows.attach(shadow)
     markers.set(building.id, { marker, rect })
     if (animate === 'upgrade') playUpgrade(marker, rect, effects)
+    else if (animate === 'drop') playDrop(marker, rect, effects)
     else if (animate) playBuild(marker, rect, effects)
   }
 
@@ -145,10 +146,10 @@ export function createBuildingsView(
       remove(event.building.id, false)
       add(event.building, 'upgrade')
     }
-    if (event.type === 'buildingMoved') {
-      // Se quita de su sitio y aparece en el nuevo con un rebote
+    if (event.type === 'buildingMoved' || event.type === 'blockMoved') {
+      // Se quita de su sitio y cae en el nuevo con rebote y polvo
       for (const { from } of event.moves) remove(from.id, false)
-      for (const { to } of event.moves) add(to, 'upgrade')
+      for (const { to } of event.moves) add(to, 'drop')
       carried = []
     }
     if (event.type === 'buildingDemolished') {
@@ -162,13 +163,12 @@ export function createBuildingsView(
 
   /** Ids atenuados ahora mismo (lo que se lleva y sus gradas). */
   let carried: BuildingId[] = []
-  const setCarrying = (buildingId: BuildingId | null): void => {
+  const setCarrying = (buildingIds: readonly BuildingId[]): void => {
     for (const id of carried) {
       const marker = markers.get(id)?.marker
       if (marker) marker.alpha = 1
     }
-    carried =
-      buildingId === null ? [] : [buildingId, ...standsOf(game.state, buildingId).map((s) => s.id)]
+    carried = [...buildingIds]
     for (const id of carried) {
       const marker = markers.get(id)?.marker
       if (marker) marker.alpha = CARRIED_ALPHA

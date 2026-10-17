@@ -116,9 +116,9 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 
 - [x] 🧠 Mover un elemento: herramienta "Mover", clic sobre un objeto, campo o grada → fantasma en el cursor, R para girar, clic para soltar (verde/rojo). Mover un campo se lleva sus gradas (comando atómico `moveBuilding` en `sim/buildings/move.ts`; clic en una grada coge su campo; Esc devuelve la pieza)
 - [x] 🧠 Menú contextual con el botón derecho sobre un objeto, campo o grada (sin herramienta activa): Mover, Demoler, Mejorar y Ver ficha. Acciones como datos para añadir opciones nuevas (personal, consumo…) sin tocar el menú (`src/ui/context-menu/buildingActions.ts`; Mover desde el menú es de un solo uso)
-- [ ] 🧠 Mover un bloque: arrastrar un rectángulo (como Demoler) selecciona muros, puertas, suelos, objetos y salas; se mueve en fantasma y se suelta. Un único comando atómico, destino validado entero, salas recalculadas, objetos con su nivel y uso
-- [ ] ⚡ Tests de mover (objeto, bloque, destino inválido sin cambios, salas y niveles conservados) — objeto y campo hechos (42 tests en `move.test.ts`); falta el bloque
-- [ ] ⚡ Animación al soltar (polvo y rebote) y vista previa del bloque completo
+- [x] 🧠 Mover un bloque: arrastrar un rectángulo (como Demoler) selecciona muros, puertas, suelos, objetos y salas; se mueve en fantasma y se suelta. Un único comando atómico, destino validado entero, salas recalculadas, objetos con su nivel y uso (comando atómico `moveBlock` en `sim/map/moveBlock.ts`; solo se mueve lo construido, R gira el bloque, no deja cortar objetos ni salas)
+- [x] ⚡ Tests de mover (objeto, bloque, destino inválido sin cambios, salas y niveles conservados): 42 en `move.test.ts` y 34 en `moveBlock.test.ts`
+- [x] ⚡ Animación al soltar (polvo y rebote) y vista previa del bloque completo (`playDrop` en `effects.ts`; maqueta de suelos, muros y puertas en el fantasma del bloque)
 
 > En la Fase 2 se decide si mover cuesta dinero; con obreros (Fase 4/6), mover dejará de ser instantáneo, como en Prison Architect. PA solo mueve objetos: mover bloques es una mejora sobre el original.
 

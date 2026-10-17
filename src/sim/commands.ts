@@ -24,6 +24,7 @@ import {
 } from './buildings/stands'
 import { applyMove, planMove, type Move, type MoveError } from './buildings/move'
 import type { SimContent } from './content'
+import { applyBlockMove, planBlockMove, type BlockMoveError } from './map/moveBlock'
 import type { FloorId } from './map/floors'
 import {
   applyDemolishStructures,
@@ -74,6 +75,16 @@ export type Command =
       readonly rotation: Rotation
     }
   | { readonly type: 'demolishBuilding'; readonly buildingId: BuildingId }
+  /**
+   * Mover un bloque: lo construido dentro de `rect` va a `to` (esquina
+   * superior izquierda del bloque ya girado), girado `rotation`.
+   */
+  | {
+      readonly type: 'moveBlock'
+      readonly rect: TileRect
+      readonly to: TileCoord
+      readonly rotation: Rotation
+    }
   /** Mover un objeto o un campo (con sus gradas) a otro sitio, conservando nivel y uso. */
   | {
       readonly type: 'moveBuilding'
@@ -127,6 +138,14 @@ export type GameEvent =
       readonly demotedId?: BuildingId
     }
   | {
+      /** Se movió un bloque: cambió todo lo de `from` y de `to`. */
+      readonly type: 'blockMoved'
+      readonly from: TileRect
+      readonly to: TileRect
+      /** Objetos que viajaron con el bloque. */
+      readonly moves: readonly Move[]
+    }
+  | {
       readonly type: 'buildingMoved'
       /** Piezas movidas: la primera es la elegida; detrás, las gradas de un campo. */
       readonly moves: readonly Move[]
@@ -166,6 +185,7 @@ export type CommandError =
   | RoomError
   | StandError
   | MoveError
+  | BlockMoveError
   | 'needsPitch'
   | 'buildingNotFound'
   | 'notUpgradable'
@@ -194,6 +214,8 @@ export function executeCommand(
       return setPitchRole(state, command, content)
     case 'placeStand':
       return placeStand(state, command, content)
+    case 'moveBlock':
+      return moveBlock(state, command, content)
     case 'moveBuilding':
       return moveBuilding(state, command, content)
     case 'demolishBuilding':
@@ -379,6 +401,21 @@ function setPitchRole(
   return {
     ok: true,
     event: { type: 'pitchRoleChanged', buildingId, role, ...(demotedId ? { demotedId } : {}) },
+  }
+}
+
+/** Mueve un bloque con todo lo construido dentro (todo o nada). */
+function moveBlock(
+  state: MapState,
+  { rect, to, rotation }: Extract<Command, { type: 'moveBlock' }>,
+  content: SimContent,
+): CommandResult {
+  const check = planBlockMove(state, content, rect, to, rotation)
+  if (!check.ok) return { ok: false, reason: check.reason }
+  applyBlockMove(state, content, check)
+  return {
+    ok: true,
+    event: { type: 'blockMoved', from: rect, to: check.target, moves: check.moves },
   }
 }
 

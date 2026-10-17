@@ -8,9 +8,10 @@ import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
 import { createGameRenderer, type GameRenderer } from '@/render/createGameRenderer'
 import type { Command } from '@/sim/commands'
 import type { Game } from '@/sim/game'
-import type { TileCoord } from '@/sim/geometry'
+import type { TileCoord, TileRect } from '@/sim/geometry'
 import { buildingAt } from '@/sim/map/map'
 import { moveTargetAt } from '@/sim/buildings/move'
+import { planBlockMove, type BlockMoveError } from '@/sim/map/moveBlock'
 import { NO_ROOM } from '@/sim/rooms/roomTypes'
 import { roomAt } from '@/sim/rooms/rooms'
 import { useNoticeStore } from '@/ui/stores/noticeStore'
@@ -32,7 +33,24 @@ let disposed = false
 function onCommand(command: Command): void {
   const result = props.game.dispatch(command)
   // Mover: si se soltó bien, la herramienta vuelve a estar lista para coger otra cosa
-  if (result.ok && command.type === 'moveBuilding') toolStore.putDown()
+  if (result.ok && (command.type === 'moveBuilding' || command.type === 'moveBlock')) {
+    toolStore.putDown()
+  }
+}
+
+/** Avisos al seleccionar un bloque que no se puede coger. */
+const BLOCK_REFUSALS: Partial<Record<BlockMoveError, string>> = {
+  nothingToMove: 'No hay nada construido en esa zona.',
+  cutsObject: 'La selección corta un objeto: amplíala para que entre entero.',
+  cutsRoom: 'La selección corta una sala: amplíala para que entre entera.',
+}
+
+/** Mover bloque: coge lo seleccionado si se puede mover entero; si no, avisa por qué. */
+function onBlockSelected(rect: TileRect): void {
+  const check = planBlockMove(props.game.state, props.game.content, rect, rect, 0)
+  const refusal = check.ok ? undefined : BLOCK_REFUSALS[check.reason]
+  if (refusal) return noticeStore.show('✋', refusal)
+  toolStore.pickUpBlock(rect)
 }
 
 /** Clic derecho sin herramienta: menú del objeto de la casilla (o cierra el que hubiera). */
@@ -66,6 +84,7 @@ onMounted(async () => {
     onInspect,
     onPickUp,
     onContextMenu,
+    onBlockSelected,
     onExpansionClick: () =>
       noticeStore.show('🔒', 'Ampliación no disponible todavía. Llegará en una versión futura.'),
   })
