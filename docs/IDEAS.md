@@ -49,6 +49,18 @@ En el tablón y en la pestaña Subvenciones del cuaderno, los objetivos se tacha
 - Sin recinto cerrado entra gente sin pagar ("colados"): la taquilla recauda menos.
 - El día de partido, la afición llega por la carretera y hace cola en los tornos (con las personas de la Fase 4).
 
+### Banquillos en zonas fijas junto al campo · Fase 2, Bloque E (o Fase 3) · Propuesta
+- Cada campo trae **dos zonas acotadas** a la altura del centro del campo, fuera de la línea de banda (local y visitante), marcadas en el césped. Solo ahí se pueden poner banquillos, igual que las vallas publicitarias del Bloque F van pegadas al campo.
+- El banquillo es un dato del campo, no un objeto suelto: se mueve, gira y se mejora con él.
+- **Mejoras por niveles**, desbloqueadas por fase o división: banco de madera → banquillo con techo de chapa → banquillo cubierto con asientos acolchados → banquillo de estadio con calefacción.
+- Efecto: un pequeño extra de moral y fuerza en casa con el banquillo local, y satisfacción con el visitante. Sin banquillos, el partido se juega igual, con una nota en el tablón ("Los suplentes se sientan en el suelo").
+
+### Túnel de vestuarios hasta el campo · Fase 3 · Propuesta
+- Un **túnel** (pasillo cubierto) que une el **vestuario local** con el campo. Se dibuja como un muro o pasillo, desde una puerta del vestuario hasta la zona de banquillos.
+- **Calidades y precios** por casilla: pasillo de lona → túnel de obra → túnel con iluminación y escudo.
+- Efecto: con túnel, el equipo sale al campo sin mojarse ni cruzarse con la afición, con un extra de moral que sube con la calidad. En la Fase 4 los jugadores lo recorren de verdad el día de partido.
+- Enlaza con el acceso de la afición (Fase 3): el túnel separa jugadores y público dentro del recinto cerrado.
+
 ---
 
 ## Propuestas de Claude
