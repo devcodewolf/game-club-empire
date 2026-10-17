@@ -20,5 +20,7 @@ export const TIME: TimeContent = {
     // Alquiler de campos y caja del bar, cada noche
     { id: 'rentalDaily', rule: { every: 'day', hour: 21 } },
     { id: 'barDaily', rule: { every: 'day', hour: 22 } },
+    // Cuidado de los campos al final del día (lluvia y jardinero)
+    { id: 'pitchNightly', rule: { every: 'day', hour: 23 } },
   ],
 }

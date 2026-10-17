@@ -42,8 +42,15 @@ function undo(): void {
 
 const unsubscribe = game.subscribe((event) => {
   if (!game.canUndo()) return stop()
-  // Una obra nueva (su cargo llega como transacción) reinicia la cuenta atrás
-  if (event.type === 'transaction' && event.entry.concept !== 'undo') start()
+  // Solo una obra nueva (construir, mejorar o mover; su cargo llega como
+  // transacción) reinicia la cuenta atrás: los ingresos y gastos del calendario no
+  const isWork =
+    event.type === 'transaction' &&
+    event.entry.amount < 0 &&
+    (event.entry.concept === 'construction' ||
+      event.entry.concept === 'upgrade' ||
+      event.entry.concept === 'move')
+  if (isWork) start()
 })
 
 const onKeyDown = (event: KeyboardEvent): void => {

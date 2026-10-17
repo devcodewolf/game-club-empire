@@ -31,6 +31,25 @@ export const ECONOMY: EconomyContent = {
     perDay: { 7: 30, 11: 50 },
     surfaceMultiplier: { dirt: 1, artificialTurf: 3, naturalGrass: 2, hybridGrass: 2 },
   },
+  // Personal (abstracto hasta la Fase 4): sueldo semanal y lo que cubre cada persona
+  staff: {
+    gardener: { name: 'Jardinero', wage: 250, covers: { pitchTiles: 1500 } },
+    cleaner: { name: 'Limpieza', wage: 200, covers: { indoorTiles: 400, seats: 1500 } },
+    maintenance: { name: 'Mantenimiento', wage: 250, covers: { objectsValue: 15000 } },
+    monitor: { name: 'Monitor de escuela', wage: 150, covers: { students: 15 } },
+  },
+  pitch: {
+    startCondition: 50,
+    maxCondition: { dirt: 60, artificialTurf: 85, naturalGrass: 100, hybridGrass: 100 },
+    dailyRecovery: 4,
+    rainDamage: { dirt: 2, artificialTurf: 0, naturalGrass: 2, hybridGrass: 1 },
+    rentalDamage: { dirt: 1, artificialTurf: 1, naturalGrass: 3, hybridGrass: 3 },
+    matchDamage: 8,
+    // Resembrar o reponer el césped: un fútbol 11 de tierra (2.128 casillas) ≈ 1.060 €
+    repairPerTile: { dirt: 0.5, artificialTurf: 1, naturalGrass: 2, hybridGrass: 3 },
+    repairRestDays: 3,
+  },
+  breakdown: { weeklyChance: 0.05, repairRate: 0.25 },
   maintenance: {
     objectRate: 0.02,
     standRate: 0.01,

@@ -75,6 +75,8 @@ export const ICON_NAMES = [
   'player-track-next',
   'coin-euro',
   'arrow-back-up',
+  'folders',
+  'tool',
 ] as const
 
 export type IconName = (typeof ICON_NAMES)[number]

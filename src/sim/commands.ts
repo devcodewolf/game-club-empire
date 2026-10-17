@@ -27,6 +27,8 @@ import type { SimContent } from './content'
 import type { Weather } from './time/clock'
 import type { LedgerEntry } from './economy/ledger'
 import type { WeeklyReport } from './economy/recurring'
+import type { StaffRole } from './economy/staff'
+import { applyPitchRepair, pitchMaxConditionAfterUpgrade } from './economy/upkeep'
 import { applyBlockMove, planBlockMove, type BlockMoveError } from './map/moveBlock'
 import type { FloorId } from './map/floors'
 import {
@@ -106,6 +108,13 @@ export type Command =
   | { readonly type: 'upgradeBuilding'; readonly buildingId: BuildingId }
   /** Cambiar el uso de un campo (principal, filial, entrenamiento). */
   | { readonly type: 'setPitchRole'; readonly buildingId: BuildingId; readonly role: PitchRole }
+  /** Contratar o despedir a una persona de un puesto. */
+  | { readonly type: 'hireStaff'; readonly role: StaffRole }
+  | { readonly type: 'fireStaff'; readonly role: StaffRole }
+  /** Reparar el césped de un campo (de pago): lo deja al máximo y descansando unos días. */
+  | { readonly type: 'repairPitch'; readonly buildingId: BuildingId }
+  /** Reparar un objeto averiado (de pago). */
+  | { readonly type: 'repairBuilding'; readonly buildingId: BuildingId }
   /** Activa o desactiva el alquiler de un campo. */
   | { readonly type: 'setPitchRental'; readonly buildingId: BuildingId; readonly rental: boolean }
   | { readonly type: 'paintFloor'; readonly rect: TileRect; readonly floor: FloorId }
@@ -156,6 +165,12 @@ export type GameEvent =
       readonly buildingId: BuildingId
       readonly rental: boolean
     }
+  | { readonly type: 'staffChanged'; readonly role: StaffRole; readonly count: number }
+  /** Cambió el estado o el descanso de algún campo (cuidado nocturno, alquiler, reparación). */
+  | { readonly type: 'pitchesChanged' }
+  /** Se averiaron objetos (lunes) o se reparó uno. */
+  | { readonly type: 'buildingsBroken'; readonly buildings: readonly PlacedBuilding[] }
+  | { readonly type: 'buildingRepaired'; readonly building: PlacedBuilding }
   /** Lunes de cuentas: resumen de la semana que se cierra. */
   | { readonly type: 'weeklyReport'; readonly report: WeeklyReport }
   /** Movimiento de dinero anotado en el libro de cuentas. */
@@ -234,6 +249,10 @@ export type CommandError =
   | 'notEnoughMoney'
   /** No hay ninguna obra reciente que deshacer. */
   | 'nothingToUndo'
+  /** No hay nadie en ese puesto para despedir. */
+  | 'noStaffToFire'
+  /** El objeto no está averiado. */
+  | 'notBroken'
 
 export type CommandResult =
   | { readonly ok: true; readonly event: GameEvent }
@@ -255,6 +274,33 @@ export function executeCommand(
       return setPitchRole(state, command, content)
     case 'setPitchRental':
       return setPitchRental(state, command, content)
+    case 'hireStaff':
+    case 'fireStaff': {
+      const delta = command.type === 'hireStaff' ? 1 : -1
+      const current = state.club.staff[command.role] ?? 0
+      if (current + delta < 0) return { ok: false, reason: 'noStaffToFire' }
+      state.club.staff[command.role] = current + delta
+      return {
+        ok: true,
+        event: { type: 'staffChanged', role: command.role, count: current + delta },
+      }
+    }
+    case 'repairPitch': {
+      const building = state.buildings[command.buildingId]
+      const def = building && content.buildings[building.type]
+      if (!building || !def) return { ok: false, reason: 'buildingNotFound' }
+      if (!def.pitch) return { ok: false, reason: 'notAPitch' }
+      applyPitchRepair(state, content, building)
+      return { ok: true, event: { type: 'pitchesChanged' } }
+    }
+    case 'repairBuilding': {
+      const building = state.buildings[command.buildingId]
+      if (!building) return { ok: false, reason: 'buildingNotFound' }
+      if (!building.broken) return { ok: false, reason: 'notBroken' }
+      const repaired: PlacedBuilding = { ...building, broken: false }
+      state.buildings[building.id] = repaired
+      return { ok: true, event: { type: 'buildingRepaired', building: repaired } }
+    }
     case 'placeStand':
       return placeStand(state, command, content)
     case 'undo':
@@ -369,7 +415,9 @@ function placeBuilding(
     origin,
     rotation,
     tier: 0,
-    ...(content.buildings[buildingType]?.pitch ? { role: defaultPitchRole(state, content) } : {}),
+    ...(content.buildings[buildingType]?.pitch
+      ? { role: defaultPitchRole(state, content), condition: content.economy.pitch.startCondition }
+      : {}),
   }
   state.nextBuildingId += 1
   state.buildings[building.id] = building
@@ -398,6 +446,9 @@ function upgradeBuilding(
 
   const tier = building.tier + 1
   let upgraded: PlacedBuilding = { ...building, tier }
+  // Un campo con superficie nueva queda como nuevo
+  if (def.pitch)
+    upgraded = { ...upgraded, condition: pitchMaxConditionAfterUpgrade(content, def, tier) }
   // Las gradas crecen hacia fuera: la franja nueva tiene que estar libre.
   if (def.stand) {
     const check = validateStandUpgrade(state, content, building, tier)

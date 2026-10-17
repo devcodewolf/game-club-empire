@@ -50,6 +50,11 @@ const entries = computed<ChecklistEntry[]>(() => {
   ]
 })
 
+const brokenText = computed(() => {
+  const n = status.value?.broken ?? 0
+  return n > 0 ? `${n} ${n === 1 ? 'objeto averiado' : 'objetos averiados'}` : null
+})
+
 const qualityText = computed(() => (status.value ? `Calidad: ${status.value.quality}` : null))
 
 const capacityText = computed(() => {
@@ -125,6 +130,13 @@ function removeRoom(): void {
 
       <p v-if="capacityText" class="font-hand text-[18px] leading-6 text-ink-blue">
         {{ capacityText }}
+      </p>
+      <p
+        v-if="brokenText"
+        class="flex items-center gap-1 font-hand text-[18px] leading-6 text-red-700"
+      >
+        <AppIcon name="tool" :size="18" />
+        {{ brokenText }}
       </p>
       <p v-if="qualityText" class="font-hand text-[18px] leading-6 text-ink-blue">
         {{ qualityText }}

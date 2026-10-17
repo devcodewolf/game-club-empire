@@ -20,6 +20,8 @@ import { evaluateRoom } from '../rooms/rooms'
 import { fromDate, MINUTES_PER_DAY, toDate } from '../time/calendar'
 import { record, type LedgerEntry } from './ledger'
 import { buildingValue } from './pricing'
+import { weeklyWages } from './staff'
+import { nightlyPitchCare, pitchResting, rollBreakdowns, wearFromRental } from './upkeep'
 
 /** Ids de los eventos del calendario que mueven dinero (los programa `content.time.events`). */
 export const ECONOMY_EVENT = {
@@ -27,6 +29,7 @@ export const ECONOMY_EVENT = {
   monthlyFees: 'monthlyFees',
   barDaily: 'barDaily',
   rentalDaily: 'rentalDaily',
+  pitchNightly: 'pitchNightly',
 } as const
 
 /** Resumen de la semana que se cierra en el lunes de cuentas. */
@@ -44,6 +47,10 @@ export interface EconomyOutcome {
   readonly entries: readonly LedgerEntry[]
   /** Solo en el lunes de cuentas. */
   readonly report?: WeeklyReport
+  /** Objetos que se averiaron (lunes). */
+  readonly broken?: readonly PlacedBuilding[]
+  /** ¿Cambió el estado de algún campo? */
+  readonly pitchesChanged?: boolean
 }
 
 const WEEK = 7 * MINUTES_PER_DAY
@@ -188,7 +195,13 @@ export function applyEconomyEvent(
       add(record(state, 'maintenanceInteriors', -m.interiors))
       add(record(state, 'maintenanceTurf', -m.turf))
       add(record(state, 'maintenanceStands', -m.stands))
-      return { entries, report: weeklyReport(state, state.clock.time - WEEK, state.clock.time) }
+      add(record(state, 'wages', -weeklyWages(state, content)))
+      const broken = rollBreakdowns(state, content)
+      return {
+        entries,
+        report: weeklyReport(state, state.clock.time - WEEK, state.clock.time),
+        ...(broken.length ? { broken } : {}),
+      }
     }
     case ECONOMY_EVENT.monthlyFees: {
       const prices = divisionPrices(state, content)
@@ -203,9 +216,11 @@ export function applyEconomyEvent(
     case ECONOMY_EVENT.rentalDaily: {
       // Nunca en domingo: es día de partido
       if (toDate(state.clock.time).weekday === 6) return { entries }
+      let pitchesChanged = false
       for (const building of Object.values(state.buildings)) {
         const def = content.buildings[building.type]
-        if (!def?.pitch || !building.rental) continue
+        // Recién reparado, el campo descansa: ni se alquila ni se desgasta
+        if (!def?.pitch || !building.rental || pitchResting(state, building)) continue
         add(
           record(
             state,
@@ -214,8 +229,13 @@ export function applyEconomyEvent(
             buildingFootprint(building, def),
           ),
         )
+        wearFromRental(state, content, building)
+        pitchesChanged = true
       }
-      return { entries }
+      return { entries, pitchesChanged }
+    }
+    case ECONOMY_EVENT.pitchNightly: {
+      return { entries, pitchesChanged: nightlyPitchCare(state, content) }
     }
     default:
       return { entries }

@@ -17,6 +17,7 @@ import { DEFAULT_FLOOR, type FloorCatalog, type FloorId } from './floors'
 import type { ClockState } from '../time/clock'
 import { seedRng } from '../time/rng'
 import type { LedgerEntry } from '../economy/ledger'
+import type { StaffRole } from '../economy/staff'
 
 /** Datos del club que cambian durante la partida (además del dinero). */
 export interface ClubState {
@@ -24,6 +25,10 @@ export interface ClubState {
   division: string
   /** Socios que pagan cuota mensual. */
   members: number
+  /** Personal contratado por puesto. */
+  readonly staff: Record<StaffRole, number>
+  /** Alumnos de la escuela de fútbol (Bloque F). */
+  students: number
 }
 import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
 import { NO_ROOM, type Room, type RoomId } from '../rooms/roomTypes'
@@ -113,7 +118,12 @@ export function createMapState({ size, features }: MapConfig): MapState {
     rng: seedRng(1),
     money: 0,
     ledger: [],
-    club: { division: '', members: 0 },
+    club: {
+      division: '',
+      members: 0,
+      staff: { gardener: 0, cleaner: 0, maintenance: 0, monitor: 0 },
+      students: 0,
+    },
   }
 
   for (const feature of features) {

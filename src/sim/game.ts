@@ -97,8 +97,10 @@ export function createGame(
       if (command.type === 'undo') return undo()
       const price = commandPrice(state, content, command)
       if (price.cost > 0 && price.cost > state.money) return { ok: false, reason: 'notEnoughMoney' }
-      // Solo las obras que cuestan algo se pueden deshacer
-      const snapshot = price.cost > 0 ? captureMap(state) : null
+      // Solo las obras que cuestan algo (construir, mejorar, mover) se pueden deshacer;
+      // las reparaciones no: son un gasto, no una obra que se pueda retirar
+      const undoable = price.cost > 0 && price.concept !== 'repairs'
+      const snapshot = undoable ? captureMap(state) : null
 
       const result = executeCommand(state, command, content)
       if (!result.ok) return result
@@ -127,6 +129,8 @@ export function createGame(
           emit({ type: 'timeEvent', id: occurrence.id, at: occurrence.at, stops: occurrence.stops })
           const outcome = applyEconomyEvent(state, content, occurrence.id)
           for (const entry of outcome.entries) emit({ type: 'transaction', entry })
+          if (outcome.broken) emit({ type: 'buildingsBroken', buildings: outcome.broken })
+          if (outcome.pitchesChanged) emit({ type: 'pitchesChanged' })
           if (outcome.report) emit({ type: 'weeklyReport', report: outcome.report })
         },
       })

@@ -7,6 +7,7 @@ import { onBeforeUnmount, onMounted } from 'vue'
 import { useBuildMenu } from '@/ui/composables/useBuildMenu'
 import { useSelectionStore } from '@/ui/stores/selectionStore'
 import { useToolStore } from '@/ui/stores/toolStore'
+import { useReports } from '@/ui/reports/useReports'
 
 /** Indica si el foco está en un campo de texto editable. */
 export function isEditableTarget(target: EventTarget | null): boolean {
@@ -23,9 +24,11 @@ export function useToolShortcuts(): void {
   const buildMenu = useBuildMenu()
   const selection = useSelectionStore()
   const contextMenu = useContextMenuStore()
+  const reports = useReports()
 
-  /** Escape: cierra el menú contextual; si no, suelta lo que se lleva o la herramienta; si no hay, deselecciona la sala u objeto; si tampoco, cierra el menú. */
+  /** Escape: cierra el cuaderno de informes; si no, el menú contextual; si no, suelta lo que se lleva o la herramienta; si no hay, deselecciona la sala u objeto; si tampoco, cierra el menú. */
   function onEscape(): void {
+    if (reports.isOpen.value) return reports.close()
     if (contextMenu.menu) return contextMenu.close()
     if (toolStore.tool.kind !== 'none') return toolStore.cancel()
     if (selection.selection !== null) return selection.clear()

@@ -193,6 +193,23 @@ export const TEST_ECONOMY: EconomyContent = {
     interiorPerTile: 0.2,
     turfPerTile: { dirt: 0.05 },
   },
+  staff: {
+    gardener: { name: 'Jardinero', wage: 250, covers: { pitchTiles: 1500 } },
+    cleaner: { name: 'Limpieza', wage: 200, covers: { indoorTiles: 400, seats: 1500 } },
+    maintenance: { name: 'Mantenimiento', wage: 250, covers: { objectsValue: 15000 } },
+    monitor: { name: 'Monitor', wage: 150, covers: { students: 15 } },
+  },
+  pitch: {
+    startCondition: 50,
+    maxCondition: { dirt: 60 },
+    dailyRecovery: 4,
+    rainDamage: { dirt: 2 },
+    rentalDamage: { dirt: 1 },
+    matchDamage: 8,
+    repairPerTile: { dirt: 0.5 },
+    repairRestDays: 3,
+  },
+  breakdown: { weeklyChance: 0.05, repairRate: 0.25 },
 }
 
 export const TEST_CONTENT: SimContent = {

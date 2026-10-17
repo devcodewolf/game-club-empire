@@ -11,6 +11,8 @@ import { useAccountsStore } from '@/ui/stores/accountsStore'
 import ObjectPanel from '@/ui/object-panel/ObjectPanel.vue'
 import ContextMenu from '@/ui/context-menu/ContextMenu.vue'
 import RoomPanel from '@/ui/room-panel/RoomPanel.vue'
+import ReportsButton from '@/ui/reports/ReportsButton.vue'
+import ReportsFolder from '@/ui/reports/ReportsFolder.vue'
 import { provideGame } from '@/ui/composables/useGame'
 import { useProgressionStore } from '@/ui/stores/progressionStore'
 import { useToolShortcuts } from '@/ui/composables/useToolShortcuts'
@@ -69,8 +71,10 @@ useTimeShortcuts(game)
       </template>
       <template #bottom>
         <BuildMenu />
+        <ReportsButton />
       </template>
     </GameLayout>
     <ContextMenu />
+    <ReportsFolder />
   </main>
 </template>

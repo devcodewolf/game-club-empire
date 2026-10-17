@@ -111,6 +111,12 @@ export interface PlacedBuilding {
   readonly role?: PitchRole
   /** Solo campos: ¿se alquila a equipos del pueblo los días sin partido? */
   readonly rental?: boolean
+  /** Solo campos: estado del césped 0-100 (sin dato = al máximo de su superficie). */
+  readonly condition?: number
+  /** Solo campos: hasta cuándo descansa tras una reparación (no se alquila). */
+  readonly restUntil?: number
+  /** Objetos: averiado (no cuenta para su sala hasta repararlo). */
+  readonly broken?: boolean
   /** Solo gradas: campo y hueco al que está pegada. */
   readonly attach?: { readonly pitchId: BuildingId; readonly slot: StandSlot }
   /**

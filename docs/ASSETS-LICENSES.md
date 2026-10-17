@@ -18,3 +18,5 @@ No hay otras fuentes, imágenes ni sonidos externos: `index.html` y `gallery.htm
 ## Arte propio
 
 Todo el arte del mapa (objetos, suelos, muros, gradas, campos, decorado y efectos) se pinta por código con `Graphics` de PixiJS en los pintores de `src/render/art/` y se comparte entre copias (caché de `artCache.ts`). No hay sprites ni imágenes externas: es obra del proyecto y no requiere licencia de terceros.
+
+Los dibujos de la interfaz que no son iconos de Tabler (figuritas del informe de Personal en `src/ui/reports/StaffFigure.vue`, icono de la carpeta en `src/ui/reports/ReportsButton.vue` y adornos de la carpeta de informes) son SVG y CSS escritos a mano en los componentes Vue: también son obra del proyecto.

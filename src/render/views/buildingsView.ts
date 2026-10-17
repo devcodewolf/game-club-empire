@@ -5,7 +5,7 @@
  * animación) y después se actualiza con los eventos de la partida: lo nuevo
  * aparece con andamio y rebote, lo demolido se va con polvo. Solo lee el estado.
  */
-import { RenderLayer, type Container } from 'pixi.js'
+import { Container, Graphics, RenderLayer, Sprite } from 'pixi.js'
 import { placedSize, type BuildingId, type PlacedBuilding } from '@/sim/buildings/buildings'
 import type { Game } from '@/sim/game'
 import { rotateSize } from '@/sim/geometry'
@@ -29,6 +29,7 @@ import {
 } from './effects'
 import { TILE_SIZE, tileToWorld } from '../core/grid'
 import type { RenderAssets } from '../core/renderAssets'
+import { palette } from '../palette'
 
 export interface BuildingsView {
   /** Casilla bajo el ratón: desvanece la visera de la grada que haya ahí. */
@@ -42,6 +43,11 @@ export interface BuildingsView {
 const ROOF_FADED_ALPHA = 0.15
 /** Duración del fundido de la visera, en segundos. */
 const ROOF_FADE_TIME = 0.25
+/** Etiqueta de la insignia de avería dentro del marcador. */
+const BADGE_LABEL = 'brokenBadge'
+/** Diámetro de la insignia de avería, en px de mundo: se lee a zoom ×0,2. */
+const BADGE_SIZE = 56
+
 /** Opacidad del original mientras se lleva con Mover. */
 const CARRIED_ALPHA = 0.35
 
@@ -57,6 +63,36 @@ export function createBuildingsView(
   // la sombra de una grada nunca oscurece la grada o el córner de al lado.
   const shadows = new RenderLayer()
   layer.addChildAt(shadows, 0)
+
+  /** Llave inglesa sobre el objeto averiado (en su esquina superior derecha). */
+  const setBadge = (buildingId: BuildingId, on: boolean): void => {
+    const entry = markers.get(buildingId)
+    if (!entry) return
+    const existing = entry.marker.getChildByLabel(BADGE_LABEL)
+    if (!on) {
+      if (existing) {
+        existing.destroy({ children: true })
+      }
+      return
+    }
+    if (existing) return
+    // Contenedor con el círculo y el icono como hermanos (en Pixi v8 un Graphics no lleva hijos)
+    const badge = new Container({ label: BADGE_LABEL })
+    badge.addChild(
+      new Graphics()
+        .circle(0, 0, BADGE_SIZE / 2)
+        .fill({ color: palette.chalk })
+        .stroke({ width: 3, color: palette.outline }),
+    )
+    const texture = assets.icons.get('tool')
+    if (texture) {
+      const icon = new Sprite({ texture, anchor: 0.5, tint: palette.outline })
+      icon.setSize(BADGE_SIZE * 0.7)
+      badge.addChild(icon)
+    }
+    badge.position.set(entry.rect.w - BADGE_SIZE / 2 - 2, BADGE_SIZE / 2 + 2)
+    entry.marker.addChild(badge)
+  }
 
   const add = (building: PlacedBuilding, animate: boolean | 'upgrade' | 'drop'): void => {
     const def = game.content.buildings[building.type]
@@ -83,6 +119,7 @@ export function createBuildingsView(
     const shadow = marker.getChildByLabel(SHADOW_LABEL)
     if (shadow) shadows.attach(shadow)
     markers.set(building.id, { marker, rect })
+    if (building.broken) setBadge(building.id, true)
     if (animate === 'upgrade') playUpgrade(marker, rect, effects)
     else if (animate === 'drop') playDrop(marker, rect, effects)
     else if (animate) playBuild(marker, rect, effects)
@@ -132,6 +169,9 @@ export function createBuildingsView(
 
   const unsubscribe = game.subscribe((event) => {
     if (event.type === 'buildingPlaced') add(event.building, true)
+    if (event.type === 'buildingsBroken')
+      for (const building of event.buildings) setBadge(building.id, true)
+    if (event.type === 'buildingRepaired') setBadge(event.building.id, false)
     if (event.type === 'pitchRoleChanged') {
       // Cambia el rótulo de uso: se redibujan el campo y, si lo hay, el que dejó de ser principal
       for (const id of [event.buildingId, event.demotedId]) {

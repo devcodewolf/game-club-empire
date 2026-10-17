@@ -158,11 +158,11 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 *Se ve:* el dinero sube y baja solo. *Prueba:* test de una semana completa que cuadre con las fórmulas.
 
 **Bloque D — Personal y estado del campo**
-- [ ] 🧠 Personal abstracto con cobertura (jardinero, limpieza, mantenimiento)
-- [ ] 🧠 Estado del campo y averías
-- [ ] 🧠 Ficha del campo con su estado (barra 0-100 y por qué baja) y botón "Reparar el césped" de pago: recupera estado de golpe y deja el campo unos días sin alquilar (idea de Raul, ver `docs/IDEAS.md`)
-- [ ] ⚡ Pestaña Personal del cuaderno
-- [ ] ⚡ Icono de avería sobre el objeto y botón de reparar en su ficha
+- [x] 🧠 Personal abstracto con cobertura (jardinero, limpieza, mantenimiento)
+- [x] 🧠 Estado del campo y averías
+- [x] 🧠 Ficha del campo con su estado (barra 0-100 y por qué baja) y botón "Reparar el césped" de pago: recupera estado de golpe y deja el campo unos días sin alquilar (idea de Raul, ver `docs/IDEAS.md`)
+- [x] ⚡ Pestaña Personal del cuaderno
+- [x] ⚡ Icono de avería sobre el objeto y botón de reparar en su ficha
 
 *Se ve:* sin jardinero el campo no se recupera; sin mantenimiento aparecen averías. *Prueba:* tests de cobertura y de probabilidad de averías con semilla fija.
 

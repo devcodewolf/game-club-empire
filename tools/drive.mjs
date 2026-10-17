@@ -65,7 +65,10 @@ ws.addEventListener('message', (ev) => {
     pending.get(msg.id)(msg.result)
     pending.delete(msg.id)
   }
-  if (msg.method === 'Runtime.consoleAPICalled' && ['warning', 'error'].includes(msg.params.type)) {
+  if (
+    msg.method === 'Runtime.consoleAPICalled' &&
+    ['warning', 'error', 'startGroupCollapsed'].includes(msg.params.type)
+  ) {
     const text = msg.params.args.map((a) => a.value ?? a.description).join(' ')
     console.log(`[consola ${msg.params.type}]`, text)
   }

@@ -23,6 +23,7 @@ import { buildingFootprint, tileIndex, type MapState } from '../map/map'
 import { planBlockMove } from '../map/moveBlock'
 import { NO_DOOR, NO_WALL } from '../map/structureTypes'
 import type { LedgerConcept } from './ledger'
+import { buildingRepairCost, pitchRepairCost } from './upkeep'
 
 export interface CommandPrice {
   /** Lo que se paga (≥ 0). */
@@ -265,6 +266,30 @@ export function commandPrice(state: MapState, content: SimContent, command: Comm
       }
       return { cost: 0, refund, concept: 'demolish', rect: command.rect }
     }
+    case 'repairPitch': {
+      const building = state.buildings[command.buildingId]
+      const def = building && buildings[building.type]
+      if (!building || !def?.pitch) return { ...FREE, concept: 'repairs' }
+      return {
+        cost: pitchRepairCost(content, def, building),
+        refund: 0,
+        concept: 'repairs',
+        rect: buildingFootprint(building, def),
+      }
+    }
+    case 'repairBuilding': {
+      const building = state.buildings[command.buildingId]
+      const def = building && buildings[building.type]
+      if (!building || !def || !building.broken) return { ...FREE, concept: 'repairs' }
+      return {
+        cost: buildingRepairCost(content, def, building),
+        refund: 0,
+        concept: 'repairs',
+        rect: buildingFootprint(building, def),
+      }
+    }
+    case 'hireStaff':
+    case 'fireStaff':
     case 'setPitchRole':
     case 'setPitchRental':
     case 'designateRoom':

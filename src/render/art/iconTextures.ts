@@ -71,6 +71,8 @@ import playerPlaySvg from '@tabler/icons/outline/player-play.svg?raw'
 import playerTrackNextSvg from '@tabler/icons/outline/player-track-next.svg?raw'
 import coinEuroSvg from '@tabler/icons/outline/coin-euro.svg?raw'
 import arrowBackUpSvg from '@tabler/icons/outline/arrow-back-up.svg?raw'
+import foldersSvg from '@tabler/icons/outline/folders.svg?raw'
+import toolSvg from '@tabler/icons/outline/tool.svg?raw'
 
 const SVG_SOURCES = {
   'soccer-field': soccerFieldSvg,
@@ -134,6 +136,8 @@ const SVG_SOURCES = {
   'player-track-next': playerTrackNextSvg,
   'coin-euro': coinEuroSvg,
   'arrow-back-up': arrowBackUpSvg,
+  folders: foldersSvg,
+  tool: toolSvg,
 } satisfies Record<IconName, string>
 
 /** Rasterizado a 4× (96 px para un icono de 24): nítido hasta zoom ×2. */

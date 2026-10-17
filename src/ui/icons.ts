@@ -66,6 +66,8 @@ import {
   IconPlayerTrackNext,
   IconCoinEuro,
   IconArrowBackUp,
+  IconFolders,
+  IconTool,
 } from '@tabler/icons-vue'
 import type { IconName } from '@/content/icons'
 
@@ -131,4 +133,6 @@ export const ICON_COMPONENTS = {
   'player-track-next': IconPlayerTrackNext,
   'coin-euro': IconCoinEuro,
   'arrow-back-up': IconArrowBackUp,
+  folders: IconFolders,
+  tool: IconTool,
 } satisfies Record<IconName, Component>

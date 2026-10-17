@@ -4,6 +4,7 @@
  * flotan sobre el edificio). Es la fuente de la pestaña Finanzas.
  */
 import type { TileRect } from '../geometry'
+import type { StaffRole, StaffRoleDef } from './staff'
 
 /** Conceptos de movimientos. Los nombres en español los pone la interfaz. */
 export type LedgerConcept =
@@ -33,6 +34,10 @@ export type LedgerConcept =
   | 'maintenanceTurf'
   /** Mantenimiento semanal de las gradas. */
   | 'maintenanceStands'
+  /** Sueldos semanales del personal. */
+  | 'wages'
+  /** Reparaciones (césped y objetos averiados). */
+  | 'repairs'
 
 export interface LedgerEntry {
   /** Instante (minutos de juego). */
@@ -82,6 +87,34 @@ export interface EconomyContent {
   readonly rental: {
     readonly perDay: Readonly<Record<number, number>>
     readonly surfaceMultiplier: Readonly<Record<string, number>>
+  }
+  /** Personal: sueldo y trabajo que cubre cada puesto. */
+  readonly staff: Readonly<Record<StaffRole, StaffRoleDef>>
+  /** Estado de los campos. */
+  readonly pitch: {
+    /** Estado con el que se construye un campo nuevo. */
+    readonly startCondition: number
+    /** Máximo por superficie. */
+    readonly maxCondition: Readonly<Record<string, number>>
+    /** Recuperación por noche con jardinería al 100 %. */
+    readonly dailyRecovery: number
+    /** Desgaste por día de lluvia, por superficie. */
+    readonly rainDamage: Readonly<Record<string, number>>
+    /** Desgaste por día de alquiler, por superficie. */
+    readonly rentalDamage: Readonly<Record<string, number>>
+    /** Desgaste por partido (Bloque E). */
+    readonly matchDamage: number
+    /** € por casilla para reparar el césped, por superficie. */
+    readonly repairPerTile: Readonly<Record<string, number>>
+    /** Días sin alquilar tras una reparación. */
+    readonly repairRestDays: number
+  }
+  /** Averías de objetos. */
+  readonly breakdown: {
+    /** Probabilidad semanal de avería de cada objeto sin mantenimiento. */
+    readonly weeklyChance: number
+    /** Parte del valor del objeto que cuesta repararlo. */
+    readonly repairRate: number
   }
   /** Mantenimiento semanal. */
   readonly maintenance: {

@@ -8,6 +8,13 @@ import { formatNumber } from '@/render/core/formatNumber'
 import { computed, watch } from 'vue'
 import { maxTier, tierQuality, type PitchRole } from '@/sim/buildings/buildings'
 import { buildingMaintenance, pitchRentalPerDay } from '@/sim/economy/recurring'
+import { pitchMaxCondition } from '@/sim/economy/staff'
+import {
+  buildingRepairCost,
+  pitchCondition,
+  pitchRepairCost,
+  pitchResting,
+} from '@/sim/economy/upkeep'
 import { pitchCapacity, standCapacity } from '@/sim/buildings/stands'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
@@ -16,6 +23,8 @@ import { formatEuros } from '@/ui/composables/formatMoney'
 import { useGame } from '@/ui/composables/useGame'
 import { useGameVersion } from '@/ui/composables/useGameVersion'
 import { upgradeLock } from '@/ui/composables/upgradeLock'
+import { useNoticeStore } from '@/ui/stores/noticeStore'
+import { formatDay } from '@/ui/time/formatTime'
 import { useProgressionStore } from '@/ui/stores/progressionStore'
 import { useSelectionStore } from '@/ui/stores/selectionStore'
 
@@ -23,6 +32,7 @@ const game = useGame()
 const version = useGameVersion()
 const selection = useSelectionStore()
 const progression = useProgressionStore()
+const notices = useNoticeStore()
 
 /** Objeto seleccionado; se recalcula cuando cambia la simulación. */
 const building = computed(() => {
@@ -96,6 +106,41 @@ const rental = computed(() => {
   if (!b || !d?.pitch) return undefined
   return { on: Boolean(b.rental), perDay: pitchRentalPerDay(game.content, d, b) }
 })
+
+/** Estado del césped de un campo: valor, máximo, color y descanso tras reparar. */
+const pitchState = computed(() => {
+  const b = building.value
+  const d = def.value
+  if (!b || !d?.pitch) return undefined
+  const value = Math.round(pitchCondition(game.content, d, b))
+  const max = pitchMaxCondition(game.content, d, b.tier)
+  const resting = pitchResting(game.state, b)
+  return {
+    value,
+    max,
+    color: value >= 70 ? 'bg-green-600' : value >= 40 ? 'bg-amber-500' : 'bg-red-600',
+    repairCost: pitchRepairCost(game.content, d, b),
+    resting,
+    restUntil: formatDay(b.restUntil ?? 0),
+  }
+})
+
+/** Avería del objeto (los campos y gradas no se averían). */
+const breakdown = computed(() => {
+  const b = building.value
+  const d = def.value
+  if (!b?.broken || !d) return undefined
+  return { cost: buildingRepairCost(game.content, d, b) }
+})
+
+/** Lanza una reparación de pago; sin fondos avisa. */
+function repair(type: 'repairPitch' | 'repairBuilding'): void {
+  const id = selection.selectedBuildingId
+  if (id === null) return
+  const result = game.dispatch({ type, buildingId: id })
+  if (!result.ok && result.reason === 'notEnoughMoney')
+    notices.show('💸', 'No hay dinero suficiente para esta reparación.')
+}
 
 function toggleRental(): void {
   const id = selection.selectedBuildingId
@@ -195,6 +240,63 @@ function upgrade(): void {
       <p v-if="pitchSeats" class="font-hand text-[18px] leading-6 text-ink-blue">
         Aforo: {{ pitchSeats }} espectadores
       </p>
+
+      <section v-if="pitchState" class="mt-2" aria-label="Estado del césped">
+        <p class="font-hand text-[18px] leading-6 text-ink-blue">
+          Estado:
+          <span class="font-data text-sm font-bold tabular-nums"
+            >{{ pitchState.value }} / {{ pitchState.max }}</span
+          >
+        </p>
+        <div
+          class="relative h-3.5 border-2 border-ink bg-black/10"
+          role="progressbar"
+          aria-label="Estado del césped"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :aria-valuenow="pitchState.value"
+        >
+          <div
+            class="h-full motion-safe:transition-[width] motion-safe:duration-300"
+            :class="pitchState.color"
+            :style="{ width: `${pitchState.value}%` }"
+          />
+          <!-- Marca del máximo de su superficie -->
+          <div
+            class="absolute -top-1 -bottom-1 w-0.5 bg-ink"
+            :style="{ left: `${pitchState.max}%` }"
+            aria-hidden="true"
+          />
+        </div>
+        <p class="font-hand text-[15px] leading-5 text-ink-blue">
+          Baja con la lluvia, los partidos y los alquileres; el jardinero lo recupera cada noche.
+        </p>
+        <p v-if="pitchState.resting" class="font-hand text-[16px] leading-5 text-amber-700">
+          Descansando: sin alquilar hasta el {{ pitchState.restUntil }}
+        </p>
+        <button
+          type="button"
+          class="mt-2 w-full cursor-pointer border-2 border-[#2b6328] bg-[#3f8f3a] px-2 py-1 font-hand text-[17px] text-white shadow-[3px_3px_0_rgba(0,0,0,0.35)] hover:bg-[#4aa044] focus-visible:outline-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#3f8f3a]"
+          :disabled="pitchState.resting"
+          @click="repair('repairPitch')"
+        >
+          Reparar el césped ({{ formatEuros(pitchState.repairCost) }})
+        </button>
+      </section>
+
+      <section v-if="breakdown" class="mt-2" aria-label="Avería">
+        <p class="flex items-center gap-1 font-hand text-[18px] leading-6 text-red-700">
+          <AppIcon name="tool" :size="18" />
+          Averiado: no cuenta para su sala
+        </p>
+        <button
+          type="button"
+          class="mt-1 w-full cursor-pointer border-2 border-[#7c241d] bg-[#b0372d] px-2 py-1 font-hand text-[17px] text-white shadow-[3px_3px_0_rgba(0,0,0,0.35)] hover:bg-[#c2433a] focus-visible:outline-2 focus-visible:outline-ink"
+          @click="repair('repairBuilding')"
+        >
+          Reparar ({{ formatEuros(breakdown.cost) }})
+        </button>
+      </section>
 
       <section v-if="currentRole" class="mt-2">
         <p

@@ -175,6 +175,8 @@ export interface RoomStatus {
   readonly capacity: number
   /** Suma de la calidad de los objetos de la sala según su nivel. */
   readonly quality: number
+  /** Objetos averiados dentro de la sala (no cuentan para requisitos ni calidad). */
+  readonly broken: number
   /** ¿Cumple todos los requisitos? */
   readonly ok: boolean
 }
@@ -210,6 +212,7 @@ export function evaluateRoom(
   // Objetos cuya huella cae (aunque sea en parte) dentro de la sala
   const objects: Record<BuildingTypeId, number> = {}
   let quality = 0
+  let broken = 0
   for (const building of Object.values(state.buildings)) {
     const bdef = content.buildings[building.type]
     if (!bdef) continue
@@ -221,6 +224,10 @@ export function evaluateRoom(
       }
     }
     if (!inside) continue
+    if (building.broken) {
+      broken++
+      continue
+    }
     objects[building.type] = (objects[building.type] ?? 0) + 1
     quality += tierQuality(bdef, building.tier)
   }
@@ -247,6 +254,7 @@ export function evaluateRoom(
     objects,
     capacity,
     quality,
+    broken,
     ok: enclosed && hasDoor && !tooSmall && missing.length === 0,
   }
 }
