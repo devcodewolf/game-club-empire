@@ -9,6 +9,7 @@ import type { BuildingCatalog } from './buildings/buildings'
 import type { FloorCatalog } from './map/floors'
 import type { RoomCatalog } from './rooms/roomTypes'
 import type { DoorCatalog, WallCatalog } from './map/structureTypes'
+import type { TimeContent } from './time/clock'
 
 export interface SimContent {
   readonly buildings: BuildingCatalog
@@ -16,4 +17,6 @@ export interface SimContent {
   readonly walls: WallCatalog
   readonly doors: DoorCatalog
   readonly rooms: RoomCatalog
+  /** Ritmo del tiempo, fecha de inicio, clima y eventos del calendario. */
+  readonly time: TimeContent
 }

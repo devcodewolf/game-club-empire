@@ -14,6 +14,8 @@ import {
   type PlacedBuilding,
 } from '../buildings/buildings'
 import { DEFAULT_FLOOR, type FloorCatalog, type FloorId } from './floors'
+import type { ClockState } from '../time/clock'
+import { seedRng } from '../time/rng'
 import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
 import { NO_ROOM, type Room, type RoomId } from '../rooms/roomTypes'
 import {
@@ -58,6 +60,10 @@ export interface MapState {
   readonly buildings: Record<BuildingId, PlacedBuilding>
   /** Siguiente id a asignar: ids deterministas, nunca reutilizados. */
   nextBuildingId: BuildingId
+  /** Reloj de la partida (instante actual y clima del día). */
+  readonly clock: ClockState
+  /** Estado del PRNG sembrado de la partida (ver `sim/time/rng.ts`). */
+  rng: number
 }
 
 /** Elemento fijo del mundo: una zona con un suelo dado, opcionalmente intocable. */
@@ -88,6 +94,8 @@ export function createMapState({ size, features }: MapConfig): MapState {
     nextRoomId: 1,
     buildings: {},
     nextBuildingId: 1,
+    clock: { time: 0, weather: 'dry' },
+    rng: seedRng(1),
   }
 
   for (const feature of features) {

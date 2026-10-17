@@ -24,6 +24,7 @@ import {
 } from './buildings/stands'
 import { applyMove, planMove, type Move, type MoveError } from './buildings/move'
 import type { SimContent } from './content'
+import type { Weather } from './time/clock'
 import { applyBlockMove, planBlockMove, type BlockMoveError } from './map/moveBlock'
 import type { FloorId } from './map/floors'
 import {
@@ -137,6 +138,15 @@ export type GameEvent =
       /** Campo que dejó de ser el principal al elegir otro, si lo había. */
       readonly demotedId?: BuildingId
     }
+  /** Tocó un evento del calendario (lunes de cuentas, partido…). */
+  | {
+      readonly type: 'timeEvent'
+      readonly id: string
+      readonly at: number
+      readonly stops: boolean
+    }
+  /** Empezó un día nuevo y se tiró su clima. */
+  | { readonly type: 'weatherChanged'; readonly weather: Weather; readonly at: number }
   | {
       /** Se movió un bloque: cambió todo lo de `from` y de `to`. */
       readonly type: 'blockMoved'

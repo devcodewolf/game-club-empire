@@ -23,7 +23,7 @@ Juego 2D en **vista cenital** (desde arriba, estilo visual de Prison Architect) 
 
 ## Arquitectura (reglas no negociables)
 1. **La simulación no conoce a Pixi ni a Vue.** Vive en `src/sim/` como TypeScript puro, testeable sin navegador.
-2. **Bucle de ticks determinista.** El tiempo avanza en ticks fijos (1 tick = 1 hora de juego). La velocidad (pausa/1x/3x) solo cambia cuántos ticks se procesan por segundo real.
+2. **Bucle de ticks determinista.** El tiempo avanza en ticks fijos (1 tick = 1 minuto de juego; 1 día = `MINUTOS_REALES_POR_DIA` = 12 min reales a ×1). La velocidad (pausa / ×1 / ×3 / ×5 / ×10) solo cambia cuántos ticks se procesan por segundo real. Toda aleatoriedad de la simulación usa el PRNG sembrado de la partida (nunca `Math.random()`); los ritmos de juego van por horas o días de juego, nunca por tiempo real.
 3. **Contenido guiado por datos.** Edificios, recursos, desbloqueos y eventos se definen en `src/content/*.ts` como datos tipados, no como lógica dispersa. Añadir un edificio nuevo = añadir una entrada.
 4. **Render lee, nunca escribe.** `src/render/` dibuja el estado de la simulación. Las acciones del jugador pasan por comandos (`src/sim/commands.ts`).
 5. **UI en Vue.** Menús, HUD, paneles y árbol de habilidades en `src/ui/`. El canvas de Pixi se monta en un componente Vue.

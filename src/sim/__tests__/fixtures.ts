@@ -3,6 +3,7 @@
  *
  * Usan un catálogo de prueba propio, independiente de `src/content/`.
  */
+import type { TimeContent } from '../time/clock'
 import type { BuildingCatalog } from '../buildings/buildings'
 import type { SimContent } from '../content'
 import type { FloorCatalog } from '../map/floors'
@@ -156,12 +157,26 @@ export const TEST_ROOMS: RoomCatalog = {
 }
 
 /** Contenido de prueba completo, el que reciben `executeCommand` y `createGame`. */
+/**
+ * Tiempo de prueba: mismo ritmo que el juego, inicio el lunes 23 de agosto
+ * del año 1 a las 09:00, lluvia al 35 % y un evento que detiene el avance
+ * cada lunes a las 08:00 (como el lunes de cuentas).
+ */
+export const TEST_TIME: TimeContent = {
+  realMinutesPerDay: 12,
+  speeds: [1, 3, 5, 10],
+  start: { year: 1, month: 8, day: 23, hour: 9 },
+  rainChance: 0.35,
+  events: [{ id: 'weeklyAccounts', rule: { every: 'week', weekday: 0, hour: 8 }, stops: true }],
+}
+
 export const TEST_CONTENT: SimContent = {
   buildings: TEST_CATALOG,
   floors: TEST_FLOORS,
   walls: TEST_WALLS,
   doors: TEST_DOORS,
   rooms: TEST_ROOMS,
+  time: TEST_TIME,
 }
 
 /**

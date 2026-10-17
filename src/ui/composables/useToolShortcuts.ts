@@ -9,7 +9,7 @@ import { useSelectionStore } from '@/ui/stores/selectionStore'
 import { useToolStore } from '@/ui/stores/toolStore'
 
 /** Indica si el foco está en un campo de texto editable. */
-function isEditableTarget(target: EventTarget | null): boolean {
+export function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
   return (
     target instanceof HTMLInputElement ||

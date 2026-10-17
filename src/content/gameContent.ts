@@ -7,6 +7,7 @@ import { BUILDINGS } from './buildings'
 import { DOORS } from './doors'
 import { FLOORS } from './floors'
 import { ROOMS } from './rooms'
+import { TIME } from './time'
 import { WALLS } from './walls'
 
 export const GAME_CONTENT: SimContent = {
@@ -15,4 +16,5 @@ export const GAME_CONTENT: SimContent = {
   walls: WALLS,
   doors: DOORS,
   rooms: ROOMS,
+  time: TIME,
 }

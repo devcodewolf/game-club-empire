@@ -9,6 +9,8 @@ import RoomPanel from '@/ui/room-panel/RoomPanel.vue'
 import { provideGame } from '@/ui/composables/useGame'
 import { useProgressionStore } from '@/ui/stores/progressionStore'
 import { useToolShortcuts } from '@/ui/composables/useToolShortcuts'
+import { useGameLoop } from '@/ui/composables/useGameLoop'
+import { useTimeShortcuts } from '@/ui/composables/useTimeShortcuts'
 import { markRaw } from 'vue'
 import { GAME_CONTENT } from '@/content/gameContent'
 import { MAP_CONFIG } from '@/content/map'
@@ -21,6 +23,8 @@ const game = markRaw(createGame(MAP_CONFIG, GAME_CONTENT))
 provideGame(game)
 const { devMode } = useProgressionStore()
 useToolShortcuts()
+useGameLoop(game)
+useTimeShortcuts(game)
 </script>
 
 <template>
