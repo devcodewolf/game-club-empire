@@ -178,6 +178,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 
 **Bloque F — Tablón, patrocinios y nuevas fuentes**
 - [ ] 🧠 Subvenciones del ayuntamiento como las de Prison Architect: lista encadenada con objetivos, adelanto al aceptar y bonus al cumplir, 2 activas, se tachan los objetivos al cumplirlos (idea de Raul; cadena inicial en `docs/IDEAS.md`)
+- [ ] 🧠 El tablón avisa de lo que frena al club ("El vestuario no cuenta: le faltan 2 duchas", "Nadie cuida el campo: contrata un jardinero"); cada nota lleva a su ficha al hacer clic
 - [ ] 🧠 Tablón del vestuario y patrocinios locales con objetivos como datos. El tablón es el equivalente a la lista "Todo" de Prison Architect: nota de corcho arriba a la izquierda con secciones (próximo partido, patrocinios con sus objetivos tachados al cumplirlos, ofertas, averías, quiebra, lotería) y un contador de pendientes
 - [ ] 🧠 Vallas publicitarias (objeto, colocación en el pasillo perimetral, anunciantes)
 - [ ] 🧠 Escuela de fútbol con monitores
@@ -201,6 +202,11 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] ⚡ Exportar e importar `.json`
 
 *Prueba:* guardar a mitad de semana, recargar y comprobar que todo (incluido el PRNG) continúa igual.
+
+**Bloque J — Comodidades de construcción**
+- [ ] 🧠 Copiar un bloque: se selecciona como al mover un bloque, se lleva en fantasma (R gira) y se pega en otro sitio pagando lo que costaría construirlo; se puede pegar varias veces seguidas
+
+*Prueba:* copiar un vestuario completo cobra lo mismo que construirlo a mano y la copia es una sala completa e independiente.
 
 **Fuera de esta fase:** liga, clasificación y ascensos (3) · horario semanal (3) · jugadores, necesidades y personal visible (4) · lluvia visible y deterioro visual (4B / 6) · electricidad y agua (4B) · patrocinio de camiseta, campus, tienda y eventos (5 o backlog) · junta directiva, préstamos e inversores (5 / backlog) · obreros y obra no instantánea (backlog).
 
@@ -228,6 +234,8 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] 🧠 Desbloqueos por ascenso conectados con el menú de construcción (p. ej. césped natural y grada mediana)
 - [ ] ⚡ Tests: una temporada completa simulada sin errores
 - [ ] ⚡ Día de partido animado: afición llegando por la carretera, focos, sonido de grada (placeholder)
+- [ ] 🧠 Peñas de aficionados: con suficiente afición nace una peña con nombre que pide mejoras; si se cumplen, sube la afición y anima en casa
+- [ ] 🧠 Rival fijo del pueblo vecino: el derbi llena el estadio y vale el doble de fama
 - [ ] 🧠 Acceso de la afición como en un estadio real: recinto cerrado con muros o vallas, puertas de acceso con tornos (objeto nuevo) y taquilla; los tornos limitan la asistencia y sin recinto cerrado hay "colados" que no pagan (idea de Raul)
 
 ✅ **Validar MVP:** jugar una temporada entera, ascender y usar algo desbloqueado. **Aquí decidimos juntos si el bucle es divertido antes de seguir.**
@@ -266,6 +274,8 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] ⚡ Definir el árbol en `content/tech-tree.ts` (ramas: deportiva, comercial, infraestructura)
 - [ ] ⚡ UI del árbol en Vue
 - [ ] 🧠 Conectar desbloqueos con edificios y mecánicas
+- [ ] 🧠 Eventos de temporada en el campo (fiestas del pueblo, concierto, feria): mucho dinero y fama a cambio de desgastar el césped
+- [ ] ⚡ Logros ("Rey del barro", "Cien socios", "Casa llena"…)
 
 ✅ **Validar:** el árbol da decisiones interesantes, no solo "comprar todo".
 

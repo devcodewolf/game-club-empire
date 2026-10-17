@@ -54,14 +54,14 @@ En el tablón y en la pestaña Subvenciones del cuaderno, los objetivos se tacha
 ## Propuestas de Claude
 
 ### Para que sea más entretenido
-- **Peñas de aficionados** · Fase 3 · Propuesta: con suficiente afición nace una peña con nombre propio que pide cosas ("una grada cubierta para el fondo norte") y, si se las das, sube la afición y anima en los partidos (más fuerza en casa).
-- **Rivalidad con el pueblo vecino** · Fase 3 · Propuesta: un rival fijo; el derbi llena el estadio y vale el doble de fama.
-- **Eventos de temporada** · Fase 5 · Propuesta: fiestas del pueblo, concierto de verano o feria en el campo. Dan mucho dinero y fama, pero desgastan el césped (enlaza con el estado del campo).
-- **Logros** · Fase 5 · Propuesta: "Rey del barro" (ascender con campo de tierra), "Cien socios", "Casa llena"… (ver `docs/referencias/README.md`).
+- **Peñas de aficionados** · Fase 3 · En el plan: con suficiente afición nace una peña con nombre propio que pide cosas ("una grada cubierta para el fondo norte") y, si se las das, sube la afición y anima en los partidos (más fuerza en casa).
+- **Rivalidad con el pueblo vecino** · Fase 3 · En el plan: un rival fijo; el derbi llena el estadio y vale el doble de fama.
+- **Eventos de temporada** · Fase 5 · En el plan: fiestas del pueblo, concierto de verano o feria en el campo. Dan mucho dinero y fama, pero desgastan el césped (enlaza con el estado del campo).
+- **Logros** · Fase 5 · En el plan: "Rey del barro" (ascender con campo de tierra), "Cien socios", "Casa llena"… (ver `docs/referencias/README.md`).
 
 ### Para que sea más fácil y menos tedioso
-- **Copiar un bloque** · Fase 2 o backlog · Propuesta: como el "Quick build" de PA. Con la herramienta de mover bloques ya hecha, copiar un vestuario entero y pegarlo en otro sitio (pagando lo que cuesta) es casi inmediato y ahorra mucho trabajo repetitivo.
+- **Copiar un bloque** · Fase 2, Bloque J · En el plan (pagando lo que cuesta construirlo): como el "Quick build" de PA. Con la herramienta de mover bloques ya hecha, copiar un vestuario entero y pegarlo en otro sitio (pagando lo que cuesta) es casi inmediato y ahorra mucho trabajo repetitivo.
 - **Planificar en pausa** · Fase 2 o backlog · Propuesta: dibujar obras como plano (fantasma azul, sin coste) y confirmarlas todas a la vez cuando haya dinero.
-- **El tablón avisa de lo que frena al club** · Fase 2, Bloque F · Propuesta: notas como "El vestuario no cuenta: le faltan 2 duchas" o "Nadie cuida el campo: contrata un jardinero", que llevan a la ficha al hacer clic.
+- **El tablón avisa de lo que frena al club** · Fase 2, Bloque F · En el plan: notas como "El vestuario no cuenta: le faltan 2 duchas" o "Nadie cuida el campo: contrata un jardinero", que llevan a la ficha al hacer clic.
 - **Dificultad elegible** · Fase 3 · Propuesta: Fácil / Normal / Difícil como multiplicadores de ingresos, costes y paciencia de la afición (todo son datos de `content/`).
 - **"¿Por qué pierdo dinero?"** · Fase 2, Bloque H · Propuesta: en Finanzas, una frase que señala el mayor gasto y el ingreso que más ha bajado.
