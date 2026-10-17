@@ -22,6 +22,8 @@ import { drawGridLines, drawGround } from './views/drawGrid'
 import { expansionAt } from './views/expansions'
 import { createExpansionsView } from './views/expansionsView'
 import { drawEntrance } from './views/entranceView'
+import { createPennantsView } from './views/pennantsView'
+import { PENNANT_FANS } from '@/content/match'
 import { createMoneyPopups } from './views/moneyPopups'
 import { createFloorsView } from './views/floorsView'
 import { createWallsView } from './views/wallsView'
@@ -120,6 +122,12 @@ export async function createGameRenderer(
   )
   drawGridLines(layers.grid, grid)
   drawEntrance(layers.scenery, ENTRANCE_PROPS, grid.height)
+  const pennants = createPennantsView(
+    layers.scenery,
+    game,
+    ENTRANCE_PROPS.flatMap((prop) => (prop.kind === 'lamp' ? [prop.tile] : [])),
+    PENNANT_FANS,
+  )
   const expansions = createExpansionsView(layers.outside, grid)
   const rooms = createRoomsView(layers.roomLabels, game)
   const walls = createWallsView(layers.structures, game, assets.walls)
@@ -262,6 +270,7 @@ export async function createGameRenderer(
       app.renderer.off('resize', onResize)
       preview.destroy()
       moneyPopups.destroy()
+      pennants.destroy()
       buildings.destroy()
       floors.destroy()
       walls.destroy()

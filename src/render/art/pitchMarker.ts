@@ -1,5 +1,6 @@
 /**
- * Dibujo de un terreno de juego: superficie, líneas de cal y porterías.
+ * Dibujo de un terreno de juego: superficie, líneas de cal, porterías y las
+ * dos zonas de banquillos junto a la banda (con sus banquillos si los tiene).
  *
  * Las medidas se calculan en PROPORCIÓN al terreno (reglamento de fútbol 11:
  * 105×68 m), así sirven igual para fútbol 11 y fútbol 7 y para cualquier giro.
@@ -10,6 +11,8 @@ import type { BuildingDef, PitchRole } from '@/sim/buildings/buildings'
 import { rotateSize, type Rotation } from '@/sim/geometry'
 import { TILE_SIZE } from '../core/grid'
 import { palette } from '../palette'
+import { shade } from '../core/color'
+import { OUTLINE, OUTLINE_DETAIL, SHADOW_ALPHA } from '../style'
 
 /** Margen entre el borde de la huella y las líneas de banda, en casillas. */
 const MARGIN_TILES = 2
@@ -33,6 +36,7 @@ export function createPitchMarker(
   rotation: Rotation,
   surface: FillInput,
   role?: PitchRole,
+  benches = false,
 ): Container {
   const tiles = rotateSize(def.size, rotation)
   const width = tiles.width * TILE_SIZE
@@ -50,6 +54,7 @@ export function createPitchMarker(
   // El largo del terreno va siempre en el eje más largo de la huella.
   const horizontal = width >= height
   drawMarkings(g, margin, margin, width - margin * 2, height - margin * 2, horizontal)
+  drawBenchZones(g, margin, margin, width - margin * 2, height - margin * 2, horizontal, benches)
 
   const marker = new Container({ label: `building:${def.id}` })
   marker.addChild(g)
@@ -158,4 +163,90 @@ function drawMarkings(
       .lineTo(...at(lineAlong, (W + gw) / 2))
       .stroke({ color: palette.chalk, width: LINE })
   }
+}
+
+/** Largo de cada zona de banquillo respecto al largo del terreno, y su hueco en el centro. */
+const BENCH_ZONE = { length: 0.13, gap: 0.05, maxLength: TILE_SIZE * 7 } as const
+const DASH = 14
+
+/** Línea discontinua de cal entre dos puntos. */
+function dashedLine(g: Graphics, x1: number, y1: number, x2: number, y2: number): void {
+  const length = Math.hypot(x2 - x1, y2 - y1)
+  const steps = Math.max(1, Math.floor(length / (DASH * 2)))
+  for (let i = 0; i < steps; i++) {
+    const a = (i * 2 * DASH) / length
+    const b = Math.min(1, ((i * 2 + 1) * DASH) / length)
+    g.moveTo(x1 + (x2 - x1) * a, y1 + (y2 - y1) * a).lineTo(x1 + (x2 - x1) * b, y1 + (y2 - y1) * b)
+  }
+}
+
+/**
+ * Zonas de banquillos (local y visitante): dos rectángulos de cal discontinua
+ * en el margen, fuera de la banda de abajo (o de la derecha si el campo está
+ * en vertical), a los lados de la línea de medio campo. Con `benches`, un
+ * banco de madera con respaldo en cada una, mirando al campo.
+ */
+function drawBenchZones(
+  g: Graphics,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  horizontal: boolean,
+  benches: boolean,
+): void {
+  const L = horizontal ? w : h
+  const W = horizontal ? h : w
+  const margin = MARGIN_TILES * TILE_SIZE
+  const zoneLength = Math.min(L * BENCH_ZONE.length, BENCH_ZONE.maxLength)
+  const gap = L * BENCH_ZONE.gap
+  // Fondo de la zona: casi todo el margen, separada de la banda y del borde
+  const near = W + margin * 0.18
+  const depth = margin * 0.62
+  /** Rectángulo (a lo largo, a lo ancho) → x, y, ancho, alto en el marcador. */
+  const box = (along: number, across: number, length: number, breadth: number) =>
+    horizontal
+      ? { rx: x + along, ry: y + across, rw: length, rh: breadth }
+      : { rx: x + across, ry: y + along, rw: breadth, rh: length }
+
+  for (const start of [L / 2 - gap / 2 - zoneLength, L / 2 + gap / 2]) {
+    const { rx, ry, rw, rh } = box(start, near, zoneLength, depth)
+    dashedLine(g, rx, ry, rx + rw, ry)
+    dashedLine(g, rx + rw, ry, rx + rw, ry + rh)
+    dashedLine(g, rx + rw, ry + rh, rx, ry + rh)
+    dashedLine(g, rx, ry + rh, rx, ry)
+    g.stroke({ color: palette.chalk, width: LINE * 0.6, alpha: 0.7 })
+    if (benches)
+      drawBench(
+        g,
+        box(start + zoneLength * 0.1, near + depth * 0.18, zoneLength * 0.8, depth * 0.62),
+        horizontal,
+      )
+  }
+}
+
+/** Banco de madera visto desde arriba: asiento de tablones y respaldo por fuera. */
+function drawBench(
+  g: Graphics,
+  { rx, ry, rw, rh }: { rx: number; ry: number; rw: number; rh: number },
+  horizontal: boolean,
+): void {
+  const wood = palette.wood
+  g.rect(rx + SHADOW_OFFSET, ry + SHADOW_OFFSET, rw, rh).fill({
+    color: palette.outline,
+    alpha: SHADOW_ALPHA,
+  })
+  g.rect(rx, ry, rw, rh).fill(shade(wood, 0.4)).stroke({ color: palette.outline, width: OUTLINE })
+  // Juntas de los tablones a lo largo del banco
+  const planks = 3
+  for (let i = 1; i < planks; i++) {
+    if (horizontal) g.moveTo(rx, ry + (rh * i) / planks).lineTo(rx + rw, ry + (rh * i) / planks)
+    else g.moveTo(rx + (rw * i) / planks, ry).lineTo(rx + (rw * i) / planks, ry + rh)
+  }
+  g.stroke({ color: shade(wood, -0.1), width: OUTLINE_DETAIL })
+  // Respaldo: listón oscuro en el lado de fuera (lejos del campo)
+  const back = Math.max(6, (horizontal ? rh : rw) * 0.28)
+  if (horizontal) g.rect(rx, ry + rh - back, rw, back)
+  else g.rect(rx + rw - back, ry, back, rh)
+  g.fill(shade(wood, -0.25)).stroke({ color: palette.outline, width: OUTLINE })
 }

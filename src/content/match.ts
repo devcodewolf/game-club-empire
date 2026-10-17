@@ -91,3 +91,9 @@ export const MATCH: MatchContent = {
   members: { targetShare: 0.25, rate: 0.1 },
   benches: { cost: 300, strength: 2 },
 }
+
+/**
+ * Banderines del club en las farolas de la entrada: un tramo más por cada
+ * cifra de afición alcanzada (ver `src/render/views/pennantsView.ts`).
+ */
+export const PENNANT_FANS: readonly number[] = [300, 800, 2000, 5000]

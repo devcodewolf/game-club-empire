@@ -102,6 +102,7 @@ export function createBuildingsView(
     const marker = createBuildingMarker(def, building.rotation, assets, {
       tier: building.tier,
       role: building.role,
+      benches: building.benches === true,
       size,
     })
     const origin = tileToWorld(building.origin)
@@ -180,6 +181,11 @@ export function createBuildingsView(
         remove(building.id, false)
         add(building, false)
       }
+    }
+    if (event.type === 'benchesBuilt') {
+      // Banquillos nuevos: se redibuja el campo con ellos, con un rebote
+      remove(event.building.id, false)
+      add(event.building, 'upgrade')
     }
     if (event.type === 'buildingUpgraded') {
       // Mejora en el sitio: se cambia el dibujo por el del nivel nuevo, con un rebote

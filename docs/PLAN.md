@@ -167,12 +167,13 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 *Se ve:* sin jardinero el campo no se recupera; sin mantenimiento aparecen averías. *Prueba:* tests de cobertura y de probabilidad de averías con semilla fija.
 
 **Bloque E — Partido mínimo, fama y afición**
-- [ ] 🧠 Partido semanal con fuerza, goles por Poisson, asistencia, taquilla, bar y aparcamiento
-- [ ] 🧠 Fama, afición, satisfacción y socios
-- [ ] 🧠 Vestuario local y visitante: uso elegible en la ficha (como el de los campos); la fuerza usa el local; sin visitante, multa de la federación y −1 de fama al jugar en casa; la caseta vieja puede hacer de visitante (idea de Raul)
-- [ ] ⚡ Pantalla de resultado del partido
-- [ ] ⚡ Socios, afición y fama en el HUD
-- [ ] ⚡ Banderines en las farolas según la afición
+- [x] 🧠 Partido semanal con fuerza, goles por Poisson, asistencia, taquilla, bar y aparcamiento
+- [x] 🧠 Fama, afición, satisfacción y socios
+- [x] 🧠 Vestuario local y visitante: uso elegible en la ficha (como el de los campos); la fuerza usa el local; sin visitante, multa de la federación y −1 de fama al jugar en casa; la caseta vieja puede hacer de visitante (idea de Raul)
+- [x] 🧠 Banquillos de madera: dos zonas fijas de cal junto a la banda del campo; se compran desde la ficha del campo y dan un poco de fuerza en casa (idea de Raul; las mejoras, en la Fase 3)
+- [x] ⚡ Pantalla de resultado del partido
+- [x] ⚡ Socios, afición y fama en el HUD
+- [x] ⚡ Banderines en las farolas según la afición
 
 *Se ve:* cada domingo hay partido con ingresos que flotan sobre sus edificios. *Prueba:* simular 20 partidos con semilla fija; la distribución de resultados es razonable (ni siempre ganar ni siempre perder).
 
@@ -236,6 +237,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] ⚡ Día de partido animado: afición llegando por la carretera, focos, sonido de grada (placeholder)
 - [ ] 🧠 Peñas de aficionados: con suficiente afición nace una peña con nombre que pide mejoras; si se cumplen, sube la afición y anima en casa
 - [ ] 🧠 Rival fijo del pueblo vecino: el derbi llena el estadio y vale el doble de fama
+- [ ] 🧠 Banquillos por niveles (techo de chapa → cubiertos y acolchados → de estadio con calefacción) y túnel de vestuarios hasta el campo con calidades y precios (ideas de Raul; ver `docs/IDEAS.md`)
 - [ ] 🧠 Acceso de la afición como en un estadio real: recinto cerrado con muros o vallas, puertas de acceso con tornos (objeto nuevo) y taquilla; los tornos limitan la asistencia y sin recinto cerrado hay "colados" que no pagan (idea de Raul)
 
 ✅ **Validar MVP:** jugar una temporada entera, ascender y usar algo desbloqueado. **Aquí decidimos juntos si el bucle es divertido antes de seguir.**

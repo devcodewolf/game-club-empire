@@ -15,6 +15,7 @@ import {
   pitchRepairCost,
   pitchResting,
 } from '@/sim/economy/upkeep'
+import { clubChangingRooms } from '@/sim/club/changingRooms'
 import { pitchCapacity, standCapacity } from '@/sim/buildings/stands'
 import AppIcon from '@/ui/components/AppIcon.vue'
 import NotebookSheet from '@/ui/components/NotebookSheet.vue'
@@ -124,6 +125,33 @@ const pitchState = computed(() => {
     restUntil: formatDay(b.restUntil ?? 0),
   }
 })
+
+/** Banquillos del campo: precio, si ya los tiene y qué aportan. */
+const benches = computed(() => {
+  const b = building.value
+  if (!b || !def.value?.pitch) return undefined
+  const { cost, strength } = game.content.match.benches
+  return { has: b.benches === true, cost, strength, canAfford: game.state.money >= cost }
+})
+
+/** La caseta vieja como vestuario: qué hace ahora. */
+const shedUse = computed(() => {
+  const b = building.value
+  if (!b || b.type !== game.content.match.changingRoom.shed) return undefined
+  const { home, away } = clubChangingRooms(game.state, game.content)
+  const isShed = (source: typeof home) => source.kind === 'shed' && source.buildingId === b.id
+  if (isShed(home)) return `Hace de vestuario local (calidad ${home.quality})`
+  if (isShed(away)) return `Hace de vestuario visitante (calidad ${away.quality})`
+  return 'No se usa: ya hay vestuarios'
+})
+
+function buildBenches(): void {
+  const id = selection.selectedBuildingId
+  if (id === null) return
+  const result = game.dispatch({ type: 'buildBenches', buildingId: id })
+  if (!result.ok && result.reason === 'notEnoughMoney')
+    notices.show('💸', 'No hay dinero suficiente para los banquillos.')
+}
 
 /** Avería del objeto (los campos y gradas no se averían). */
 const breakdown = computed(() => {
@@ -282,6 +310,27 @@ function upgrade(): void {
         >
           Reparar el césped ({{ formatEuros(pitchState.repairCost) }})
         </button>
+      </section>
+
+      <p v-if="shedUse" class="font-hand text-[18px] leading-6 text-ink-blue">{{ shedUse }}</p>
+
+      <section v-if="benches" class="mt-2" aria-label="Banquillos">
+        <p v-if="benches.has" class="font-hand text-[18px] leading-6 text-green-700">
+          Banquillos de madera ✓
+        </p>
+        <template v-else>
+          <button
+            type="button"
+            class="w-full cursor-pointer border-2 border-[#7a5320] bg-[#a8742f] px-2 py-1 font-hand text-[17px] text-white shadow-[3px_3px_0_rgba(0,0,0,0.35)] hover:bg-[#b9843b] focus-visible:outline-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#a8742f]"
+            :disabled="!benches.canAfford"
+            @click="buildBenches"
+          >
+            Poner banquillos ({{ formatEuros(benches.cost) }})
+          </button>
+          <p class="font-hand text-[15px] leading-5 text-ink-blue">
+            +{{ benches.strength }} de fuerza en los partidos en casa
+          </p>
+        </template>
       </section>
 
       <section v-if="breakdown" class="mt-2" aria-label="Avería">

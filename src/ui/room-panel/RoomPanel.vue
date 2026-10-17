@@ -4,6 +4,7 @@
  * operativa, qué le falta y permite quitar su designación.
  */
 import { computed, watch } from 'vue'
+import { changingRoomQuality, clubChangingRooms, isChangingRoom } from '@/sim/club/changingRooms'
 import { roomMaintenance } from '@/sim/economy/recurring'
 import { evaluateRoom } from '@/sim/rooms/rooms'
 import AppIcon from '@/ui/components/AppIcon.vue'
@@ -69,6 +70,39 @@ const maintenanceText = computed(() => {
   if (id === null || !status.value) return null
   return `Mantenimiento: ${formatEuros(roomMaintenance(game.state, game.content, id))}/semana`
 })
+
+/** Vestuario: su uso (local/visitante), qué hace ahora y su calidad. */
+const changing = computed(() => {
+  const id = selection.selectedRoomId
+  const s = status.value
+  if (id === null || !s || !isChangingRoom(game.state, game.content, id)) return undefined
+  const { home, away } = clubChangingRooms(game.state, game.content)
+  const isRoom = (source: typeof home) => source.kind === 'room' && source.roomId === id
+  // Sin uso elegido, el selector marca lo que hace ahora (el club lo reparte solo)
+  const auto = isRoom(away) ? ('away' as const) : ('home' as const)
+  return {
+    use: game.state.rooms[id]?.use ?? auto,
+    now: !s.ok
+      ? 'No se usa: la sala no está completa'
+      : isRoom(home)
+        ? 'Hace de vestuario local'
+        : isRoom(away)
+          ? 'Hace de vestuario visitante'
+          : 'No se usa: hay otro mejor',
+    quality: changingRoomQuality(game.content, s),
+  }
+})
+
+const CHANGING_USES = [
+  { id: 'home', label: 'Local' },
+  { id: 'away', label: 'Visitante' },
+] as const
+
+function setUse(use: 'home' | 'away'): void {
+  const id = selection.selectedRoomId
+  if (id === null || use === changing.value?.use) return
+  game.dispatch({ type: 'setRoomUse', roomId: id, use })
+}
 
 // Si la sala deja de existir, se limpia la selección y el panel se cierra.
 const exists = computed(() => status.value !== undefined)
@@ -145,6 +179,35 @@ function removeRoom(): void {
       <p v-if="maintenanceText" class="font-hand text-[18px] leading-6 text-ink-blue">
         {{ maintenanceText }}
       </p>
+      <section v-if="changing" class="mt-2">
+        <p
+          id="changing-use-label"
+          class="font-hand text-[20px] leading-6 underline underline-offset-2"
+        >
+          Uso del vestuario:
+        </p>
+        <div role="radiogroup" aria-labelledby="changing-use-label" class="mt-1 flex gap-1">
+          <button
+            v-for="option in CHANGING_USES"
+            :key="option.id"
+            type="button"
+            role="radio"
+            :aria-checked="changing.use === option.id"
+            class="flex-1 cursor-pointer border-2 border-ink px-1 py-0.5 font-hand text-[16px] leading-5 focus-visible:outline-2 focus-visible:outline-ink"
+            :class="
+              changing.use === option.id
+                ? 'bg-amber-300 font-bold shadow-[2px_2px_0_rgba(0,0,0,0.35)]'
+                : 'bg-transparent hover:bg-black/10'
+            "
+            @click="setUse(option.id)"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+        <p class="mt-1 font-hand text-[16px] leading-5 text-ink-blue">
+          {{ changing.now }} (calidad {{ changing.quality }}/10)
+        </p>
+      </section>
       <p v-if="def.benefit" class="font-hand text-[16px] leading-5 text-ink-blue">
         <span class="text-[18px] text-ink underline underline-offset-2">Qué aporta:</span>
         {{ def.benefit }}

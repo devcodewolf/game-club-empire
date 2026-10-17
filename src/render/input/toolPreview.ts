@@ -197,6 +197,7 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
     return createBuildingMarker(def, building.rotation, assets, {
       tier: building.tier,
       role: building.role,
+      benches: building.benches === true,
       ...(building.size ? { size: building.size } : {}),
     })
   }

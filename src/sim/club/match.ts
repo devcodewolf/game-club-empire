@@ -148,7 +148,7 @@ export interface Attendance {
   readonly leftOut: number
 }
 
-/** Dinero del día de partido, por concepto (en positivo los ingresos). */
+/** Dinero del día de partido, por concepto. Todo en positivo: furgoneta y multa son gastos. */
 export interface MatchMoney {
   readonly tickets: number
   readonly bar: number

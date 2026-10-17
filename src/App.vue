@@ -5,9 +5,12 @@ import BuildMenu from '@/ui/build-menu/BuildMenu.vue'
 import NoticeToasts from '@/ui/components/NoticeToasts.vue'
 import HudClock from '@/ui/hud/HudClock.vue'
 import HudStats from '@/ui/hud/HudStats.vue'
+import MatchChip from '@/ui/hud/MatchChip.vue'
 import UndoChip from '@/ui/hud/UndoChip.vue'
 import WeeklyReportNote from '@/ui/hud/WeeklyReportNote.vue'
 import { useAccountsStore } from '@/ui/stores/accountsStore'
+import { useMatchStore } from '@/ui/stores/matchStore'
+import MatchResult from '@/ui/match/MatchResult.vue'
 import ObjectPanel from '@/ui/object-panel/ObjectPanel.vue'
 import ContextMenu from '@/ui/context-menu/ContextMenu.vue'
 import RoomPanel from '@/ui/room-panel/RoomPanel.vue'
@@ -34,6 +37,7 @@ const game = markRaw(
 
 provideGame(game)
 onBeforeUnmount(useAccountsStore().listen(game))
+onBeforeUnmount(useMatchStore().listen(game))
 const { devMode } = useProgressionStore()
 useToolShortcuts()
 useGameLoop(game)
@@ -63,6 +67,7 @@ useTimeShortcuts(game)
           <div class="relative justify-self-end">
             <HudClock />
             <div class="absolute top-full right-0 z-30 mt-2 flex flex-col items-end gap-2">
+              <MatchChip />
               <WeeklyReportNote />
               <NoticeToasts />
             </div>
@@ -80,5 +85,6 @@ useTimeShortcuts(game)
     </GameLayout>
     <ContextMenu />
     <ReportsFolder />
+    <MatchResult />
   </main>
 </template>
