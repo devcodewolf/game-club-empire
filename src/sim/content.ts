@@ -11,6 +11,7 @@ import type { RoomCatalog } from './rooms/roomTypes'
 import type { DoorCatalog, WallCatalog } from './map/structureTypes'
 import type { TimeContent } from './time/clock'
 import type { EconomyContent } from './economy/ledger'
+import type { MatchContent } from './club/match'
 
 export interface SimContent {
   readonly buildings: BuildingCatalog
@@ -22,4 +23,6 @@ export interface SimContent {
   readonly time: TimeContent
   /** Dinero inicial, reembolsos al demoler y coste de mover. */
   readonly economy: EconomyContent
+  /** Partido semanal, fama, afición y vestuarios. */
+  readonly match: MatchContent
 }

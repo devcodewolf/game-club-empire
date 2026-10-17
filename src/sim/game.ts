@@ -16,8 +16,13 @@ import { commandPrice } from './economy/pricing'
 import { applyEconomyEvent } from './economy/recurring'
 import { record } from './economy/ledger'
 import { captureMap, diffMap, restoreMap, type MapSnapshot } from './map/snapshot'
+import { finishMatch, startMatch } from './club/match'
+import { awardFirstRooms, weeklyClubUpdate } from './club/fans'
 
 export type GameListener = (event: GameEvent) => void
+
+/** Ids de los eventos del calendario del partido (los programa `content.time.events`). */
+export const MATCH_EVENT = { kickoff: 'matchKickoff', final: 'matchFinal' } as const
 
 export interface Game {
   /** Estado de solo lectura para quien no sea la simulación. */
@@ -64,9 +69,15 @@ export function createGame(
   state.money = money ?? content.economy.startMoney
   state.club.division = content.economy.start.division
   state.club.members = content.economy.start.members
+  state.club.fame = content.match.fame.start
+  state.club.fans = content.match.fans.start
+  state.club.satisfaction = content.match.satisfaction.start
   rollWeather(state, content.time)
   // El escenario de inicio se aplica gratis y sin avisar a nadie (aún no hay suscriptores)
   for (const command of scenario) executeCommand(state, command, content)
+  // Lo que ya venga completo en el escenario no cuenta como estreno de sala (ni da fama)
+  awardFirstRooms(state, content)
+  state.club.fame = content.match.fame.start
 
   const listeners = new Set<GameListener>()
   const emit = (event: GameEvent): void => {
@@ -108,6 +119,11 @@ export function createGame(
       undoSlot = snapshot ? { snapshot, cost: price.cost, revision } : null
 
       emit(result.event)
+      const firstRooms = awardFirstRooms(state, content)
+      if (firstRooms.length) {
+        emit({ type: 'firstRooms', roomTypes: firstRooms })
+        emit({ type: 'clubChanged' })
+      }
       for (const [amount, concept] of [
         [-price.cost, price.concept],
         [price.refund, 'demolish'],
@@ -126,12 +142,43 @@ export function createGame(
             emit({ type: 'weatherChanged', weather: occurrence.weather, at: occurrence.at })
             return
           }
+          if (occurrence.id === MATCH_EVENT.kickoff) {
+            const kickoff = startMatch(state, content)
+            if (!kickoff) return false
+            emit({
+              type: 'timeEvent',
+              id: occurrence.id,
+              at: occurrence.at,
+              stops: occurrence.stops,
+            })
+            for (const entry of kickoff.entries) emit({ type: 'transaction', entry })
+            if (kickoff.pitchesChanged) emit({ type: 'pitchesChanged' })
+            emit({ type: 'matchStarted', match: kickoff.match })
+            return true
+          }
+          if (occurrence.id === MATCH_EVENT.final) {
+            const match = finishMatch(state)
+            if (!match) return false
+            emit({
+              type: 'timeEvent',
+              id: occurrence.id,
+              at: occurrence.at,
+              stops: occurrence.stops,
+            })
+            emit({ type: 'matchPlayed', match })
+            emit({ type: 'clubChanged' })
+            return true
+          }
           emit({ type: 'timeEvent', id: occurrence.id, at: occurrence.at, stops: occurrence.stops })
           const outcome = applyEconomyEvent(state, content, occurrence.id)
           for (const entry of outcome.entries) emit({ type: 'transaction', entry })
           if (outcome.broken) emit({ type: 'buildingsBroken', buildings: outcome.broken })
           if (outcome.pitchesChanged) emit({ type: 'pitchesChanged' })
-          if (outcome.report) emit({ type: 'weeklyReport', report: outcome.report })
+          if (outcome.report) {
+            if (weeklyClubUpdate(state, content)) emit({ type: 'clubChanged' })
+            emit({ type: 'weeklyReport', report: outcome.report })
+          }
+          return true
         },
       })
     },

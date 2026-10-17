@@ -90,8 +90,10 @@ export function advanceClock(
     /**
      * Se llama con cada suceso en su instante (con el reloj ya en esa hora),
      * para que sus efectos (cobros, clima…) ocurran en orden y con la hora justa.
+     * Devolver `false` indica que el evento no tuvo efecto (p. ej. un domingo
+     * sin partido): entonces no detiene el "próximo evento".
      */
-    readonly onOccurrence?: (occurrence: ClockOccurrence) => void
+    readonly onOccurrence?: (occurrence: ClockOccurrence) => boolean | void
   } = {},
 ): AdvanceResult {
   const start = state.clock.time
@@ -118,8 +120,8 @@ export function advanceClock(
       const stops = event.stops === true
       const occurrence: ClockOccurrence = { kind: 'event', id: event.id, at: due.at, stops }
       occurrences.push(occurrence)
-      onOccurrence?.(occurrence)
-      if (stops && stoppedBy === null) stoppedBy = event.id
+      const happened = onOccurrence?.(occurrence) !== false
+      if (stops && happened && stoppedBy === null) stoppedBy = event.id
     }
     if (stopOnEvent && stoppedBy !== null) {
       return { occurrences, advanced: state.clock.time - start, stoppedBy }

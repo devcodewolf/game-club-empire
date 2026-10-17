@@ -44,4 +44,6 @@ export type RoomCatalog = Readonly<Record<RoomTypeId, RoomDef>>
 export interface Room {
   readonly id: RoomId
   readonly type: RoomTypeId
+  /** Solo vestuarios: local o visitante (sin dato, lo decide el club; ver `club/changingRooms.ts`). */
+  readonly use?: 'home' | 'away'
 }

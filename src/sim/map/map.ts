@@ -18,6 +18,8 @@ import type { ClockState } from '../time/clock'
 import { seedRng } from '../time/rng'
 import type { LedgerEntry } from '../economy/ledger'
 import type { StaffRole } from '../economy/staff'
+import type { MatchResult } from '../club/match'
+import type { RoomTypeId } from '../rooms/roomTypes'
 
 /** Datos del club que cambian durante la partida (además del dinero). */
 export interface ClubState {
@@ -29,6 +31,18 @@ export interface ClubState {
   readonly staff: Record<StaffRole, number>
   /** Alumnos de la escuela de fútbol (Bloque F). */
   students: number
+  /** Reputación 0-100 (con un decimal). */
+  fame: number
+  /** Personas del pueblo que siguen al club. */
+  fans: number
+  /** Satisfacción de la afición en el último partido en casa (0-100). */
+  satisfaction: number
+  /** Partidos jugados, del primero al último. */
+  readonly matches: MatchResult[]
+  /** Partido en juego (entre el inicio y el final del domingo), si lo hay. */
+  currentMatch: MatchResult | null
+  /** Tipos de sala que ya se completaron alguna vez (+1 de fama la primera). */
+  readonly roomsCompleted: RoomTypeId[]
 }
 import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
 import { NO_ROOM, type Room, type RoomId } from '../rooms/roomTypes'
@@ -123,6 +137,12 @@ export function createMapState({ size, features }: MapConfig): MapState {
       members: 0,
       staff: { gardener: 0, cleaner: 0, maintenance: 0, monitor: 0 },
       students: 0,
+      fame: 0,
+      fans: 0,
+      satisfaction: 0,
+      matches: [],
+      currentMatch: null,
+      roomsCompleted: [],
     },
   }
 

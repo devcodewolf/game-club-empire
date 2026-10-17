@@ -322,9 +322,11 @@ describe('cuotas de socios', () => {
     expect(countOf(game, 'memberFees')).toBe(0)
     game.advance(1)
     expect(countOf(game, 'memberFees')).toBe(1)
+    // El lunes 30 los socios ya se han acercado a su parte de la afición (60 → 62)
+    expect(game.state.club.members).toBe(62)
     expect(game.state.ledger.find((e) => e.concept === 'memberFees')).toMatchObject({
       at: SEP1,
-      amount: 900,
+      amount: 62 * 15,
     })
     const tx = events.filter((e) => e.type === 'transaction' && e.entry.concept === 'memberFees')
     expect(tx).toHaveLength(1)

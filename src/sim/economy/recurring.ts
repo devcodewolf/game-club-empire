@@ -56,7 +56,7 @@ export interface EconomyOutcome {
 const WEEK = 7 * MINUTES_PER_DAY
 
 /** Precios de la división del club (o los de la primera si no está en la tabla). */
-function divisionPrices(state: MapState, content: SimContent) {
+export function divisionPrices(state: MapState, content: SimContent) {
   const table = content.economy.divisions
   return (
     table[state.club.division] ?? Object.values(table)[0] ?? { entry: 0, memberFee: 0, subsidy: 0 }
@@ -149,8 +149,8 @@ export function roomMaintenance(state: MapState, content: SimContent, roomId: nu
   return total
 }
 
-/** Salas de bar completas (la primera da la caja diaria). */
-function completeBar(state: MapState, content: SimContent): TileRect | null {
+/** Zona de la primera sala de bar completa (da la caja diaria y la del partido), o null. */
+export function completeBar(state: MapState, content: SimContent): TileRect | null {
   for (const key of Object.keys(state.rooms)) {
     const room = state.rooms[Number(key)]
     if (room?.type !== content.economy.bar.roomType) continue

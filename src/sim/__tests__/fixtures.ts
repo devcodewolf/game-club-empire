@@ -4,6 +4,7 @@
  * Usan un catálogo de prueba propio, independiente de `src/content/`.
  */
 import type { EconomyContent } from '../economy/ledger'
+import type { MatchContent } from '../club/match'
 import type { TimeContent } from '../time/clock'
 import type { BuildingCatalog } from '../buildings/buildings'
 import type { SimContent } from '../content'
@@ -212,6 +213,66 @@ export const TEST_ECONOMY: EconomyContent = {
   breakdown: { weeklyChance: 0.05, repairRate: 0.25 },
 }
 
+/**
+ * Partido de prueba: mismas reglas que el juego. El vestuario es la sala
+ * 'kit' (calidad = media de sus objetos × 2,5) y no hay caseta vieja
+ * ('shed' no existe en el catálogo de prueba).
+ */
+export const TEST_MATCH: MatchContent = {
+  firstMatch: { month: 9, day: 5 },
+  offSeasonMonths: [6, 7, 8],
+  rivals: ['Rival A', 'Rival B', 'Rival C'],
+  changingRoom: { roomType: 'kit', shed: 'shed', qualityScale: 2.5 },
+  strength: {
+    base: 40,
+    home: 5,
+    pitchDivisor: 10,
+    facilitiesMax: 30,
+    changingRoomFactor: 1.5,
+    surface: { dirt: 0, grass: 8, stone: 10 },
+    rooms: { depot: 3 },
+    rival: { base: 45, spread: 10 },
+  },
+  goals: { base: 1.3, exponent: 1.5, max: 9 },
+  attendance: { memberShare: 0.9, publicShare: 0.5, rainFactor: 0.85, standing: 100 },
+  matchday: {
+    barPerSpectator: 1.5,
+    parking: { spaces: 10, fee: 2, perCar: 4, rect: { x: 18, y: 0, width: 2, height: 4 } },
+    travelCost: 100,
+    noVisitorRoom: { fine: 200, fame: -1 },
+  },
+  fame: {
+    start: 5,
+    result: { win: 2, draw: 0.5, loss: -1 },
+    firstRoom: 1,
+    drift: 0.2,
+    divisionBase: { comarcal: 5 },
+  },
+  fans: {
+    start: 300,
+    result: { win: 0.03, draw: 0.01, loss: -0.01 },
+    ceilingBase: 1000,
+    ceilingPerFame: 100,
+    satisfactionPivot: 60,
+    satisfactionDivisor: 2000,
+  },
+  satisfaction: {
+    start: 70,
+    base: 70,
+    cleaning: 30,
+    bar: 10,
+    parking: 5,
+    coveredStand: 10,
+    coveredStandTier: 2,
+    crowdOut: 15,
+    rainUncovered: 10,
+    goodVisitorQuality: 5,
+    goodVisitorRoom: 5,
+  },
+  members: { targetShare: 0.25, rate: 0.1 },
+  benches: { cost: 300, strength: 2 },
+}
+
 export const TEST_CONTENT: SimContent = {
   buildings: TEST_CATALOG,
   floors: TEST_FLOORS,
@@ -220,6 +281,7 @@ export const TEST_CONTENT: SimContent = {
   rooms: TEST_ROOMS,
   time: TEST_TIME,
   economy: TEST_ECONOMY,
+  match: TEST_MATCH,
 }
 
 /**

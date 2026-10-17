@@ -115,6 +115,8 @@ export interface PlacedBuilding {
   readonly condition?: number
   /** Solo campos: hasta cuándo descansa tras una reparación (no se alquila). */
   readonly restUntil?: number
+  /** Solo campos: ¿tiene banquillos junto a la banda? (dato del campo: se mueven con él) */
+  readonly benches?: boolean
   /** Objetos: averiado (no cuenta para su sala hasta repararlo). */
   readonly broken?: boolean
   /** Solo gradas: campo y hueco al que está pegada. */

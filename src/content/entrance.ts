@@ -47,7 +47,8 @@ export type EntranceProp =
   | { readonly kind: 'laneMarkings'; readonly rect: TileRect; readonly stopLineX: number }
   | { readonly kind: 'label'; readonly text: string; readonly tile: TileCoord }
 
-const PARKING: TileRect = { x: 180, y: 62, width: 16, height: 14 }
+/** Aparcamiento de visitantes (el partido cobra sus plazas). */
+export const PARKING: TileRect = { x: 180, y: 62, width: 16, height: 14 }
 const YARD: TileRect = { x: 180, y: 84, width: 16, height: 14 }
 const WAREHOUSE: TileRect = { x: 180, y: 98, width: 16, height: 8 }
 const VERGE_NORTH: TileRect = { x: 196, y: 70, width: 14, height: 6 }

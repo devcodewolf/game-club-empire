@@ -38,6 +38,14 @@ export type LedgerConcept =
   | 'wages'
   /** Reparaciones (césped y objetos averiados). */
   | 'repairs'
+  /** Taquilla de los partidos en casa. */
+  | 'tickets'
+  /** Aparcamiento de pago en los partidos en casa. */
+  | 'parking'
+  /** Desplazamiento a los partidos fuera. */
+  | 'travel'
+  /** Multas de la federación (jugar sin vestuario visitante). */
+  | 'fines'
 
 export interface LedgerEntry {
   /** Instante (minutos de juego). */

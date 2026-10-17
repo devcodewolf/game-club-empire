@@ -266,6 +266,19 @@ export function commandPrice(state: MapState, content: SimContent, command: Comm
       }
       return { cost: 0, refund, concept: 'demolish', rect: command.rect }
     }
+    case 'setRoomUse':
+      return FREE
+    case 'buildBenches': {
+      const building = state.buildings[command.buildingId]
+      const def = building && buildings[building.type]
+      if (!building || !def?.pitch || building.benches) return FREE
+      return {
+        cost: content.match.benches.cost,
+        refund: 0,
+        concept: 'construction',
+        rect: buildingFootprint(building, def),
+      }
+    }
     case 'repairPitch': {
       const building = state.buildings[command.buildingId]
       const def = building && buildings[building.type]

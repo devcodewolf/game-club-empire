@@ -28,6 +28,8 @@ import type { Weather } from './time/clock'
 import type { LedgerEntry } from './economy/ledger'
 import type { WeeklyReport } from './economy/recurring'
 import type { StaffRole } from './economy/staff'
+import type { MatchResult } from './club/match'
+import { isChangingRoom, type ChangingRoomUse } from './club/changingRooms'
 import { applyPitchRepair, pitchMaxConditionAfterUpgrade } from './economy/upkeep'
 import { applyBlockMove, planBlockMove, type BlockMoveError } from './map/moveBlock'
 import type { FloorId } from './map/floors'
@@ -115,6 +117,10 @@ export type Command =
   | { readonly type: 'repairPitch'; readonly buildingId: BuildingId }
   /** Reparar un objeto averiado (de pago). */
   | { readonly type: 'repairBuilding'; readonly buildingId: BuildingId }
+  /** Uso de un vestuario: local o visitante. */
+  | { readonly type: 'setRoomUse'; readonly roomId: RoomId; readonly use: ChangingRoomUse }
+  /** Poner banquillos de madera junto a la banda de un campo (de pago). */
+  | { readonly type: 'buildBenches'; readonly buildingId: BuildingId }
   /** Activa o desactiva el alquiler de un campo. */
   | { readonly type: 'setPitchRental'; readonly buildingId: BuildingId; readonly rental: boolean }
   | { readonly type: 'paintFloor'; readonly rect: TileRect; readonly floor: FloorId }
@@ -166,6 +172,17 @@ export type GameEvent =
       readonly rental: boolean
     }
   | { readonly type: 'staffChanged'; readonly role: StaffRole; readonly count: number }
+  | { readonly type: 'roomUseChanged'; readonly roomId: RoomId; readonly use: ChangingRoomUse }
+  /** Se pusieron banquillos en un campo (ya con `benches`). */
+  | { readonly type: 'benchesBuilt'; readonly building: PlacedBuilding }
+  /** Empezó el partido de la jornada (el resultado se enseña al terminar). */
+  | { readonly type: 'matchStarted'; readonly match: MatchResult }
+  /** Terminó el partido: resultado, dinero del día y cambios de fama y afición. */
+  | { readonly type: 'matchPlayed'; readonly match: MatchResult }
+  /** Cambiaron la fama, la afición o los socios. */
+  | { readonly type: 'clubChanged' }
+  /** Primera sala completa de estos tipos (+1 de fama cada una). */
+  | { readonly type: 'firstRooms'; readonly roomTypes: readonly RoomTypeId[] }
   /** Cambió el estado o el descanso de algún campo (cuidado nocturno, alquiler, reparación). */
   | { readonly type: 'pitchesChanged' }
   /** Se averiaron objetos (lunes) o se reparó uno. */
@@ -253,6 +270,11 @@ export type CommandError =
   | 'noStaffToFire'
   /** El objeto no está averiado. */
   | 'notBroken'
+  /** No es un vestuario. */
+  | 'notAChangingRoom'
+  | 'roomNotFound'
+  /** El campo ya tiene banquillos. */
+  | 'hasBenches'
 
 export type CommandResult =
   | { readonly ok: true; readonly event: GameEvent }
@@ -300,6 +322,24 @@ export function executeCommand(
       const repaired: PlacedBuilding = { ...building, broken: false }
       state.buildings[building.id] = repaired
       return { ok: true, event: { type: 'buildingRepaired', building: repaired } }
+    }
+    case 'setRoomUse': {
+      const room = state.rooms[command.roomId]
+      if (!room) return { ok: false, reason: 'roomNotFound' }
+      if (!isChangingRoom(state, content, room.id)) return { ok: false, reason: 'notAChangingRoom' }
+      if (room.use === command.use) return { ok: false, reason: 'sameRole' }
+      state.rooms[room.id] = { ...room, use: command.use }
+      return { ok: true, event: { type: 'roomUseChanged', roomId: room.id, use: command.use } }
+    }
+    case 'buildBenches': {
+      const building = state.buildings[command.buildingId]
+      const def = building && content.buildings[building.type]
+      if (!building || !def) return { ok: false, reason: 'buildingNotFound' }
+      if (!def.pitch) return { ok: false, reason: 'notAPitch' }
+      if (building.benches) return { ok: false, reason: 'hasBenches' }
+      const withBenches: PlacedBuilding = { ...building, benches: true }
+      state.buildings[building.id] = withBenches
+      return { ok: true, event: { type: 'benchesBuilt', building: withBenches } }
     }
     case 'placeStand':
       return placeStand(state, command, content)
