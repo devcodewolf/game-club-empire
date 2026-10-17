@@ -122,29 +122,92 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 
 > En la Fase 2 se decide si mover cuesta dinero; con obreros (Fase 4/6), mover dejará de ser instantáneo, como en Prison Architect. PA solo mueve objetos: mover bloques es una mejora sobre el original.
 
-✅ **Validar:** mover una taquilla, un vestuario completo y el campo principal con su estadio, sin dejar nada a medias.
+✅ **Validar:** mover una taquilla, un vestuario completo y el campo principal con su estadio, sin dejar nada a medias. — **Validado por Raul el 17-oct-2026.**
 
 ---
 
 ## Fase 2 — Tiempo y economía
-**Resultado visible:** el reloj avanza, el dinero sube y baja, y el HUD lo muestra.
+**Resultado visible:** el reloj avanza, el dinero sube y baja, hay partido cada domingo y el HUD lo muestra.
 
-- [ ] 🧠 Bucle de ticks determinista con pausa / 1x / 3x
-- [ ] 🧠 Recursos: dinero, fama, afición. Coste de construcción (por casilla de suelo y muro, por objeto) y mantenimiento semanal por sala
-- [ ] 🧠 Ingresos básicos: taquilla según grada y afición; cuotas de socios
-- [ ] ⚡ HUD en Vue: fecha, velocidad, recursos con variación (+/−)
-- [ ] ⚡ Panel de sala al hacer clic: tipo, capacidad, requisitos cumplidos, mantenimiento y qué aporta
-- [ ] 🧠 Condición de quiebra (dinero negativo X semanas)
-- [ ] 🧠 Guardado en IndexedDB tras una interfaz `SaveRepository` (permite pasar a archivos si se empaqueta como app de escritorio)
-- [ ] 🧠 Partidas versionadas: versión del formato + migraciones para no romper partidas antiguas
-- [ ] ⚡ Autoguardado semanal, botón manual y exportar/importar partida como `.json`
-- [ ] ⚡ Tests de economía (ingresos/gastos de una semana)
-- [ ] ⚡ Cifras del HUD animadas y textos flotantes "+120 €" sobre las salas
-- [ ] 🧠 Sistema de temas visuales de UI con Tailwind: estilo "carpeta del míster" (papel, clip, pestañas de colores en el lateral), fuente manuscrita para títulos y otra legible para datos
-- [ ] 🧠 **Informes** (como Reports de Prison Architect): botón "Informes" (icono de carpeta con papeles) abajo a la derecha que abre un cuaderno/carpeta con pestañas de colores en vertical a la IZQUIERDA. Hoja de papel con título en recuadro verde, secciones con cabecera de color, barras y listas. Las pestañas aparecen a medida que llegan los sistemas: Finanzas y Valoración (Fase 2) · Horario (Fase 3) · Plantilla y personal, Llegadas y fichajes, Trabajos y Necesidades (Fase 4) · Normas y Patrocinios (Fase 5) · Cantera (backlog)
-- [ ] ⚡ Pestaña Finanzas: ingresos y gastos por concepto y saldo neto por semana (como Finance de PA)
+> Especificación completa (cifras, fórmulas e interfaz): [`docs/prompts/FASE2-ESPECIFICACION.md`](prompts/FASE2-ESPECIFICACION.md). Todas las cifras son datos en `src/content/`; toda aleatoriedad usa el PRNG sembrado de la partida. Cada bloque termina con algo visible y se valida antes de pasar al siguiente.
 
-✅ **Validar:** una partida de 10 minutos tiene sentido económico; guardar y cargar funciona.
+**Bloque A — Reloj y tema visual**
+- [ ] 🧠 Bucle de ticks (1 tick = 1 min de juego) con `MINUTOS_REALES_POR_DIA`, velocidades ×1/×3/×5/×10 y pausa. Calendario con fecha, hora y día de la semana
+- [ ] 🧠 Planificador de eventos (por hora, día, semana, mes y fecha concreta) y "próximo evento"
+- [ ] 🧠 Clima diario sembrado
+- [ ] ⚡ Tokens del tema "carpeta del míster" en Tailwind (madera, papel, corcho, tipografías)
+- [ ] ⚡ HUD: fecha, hora, clima y velocidades, con teclas
+
+*Se ve:* el reloj avanza a cada velocidad, "próximo evento" salta al lunes y se detiene. *Prueba:* 1 día a ×1 dura 12 min (cronometrar a ×10: 72 s).
+
+**Bloque B — Libro de cuentas y costes**
+- [ ] 🧠 Libro de cuentas: cada movimiento con fecha, concepto, importe y origen (edificio o club). Será la fuente de Finanzas
+- [ ] 🧠 Cobro de construcción, mejoras, mover, demoler y deshacer (mover objeto gratis, bloque o campo 10 %; demoler devuelve 50 % objetos y 25 % suelos, muros y gradas; deshacer 10 s al 100 %); bloqueo sin fondos
+- [ ] 🧠 Inicio de partida: caseta vieja, campo de tierra, recursos iniciales
+- [ ] ⚡ Dinero en el HUD con cifra animada
+- [ ] ⚡ Textos flotantes con agrupación
+
+*Se ve:* construir resta dinero con su "−X €". *Prueba:* construir y deshacer deja el saldo igual; demoler devuelve los porcentajes correctos.
+
+**Bloque C — Ingresos y gastos regulares**
+- [ ] 🧠 Subvención con ayuda de arranque, socios, bar, alquiler del campo (interruptor en la ficha del campo)
+- [ ] 🧠 Mantenimiento semanal (objetos, interiores, césped y gradas) y lunes de cuentas
+- [ ] ⚡ Aviso del lunes de cuentas
+- [ ] ⚡ Ficha de sala ampliada con mantenimiento y aportaciones
+
+*Se ve:* el dinero sube y baja solo. *Prueba:* test de una semana completa que cuadre con las fórmulas.
+
+**Bloque D — Personal y estado del campo**
+- [ ] 🧠 Personal abstracto con cobertura (jardinero, limpieza, mantenimiento)
+- [ ] 🧠 Estado del campo y averías
+- [ ] ⚡ Pestaña Personal del cuaderno
+- [ ] ⚡ Icono de avería sobre el objeto y botón de reparar en su ficha
+
+*Se ve:* sin jardinero el campo no se recupera; sin mantenimiento aparecen averías. *Prueba:* tests de cobertura y de probabilidad de averías con semilla fija.
+
+**Bloque E — Partido mínimo, fama y afición**
+- [ ] 🧠 Partido semanal con fuerza, goles por Poisson, asistencia, taquilla, bar y aparcamiento
+- [ ] 🧠 Fama, afición, satisfacción y socios
+- [ ] ⚡ Pantalla de resultado del partido
+- [ ] ⚡ Socios, afición y fama en el HUD
+- [ ] ⚡ Banderines en las farolas según la afición
+
+*Se ve:* cada domingo hay partido con ingresos que flotan sobre sus edificios. *Prueba:* simular 20 partidos con semilla fija; la distribución de resultados es razonable (ni siempre ganar ni siempre perder).
+
+**Bloque F — Tablón, patrocinios y nuevas fuentes**
+- [ ] 🧠 Tablón del vestuario y patrocinios locales con objetivos como datos
+- [ ] 🧠 Vallas publicitarias (objeto, colocación en el pasillo perimetral, anunciantes)
+- [ ] 🧠 Escuela de fútbol con monitores
+- [ ] 🧠 Lotería de Navidad
+- [ ] ⚡ Notas del tablón, carteles de los anunciantes y logotipos de los patrocinadores
+
+*Se ve:* el tablón propone metas; las vallas muestran anuncios. *Prueba:* aceptar, cumplir, fallar y cancelar un patrocinio dan los importes y la fama correctos.
+
+**Bloque G — Quiebra**
+- [ ] 🧠 Contador de lunes en negativo, dos rescates con condiciones y fin de partida
+- [ ] ⚡ Avisos y pantalla "El club se disuelve"
+
+*Prueba:* forzar el saldo negativo y comprobar los dos rescates y el final.
+
+**Bloque H — Informes**
+- [ ] ⚡ Cuaderno con pestañas: Finanzas, Valoración (con opinión del pueblo), Personal y Partidos
+- [ ] 🧠 Reglas de la opinión del pueblo (cada frase, con su condición, como dato)
+
+**Bloque I — Guardado**
+- [ ] 🧠 Partidas con número de versión y migraciones; autoguardado cada lunes y guardado manual (IndexedDB tras una interfaz `SaveRepository`)
+- [ ] ⚡ Exportar e importar `.json`
+
+*Prueba:* guardar a mitad de semana, recargar y comprobar que todo (incluido el PRNG) continúa igual.
+
+**Fuera de esta fase:** liga, clasificación y ascensos (3) · horario semanal (3) · jugadores, necesidades y personal visible (4) · lluvia visible y deterioro visual (4B / 6) · electricidad y agua (4B) · patrocinio de camiseta, campus, tienda y eventos (5 o backlog) · junta directiva, préstamos e inversores (5 / backlog) · obreros y obra no instantánea (backlog).
+
+✅ **Validar:**
+1. Una sesión de unos 45 minutos reales, mezclando velocidades, cubre 4-5 semanas de juego y 2-3 partidos en casa, con decisiones económicas con sentido: no sobra el dinero ni se está siempre en quiebra.
+2. Con una construcción razonable, el saldo de las primeras 4 semanas es positivo; al retirarse la ayuda (semanas 5-8) se ajusta, y sin vallas, escuela ni patrocinios se acerca a cero.
+3. Ninguna fuente supera el 50 % de los ingresos de un mes típico.
+4. Guardar, recargar, exportar e importar conservan el estado exacto.
+5. Los tests de la economía (semana tipo, partido, patrocinios, quiebra) pasan con semilla fija.
+6. Raul juega una partida y le apetece seguir jugando.
 
 ---
 
