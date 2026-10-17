@@ -23,6 +23,22 @@ function detectDevMode(): boolean {
   return new URLSearchParams(window.location.search).has('dev')
 }
 
+/** Dinero de `?infinite` (para probar sin preocuparse del saldo). */
+const TEST_MONEY = 1_000_000
+
+/**
+ * Dinero inicial de pruebas desde la URL, o undefined para el normal:
+ * `?infinite` da 1.000.000 € y `?money=50000` la cifra que se pida.
+ * Se combina con `?dev` (`?dev&infinite`).
+ */
+export function detectTestMoney(): number | undefined {
+  if (typeof window === 'undefined') return undefined
+  const params = new URLSearchParams(window.location.search)
+  const custom = Number(params.get('money'))
+  if (params.has('money') && Number.isFinite(custom) && custom > 0) return custom
+  return params.has('infinite') ? TEST_MONEY : undefined
+}
+
 export const useProgressionStore = defineStore('progression', () => {
   const division = ref<DivisionId>(STARTING_DIVISION)
 

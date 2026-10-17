@@ -14,7 +14,7 @@ import RoomPanel from '@/ui/room-panel/RoomPanel.vue'
 import ReportsButton from '@/ui/reports/ReportsButton.vue'
 import ReportsFolder from '@/ui/reports/ReportsFolder.vue'
 import { provideGame } from '@/ui/composables/useGame'
-import { useProgressionStore } from '@/ui/stores/progressionStore'
+import { detectTestMoney, useProgressionStore } from '@/ui/stores/progressionStore'
 import { useToolShortcuts } from '@/ui/composables/useToolShortcuts'
 import { useGameLoop } from '@/ui/composables/useGameLoop'
 import { useTimeShortcuts } from '@/ui/composables/useTimeShortcuts'
@@ -26,7 +26,11 @@ import { START_SCENARIO } from '@/content/start'
 
 // markRaw: la simulación no debe ser reactiva (Vue la envolvería en Proxies
 // y cada lectura del estado sería más lenta). La UI se entera por eventos.
-const game = markRaw(createGame(MAP_CONFIG, GAME_CONTENT, { scenario: START_SCENARIO }))
+// `?infinite` o `?money=N` en la URL: dinero de pruebas (ver `detectTestMoney`)
+const testMoney = detectTestMoney()
+const game = markRaw(
+  createGame(MAP_CONFIG, GAME_CONTENT, { scenario: START_SCENARIO, money: testMoney }),
+)
 
 provideGame(game)
 onBeforeUnmount(useAccountsStore().listen(game))
@@ -51,7 +55,7 @@ useTimeShortcuts(game)
               v-if="devMode"
               class="rounded-sm bg-amber-400 px-2 py-0.5 text-xs font-bold text-stone-900"
             >
-              MODO DESARROLLO · todo desbloqueado
+              MODO DESARROLLO · todo desbloqueado{{ testMoney ? ' · dinero de pruebas' : '' }}
             </span>
           </div>
           <!-- Reloj y, debajo, todo lo que "pasa" (avisos, lunes de cuentas…), flotando
