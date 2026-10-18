@@ -2,23 +2,16 @@
 /**
  * Apartado del tablón con las subvenciones en marcha: título en negrita con
  * su cuadradito, lo que se cobra al cumplir en rojo a la derecha y las tareas
- * debajo, tachadas al cumplirse. Si hay ofertas sin aceptar, una línea que
- * lleva a la pestaña Subvenciones del cuaderno, donde se gestiona todo.
+ * debajo, tachadas al cumplirse. Las ofertas van en `BoardOffersSection`;
+ * todo se gestiona en la pestaña Subvenciones del cuaderno.
  */
-import { computed } from 'vue'
 import { formatEuros } from '@/ui/composables/formatMoney'
 import { useReports } from '@/ui/reports/useReports'
 import ObjectiveRows from './ObjectiveRows.vue'
 import { useGrantsBoard } from './useGrantsBoard'
 
 const reports = useReports()
-const { active, offered } = useGrantsBoard()
-
-const offeredText = computed(() =>
-  offered.value.length === 1
-    ? 'El ayuntamiento ofrece 1 subvención'
-    : `El ayuntamiento ofrece ${offered.value.length} subvenciones`,
-)
+const { active } = useGrantsBoard()
 
 function openGrants(): void {
   reports.selectTab('grants')
@@ -43,20 +36,6 @@ function openGrants(): void {
       }}</span>
     </h3>
     <ObjectiveRows class="pl-3" :rows="grant.rows" todo compact />
-  </section>
-
-  <section v-if="offered.length > 0" class="mt-1">
-    <h3 class="flex items-baseline gap-1.5">
-      <span class="bullet" aria-hidden="true" />
-      <span class="font-hand text-[18px] leading-5 font-bold">Ofertas nuevas</span>
-    </h3>
-    <button
-      type="button"
-      class="cursor-pointer pl-5 text-left font-hand text-[15px] leading-5 text-ink-blue underline underline-offset-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
-      @click="openGrants"
-    >
-      {{ offeredText }} (ver en Informes)
-    </button>
   </section>
 </template>
 

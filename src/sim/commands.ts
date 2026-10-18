@@ -36,6 +36,13 @@ import {
   validateAcceptGrant,
   type GrantError,
 } from './club/grants'
+import {
+  applyAcceptSponsor,
+  applyCancelSponsor,
+  validateAcceptSponsor,
+  type ActiveSponsor,
+  type SponsorError,
+} from './club/sponsors'
 import { applyPitchRepair, pitchMaxConditionAfterUpgrade } from './economy/upkeep'
 import { applyBlockMove, planBlockMove, type BlockMoveError } from './map/moveBlock'
 import type { FloorId } from './map/floors'
@@ -132,6 +139,9 @@ export type Command =
   /** Aceptar una subvención (cobra el adelanto) o cancelarla (devuelve el adelanto con recargo). */
   | { readonly type: 'acceptGrant'; readonly grantId: string }
   | { readonly type: 'cancelGrant'; readonly grantId: string }
+  /** Aceptar un patrocinio ofrecido (cobra el adelanto) o cancelar uno en marcha. */
+  | { readonly type: 'acceptSponsor'; readonly offerId: string }
+  | { readonly type: 'cancelSponsor'; readonly sponsorId: string }
   /** Activa o desactiva el alquiler de un campo. */
   | { readonly type: 'setPitchRental'; readonly buildingId: BuildingId; readonly rental: boolean }
   | { readonly type: 'paintFloor'; readonly rect: TileRect; readonly floor: FloorId }
@@ -198,6 +208,12 @@ export type GameEvent =
   | { readonly type: 'grantsProgress' }
   /** Se cumplió una subvención: bonus y fama ya aplicados. */
   | { readonly type: 'grantCompleted'; readonly grantId: string }
+  | { readonly type: 'sponsorAccepted'; readonly sponsorId: string }
+  | { readonly type: 'sponsorCancelled'; readonly sponsorId: string }
+  /** Cambiaron las ofertas, se tachó algún objetivo de un patrocinio o se cumplió o venció alguno. */
+  | { readonly type: 'sponsorsProgress' }
+  | { readonly type: 'sponsorCompleted'; readonly sponsor: ActiveSponsor }
+  | { readonly type: 'sponsorFailed'; readonly sponsor: ActiveSponsor }
   /** Cambiaron la fama, la afición o los socios. */
   | { readonly type: 'clubChanged' }
   /** Primera sala completa de estos tipos (+1 de fama cada una). */
@@ -275,6 +291,7 @@ export type CommandError =
   | MoveError
   | BlockMoveError
   | GrantError
+  | SponsorError
   | 'needsPitch'
   | 'buildingNotFound'
   | 'notUpgradable'
@@ -379,6 +396,16 @@ export function executeCommand(
     case 'cancelGrant':
       if (!applyCancelGrant(state, command.grantId)) return { ok: false, reason: 'grantNotActive' }
       return { ok: true, event: { type: 'grantCancelled', grantId: command.grantId } }
+    case 'acceptSponsor': {
+      const error = validateAcceptSponsor(state, content, command.offerId)
+      if (error) return { ok: false, reason: error }
+      applyAcceptSponsor(state, command.offerId)
+      return { ok: true, event: { type: 'sponsorAccepted', sponsorId: command.offerId } }
+    }
+    case 'cancelSponsor':
+      if (!applyCancelSponsor(state, command.sponsorId))
+        return { ok: false, reason: 'sponsorNotActive' }
+      return { ok: true, event: { type: 'sponsorCancelled', sponsorId: command.sponsorId } }
     case 'placeStand':
       return placeStand(state, command, content)
     case 'undo':

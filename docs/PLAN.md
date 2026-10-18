@@ -183,7 +183,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 **Bloque F — Tablón, patrocinios y nuevas fuentes**
 - [x] 🧠 Subvenciones del ayuntamiento como las de Prison Architect: lista encadenada con objetivos, adelanto al aceptar y bonus al cumplir, 2 activas, se tachan los objetivos al cumplirlos (idea de Raul; cadena inicial en `docs/IDEAS.md`)
 - [ ] 🧠 El tablón avisa de lo que frena al club ("El vestuario no cuenta: le faltan 2 duchas", "Nadie cuida el campo: contrata un jardinero"); cada nota lleva a su ficha al hacer clic
-- [ ] 🧠 Tablón del vestuario y patrocinios locales con objetivos como datos. El tablón es el equivalente a la lista "Todo" de Prison Architect: nota de corcho arriba a la izquierda con secciones (próximo partido, patrocinios con sus objetivos tachados al cumplirlos, ofertas, averías, quiebra, lotería) y un contador de pendientes
+- [x] 🧠 Tablón del vestuario y patrocinios locales con objetivos como datos. El tablón es el equivalente a la lista "Todo" de Prison Architect: nota de corcho arriba a la izquierda con secciones (próximo partido, patrocinios con sus objetivos tachados al cumplirlos, ofertas, averías, quiebra, lotería) y un contador de pendientes
 - [ ] 🧠 Vallas publicitarias (objeto, colocación en el pasillo perimetral, anunciantes)
 - [ ] 🧠 Escuela de fútbol con monitores
 - [ ] 🧠 Lotería de Navidad

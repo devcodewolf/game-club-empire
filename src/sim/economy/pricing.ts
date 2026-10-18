@@ -276,6 +276,20 @@ export function commandPrice(state: MapState, content: SimContent, command: Comm
       const grant = grantDef(content, command.grantId)
       return { cost: 0, refund: grant?.advance ?? 0, concept: 'grants', refundConcept: 'grants' }
     }
+    case 'acceptSponsor': {
+      const offer = state.club.sponsors.offers.find((o) => o.id === command.offerId)
+      return {
+        cost: 0,
+        refund: offer?.advance ?? 0,
+        concept: 'sponsors',
+        refundConcept: 'sponsors',
+      }
+    }
+    case 'cancelSponsor': {
+      const sponsor = state.club.sponsors.active.find((a) => a.id === command.sponsorId)
+      if (!sponsor) return { ...FREE, concept: 'sponsors' }
+      return { cost: sponsor.advance * content.sponsors.cancelRate, refund: 0, concept: 'sponsors' }
+    }
     case 'cancelGrant': {
       const grant = grantDef(content, command.grantId)
       const active = state.club.grants.active.some((a) => a.id === command.grantId)

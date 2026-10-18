@@ -48,6 +48,8 @@ export type LedgerConcept =
   | 'fines'
   /** Subvenciones con objetivos: adelanto, bonus y devolución al cancelar. */
   | 'grants'
+  /** Patrocinios locales: adelanto, bonus y devolución al cancelar. */
+  | 'sponsors'
 
 export interface LedgerEntry {
   /** Instante (minutos de juego). */

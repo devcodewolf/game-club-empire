@@ -21,6 +21,7 @@ import type { StaffRole } from '../economy/staff'
 import type { MatchPreview, MatchResult } from '../club/match'
 import type { RoomTypeId } from '../rooms/roomTypes'
 import type { GrantsState } from '../club/grants'
+import type { SponsorsState } from '../club/sponsors'
 
 /** Datos del club que cambian durante la partida (además del dinero). */
 export interface ClubState {
@@ -48,6 +49,8 @@ export interface ClubState {
   readonly roomsCompleted: RoomTypeId[]
   /** Subvenciones aceptadas y cumplidas. */
   readonly grants: GrantsState
+  /** Patrocinios locales: ofertas, tratos en marcha e historial. */
+  readonly sponsors: SponsorsState
 }
 import { NO_DOOR, NO_WALL, type DoorId, type WallId } from './structureTypes'
 import { NO_ROOM, type Room, type RoomId } from '../rooms/roomTypes'
@@ -150,6 +153,7 @@ export function createMapState({ size, features }: MapConfig): MapState {
       nextMatch: null,
       roomsCompleted: [],
       grants: { active: [], completed: [] },
+      sponsors: { offers: [], active: [], history: [], nextId: 1 },
     },
   }
 

@@ -6,6 +6,7 @@
 import type { EconomyContent } from '../economy/ledger'
 import type { MatchContent } from '../club/match'
 import type { GrantsContent } from '../club/grants'
+import type { SponsorsContent } from '../club/sponsors'
 import type { TimeContent } from '../time/clock'
 import type { BuildingCatalog } from '../buildings/buildings'
 import type { SimContent } from '../content'
@@ -328,6 +329,52 @@ export const TEST_GRANTS: GrantsContent = {
   ],
 }
 
+/**
+ * Patrocinios de prueba: dos negocios y tres plantillas (una relativa de
+ * socios, una de jardinero y una que solo sale en otra división).
+ */
+export const TEST_SPONSORS: SponsorsContent = {
+  maxActive: 2,
+  maxOffers: 2,
+  offerEveryWeeks: 2,
+  offerLifetimeWeeks: 4,
+  cancelRate: 1.1,
+  advance: [500, 1000, 1500],
+  bonus: [1500, 2500, 4000],
+  moneySpread: 0,
+  fame: { completed: 2, failed: -2 },
+  businesses: [
+    {
+      id: 'bakery',
+      name: 'Panadería',
+      logo: { shape: 'bread', color: 0xc98a3e, accent: 0xffffff },
+    },
+    { id: 'garage', name: 'Taller', logo: { shape: 'wrench', color: 0x3f6fa8, accent: 0xffffff } },
+    { id: 'bar', name: 'Bar', logo: { shape: 'cup', color: 0x7a5a3a, accent: 0xffffff } },
+  ],
+  templates: [
+    {
+      id: 'members',
+      difficulty: 1,
+      weeks: [3, 3],
+      objectives: [{ objective: { kind: 'members', min: 10 }, relative: true }],
+    },
+    {
+      id: 'gardener',
+      difficulty: 2,
+      weeks: [4, 4],
+      objectives: [{ objective: { kind: 'staff', role: 'gardener', min: 1 } }],
+    },
+    {
+      id: 'elsewhere',
+      difficulty: 3,
+      weeks: [5, 5],
+      divisions: ['regional'],
+      objectives: [{ objective: { kind: 'fans', min: 1 } }],
+    },
+  ],
+}
+
 export const TEST_CONTENT: SimContent = {
   buildings: TEST_CATALOG,
   floors: TEST_FLOORS,
@@ -338,6 +385,7 @@ export const TEST_CONTENT: SimContent = {
   economy: TEST_ECONOMY,
   match: TEST_MATCH,
   grants: TEST_GRANTS,
+  sponsors: TEST_SPONSORS,
 }
 
 /**

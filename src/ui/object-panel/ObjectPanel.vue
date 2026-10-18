@@ -360,7 +360,7 @@ function upgrade(): void {
             />{{
               benches.current
                 ? `Mejorar a ${benches.next.name} (${formatEuros(benches.next.cost)})`
-                : `Poner banquillos: ${benches.next.name} (${formatEuros(benches.next.cost)})`
+                : `Banquillos: ${benches.next.name} (${formatEuros(benches.next.cost)})`
             }}
           </button>
           <p class="font-hand text-[15px] leading-5 text-ink-blue">

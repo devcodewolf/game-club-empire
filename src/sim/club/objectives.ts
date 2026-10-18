@@ -19,6 +19,7 @@ import { pitchCapacity } from '../buildings/stands'
 import type { StaffRole } from '../economy/staff'
 import { pitchCondition } from '../economy/upkeep'
 import { mainPitch } from './match'
+import { clubChangingRooms } from './changingRooms'
 
 export type Objective =
   /** Salas completas de un tipo (por defecto, una). */
@@ -40,6 +41,8 @@ export type Objective =
   | { readonly kind: 'students'; readonly min: number }
   /** Banquillos del campo principal de este nivel (índice) o más. */
   | { readonly kind: 'benches'; readonly tier: number }
+  /** Calidad (0-10) del vestuario local. */
+  | { readonly kind: 'changingRoomQuality'; readonly min: number }
 
 /** Seguimiento de los objetivos de un contrato (subvención o patrocinio). */
 export interface ObjectivesProgress {
@@ -136,6 +139,8 @@ export function objectiveStatus(
       const tier = main?.benches
       return { current: tier === undefined ? 0 : tier + 1, target: objective.tier + 1 }
     }
+    case 'changingRoomQuality':
+      return { current: clubChangingRooms(state, content).home.quality, target: objective.min }
   }
 }
 

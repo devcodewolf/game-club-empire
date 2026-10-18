@@ -13,6 +13,7 @@ import type { TimeContent } from './time/clock'
 import type { EconomyContent } from './economy/ledger'
 import type { MatchContent } from './club/match'
 import type { GrantsContent } from './club/grants'
+import type { SponsorsContent } from './club/sponsors'
 
 export interface SimContent {
   readonly buildings: BuildingCatalog
@@ -28,4 +29,6 @@ export interface SimContent {
   readonly match: MatchContent
   /** Subvenciones del ayuntamiento con objetivos. */
   readonly grants: GrantsContent
+  /** Patrocinios de los negocios del pueblo. */
+  readonly sponsors: SponsorsContent
 }

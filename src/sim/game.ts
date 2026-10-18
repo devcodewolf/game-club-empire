@@ -16,6 +16,7 @@ import { commandPrice } from './economy/pricing'
 import { applyEconomyEvent } from './economy/recurring'
 import { record, type LedgerConcept } from './economy/ledger'
 import { updateGrants } from './club/grants'
+import { fillOffers, updateSponsors, weeklySponsors } from './club/sponsors'
 import { captureMap, diffMap, restoreMap, type MapSnapshot } from './map/snapshot'
 import { announceMatch, finishMatch, startMatch } from './club/match'
 import { awardFirstRooms, weeklyClubUpdate } from './club/fans'
@@ -86,19 +87,30 @@ export function createGame(
   // Lo que ya venga completo en el escenario no cuenta como estreno de sala (ni da fama)
   awardFirstRooms(state, content)
   state.club.fame = content.match.fame.start
+  // "Dos patrocinios ofrecidos" en el tablón desde el primer minuto
+  fillOffers(state, content)
 
   const listeners = new Set<GameListener>()
   const emit = (event: GameEvent): void => {
     for (const listener of listeners) listener(event)
   }
-  /** Comprueba los objetivos de las subvenciones y avisa de lo que cambie. */
-  const checkGrants = (): void => {
-    const update = updateGrants(state, content)
-    if (!update.changed) return
-    for (const entry of update.entries) emit({ type: 'transaction', entry })
-    for (const grant of update.completed) emit({ type: 'grantCompleted', grantId: grant.id })
-    if (update.completed.length) emit({ type: 'clubChanged' })
-    emit({ type: 'grantsProgress' })
+  /** Comprueba los objetivos de subvenciones y patrocinios y avisa de lo que cambie. */
+  const checkContracts = (): void => {
+    const grants = updateGrants(state, content)
+    if (grants.changed) {
+      for (const entry of grants.entries) emit({ type: 'transaction', entry })
+      for (const grant of grants.completed) emit({ type: 'grantCompleted', grantId: grant.id })
+      if (grants.completed.length) emit({ type: 'clubChanged' })
+      emit({ type: 'grantsProgress' })
+    }
+    const sponsors = updateSponsors(state, content)
+    if (sponsors.changed) {
+      for (const entry of sponsors.entries) emit({ type: 'transaction', entry })
+      for (const sponsor of sponsors.completed) emit({ type: 'sponsorCompleted', sponsor })
+      for (const sponsor of sponsors.failed) emit({ type: 'sponsorFailed', sponsor })
+      if (sponsors.completed.length || sponsors.failed.length) emit({ type: 'clubChanged' })
+      emit({ type: 'sponsorsProgress' })
+    }
   }
 
   /**
@@ -157,6 +169,7 @@ export function createGame(
     if (outcome.pitchesChanged) emit({ type: 'pitchesChanged' })
     if (outcome.report) {
       if (weeklyClubUpdate(state, content)) emit({ type: 'clubChanged' })
+      if (weeklySponsors(state, content)) emit({ type: 'sponsorsProgress' })
       emit({ type: 'weeklyReport', report: outcome.report })
     }
     return true
@@ -209,7 +222,7 @@ export function createGame(
         const entry = record(state, concept, amount, price.rect)
         if (entry) emit({ type: 'transaction', entry })
       }
-      checkGrants()
+      checkContracts()
       return result
     },
     advance(minutes, options) {
@@ -218,7 +231,7 @@ export function createGame(
         // Cada suceso tiene efecto en su instante; después se miran los objetivos de las subvenciones
         onOccurrence(occurrence) {
           const happened = handleOccurrence(occurrence)
-          if (happened !== false) checkGrants()
+          if (happened !== false) checkContracts()
           return happened
         },
       })

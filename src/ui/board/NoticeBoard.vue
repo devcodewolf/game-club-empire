@@ -15,8 +15,12 @@ import { grantDef } from '@/sim/club/grants'
 import { useGame } from '@/ui/composables/useGame'
 import { formatSignedEuros } from '@/ui/composables/formatMoney'
 import { useNoticeStore } from '@/ui/stores/noticeStore'
+import { businessOf } from '@/sim/club/sponsors'
 import BoardGrantsSection from './BoardGrantsSection.vue'
+import BoardOffersSection from './BoardOffersSection.vue'
+import BoardSponsorsSection from './BoardSponsorsSection.vue'
 import { useGrantsBoard } from './useGrantsBoard'
+import { useSponsorsBoard } from './useSponsorsBoard'
 
 const STORAGE_KEY = 'club.board.folded'
 
@@ -24,11 +28,21 @@ const game = useGame()
 const notices = useNoticeStore()
 const { active, offered } = useGrantsBoard()
 /** Sin nada en marcha ni ofertas, el tablón no se muestra. */
-const visible = computed(() => active.value.length > 0 || offered.value.length > 0)
+const sponsors = useSponsorsBoard()
+const visible = computed(
+  () =>
+    active.value.length > 0 ||
+    offered.value.length > 0 ||
+    sponsors.active.value.length > 0 ||
+    sponsors.offers.value.length > 0,
+)
 
 /** Tareas cumplidas sobre el total, como el "3/11" de Prison Architect. */
 const tally = computed(() => {
-  const rows = active.value.flatMap((grant) => grant.rows)
+  const rows = [
+    ...active.value.flatMap((grant) => grant.rows),
+    ...sponsors.active.value.flatMap((view) => view.rows),
+  ]
   return { done: rows.filter((row) => row.done).length, total: rows.length }
 })
 
@@ -49,11 +63,36 @@ watch(folded, (value) => {
 })
 
 // Aviso al cumplir una subvención
+const businessName = (id: string): string => businessOf(game.content, id)?.name ?? id
+const knownOffers = new Set(game.state.club.sponsors.offers.map((offer) => offer.id))
 const unsubscribe = game.subscribe((event) => {
-  if (event.type !== 'grantCompleted') return
-  const def = grantDef(game.content, event.grantId)
-  if (def) {
-    notices.show('✅', `¡Subvención cumplida: ${def.name}! ${formatSignedEuros(def.bonus)}`)
+  if (event.type === 'grantCompleted') {
+    const def = grantDef(game.content, event.grantId)
+    if (def) {
+      notices.show('✅', `¡Subvención cumplida: ${def.name}! ${formatSignedEuros(def.bonus)}`)
+    }
+  } else if (event.type === 'sponsorCompleted') {
+    const { sponsor } = event
+    notices.show(
+      '✅',
+      `¡Patrocinio cumplido: ${businessName(sponsor.business)}! ${formatSignedEuros(sponsor.bonus)}`,
+    )
+  } else if (event.type === 'sponsorFailed') {
+    const fame = game.content.sponsors.fame.failed
+    notices.show(
+      '⌛',
+      `Patrocinio vencido: ${businessName(event.sponsor.business)} (${formatSignedEuros(fame).replace(' €', '')} de fama)`,
+    )
+  } else if (event.type === 'sponsorsProgress') {
+    // Ofertas que no estaban antes (las caducadas o aceptadas simplemente se olvidan)
+    const offers = game.state.club.sponsors.offers
+    for (const offer of offers) {
+      if (!knownOffers.has(offer.id)) {
+        notices.show('🤝', `Nueva oferta de patrocinio: ${businessName(offer.business)}`)
+      }
+    }
+    knownOffers.clear()
+    for (const offer of offers) knownOffers.add(offer.id)
   }
 })
 onBeforeUnmount(unsubscribe)
@@ -99,6 +138,8 @@ onBeforeUnmount(unsubscribe)
     <!-- Hoja con renglones -->
     <div v-show="!folded" class="todo-sheet max-h-[60vh] overflow-y-auto px-2.5 pt-1 pb-3">
       <BoardGrantsSection />
+      <BoardSponsorsSection />
+      <BoardOffersSection />
     </div>
   </section>
 </template>

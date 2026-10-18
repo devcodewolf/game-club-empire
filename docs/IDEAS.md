@@ -85,6 +85,10 @@ En el tablón y en la pestaña Subvenciones del cuaderno, los objetivos se tacha
 - Hoja de libreta con renglones arriba a la izquierda: "Tablón 1/4" (tareas cumplidas sobre el total), apartados con cuadradito negro y título en negrita, el dinero de cada subvención en rojo a la derecha y las tareas tachadas al cumplirse. Toda la gestión, en las pestañas de Informes.
 - Más adelante, iconos en la cabecera (presidente, avisos…), como en PA.
 
+### Marcas deportivas (inventadas) · Fase 5 · Propuesta
+- Además de los negocios del pueblo, **marcas deportivas** que visten al club: equipación, balones, botas. Encaja con el "patrocinio de camiseta" de la Fase 5. Contrato por temporada, cuanto más fama y división, mejores marcas y más dinero. El logotipo sale en la camiseta de las figuritas, en las vallas y en la tienda del club.
+- **Siempre inventadas**, como los clubes: Nike, Adidas, Puma, Joma, Kelme… son marcas registradas, y usarlas en un juego publicado es un riesgo. Nombres con el mismo aire y sin parecerse a ninguna real, por ejemplo **Zancada**, **Brío Sport**, **Dorsal 9**, **Remate** o **Taco Pro**. Hay que comprobar cada nombre antes de usarlo.
+
 ### Pantalla de inicio con el nombre del club · Fase 2, Bloque I · En el plan
 - Al empezar una partida nueva se elige el **nombre del club** y otras cosas que se decidirán en su momento (colores, escudo dibujado, dificultad…). Hasta entonces el club se llama "Tu club".
 - Va junto al guardado: la pantalla de inicio ofrece nueva partida, continuar y cargar.
