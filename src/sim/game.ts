@@ -17,6 +17,7 @@ import { applyEconomyEvent } from './economy/recurring'
 import { record, type LedgerConcept } from './economy/ledger'
 import { updateGrants } from './club/grants'
 import { fillOffers, updateSponsors, weeklySponsors } from './club/sponsors'
+import { weeklyBillboards } from './club/billboards'
 import { captureMap, diffMap, restoreMap, type MapSnapshot } from './map/snapshot'
 import { announceMatch, finishMatch, startMatch } from './club/match'
 import { awardFirstRooms, weeklyClubUpdate } from './club/fans'
@@ -170,6 +171,9 @@ export function createGame(
     if (outcome.report) {
       if (weeklyClubUpdate(state, content)) emit({ type: 'clubChanged' })
       if (weeklySponsors(state, content)) emit({ type: 'sponsorsProgress' })
+      const boards = weeklyBillboards(state, content)
+      for (const entry of boards.entries) emit({ type: 'transaction', entry })
+      if (boards.changed.length) emit({ type: 'billboardsChanged', buildings: boards.changed })
       emit({ type: 'weeklyReport', report: outcome.report })
     }
     return true

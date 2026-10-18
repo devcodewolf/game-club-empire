@@ -85,6 +85,15 @@ En el tablón y en la pestaña Subvenciones del cuaderno, los objetivos se tacha
 - Hoja de libreta con renglones arriba a la izquierda: "Tablón 1/4" (tareas cumplidas sobre el total), apartados con cuadradito negro y título en negrita, el dinero de cada subvención en rojo a la derecha y las tareas tachadas al cumplirse. Toda la gestión, en las pestañas de Informes.
 - Más adelante, iconos en la cabecera (presidente, avisos…), como en PA.
 
+### Focos del campo y partidos de noche · Fase 3 (con el ciclo día/noche) · En el plan
+- Cada campo trae un **hueco para focos en sus cuatro esquinas**, como los banquillos: un dato del campo que se compra y se **mejora por niveles** (postes con dos focos → torres → torres de estadio).
+- Con el ciclo día/noche, en invierno anochece pronto: un partido a las 21:00 se juega a oscuras. Sin focos (o con focos flojos) baja la fuerza en casa y la asistencia, o directamente no se puede programar el partido tarde. Con buenos focos, partidos nocturnos con más público.
+- En el mapa, los focos se encienden de noche (ya está en la guía visual: "focos del estadio que se encienden de noche").
+
+### Derechos de televisión · Fase 3 · En el plan
+- Al llegar a **Segunda y Primera**, las cadenas pagan por retransmitir: un ingreso por partido (o por temporada) según la división y la fama. Puede pedir requisitos (focos de cierto nivel, una tribuna de prensa, aforo mínimo) que den motivos para construir.
+- Encaja como fuente de ingreso que sustituye a las pequeñas del pueblo cuando el club crece.
+
 ### Marcas deportivas (inventadas) · Fase 5 · Propuesta
 - Además de los negocios del pueblo, **marcas deportivas** que visten al club: equipación, balones, botas. Encaja con el "patrocinio de camiseta" de la Fase 5. Contrato por temporada, cuanto más fama y división, mejores marcas y más dinero. El logotipo sale en la camiseta de las figuritas, en las vallas y en la tienda del club.
 - **Siempre inventadas**, como los clubes: Nike, Adidas, Puma, Joma, Kelme… son marcas registradas, y usarlas en un juego publicado es un riesgo. Nombres con el mismo aire y sin parecerse a ninguna real, por ejemplo **Zancada**, **Brío Sport**, **Dorsal 9**, **Remate** o **Taco Pro**. Hay que comprobar cada nombre antes de usarlo.

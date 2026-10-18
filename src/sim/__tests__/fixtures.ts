@@ -7,6 +7,7 @@ import type { EconomyContent } from '../economy/ledger'
 import type { MatchContent } from '../club/match'
 import type { GrantsContent } from '../club/grants'
 import type { SponsorsContent } from '../club/sponsors'
+import type { BillboardsContent } from '../club/billboards'
 import type { TimeContent } from '../time/clock'
 import type { BuildingCatalog } from '../buildings/buildings'
 import type { SimContent } from '../content'
@@ -375,6 +376,17 @@ export const TEST_SPONSORS: SponsorsContent = {
   ],
 }
 
+/** Vallas de prueba: mismas reglas que el juego; el campo de prueba (fútbol 7) admite 3 en su primer nivel y 4 en el segundo. */
+export const TEST_BILLBOARDS: BillboardsContent = {
+  cost: 150,
+  maxPerPitch: { 7: [3, 4, 5], 11: [5, 6, 7] },
+  chanceBase: 0.3,
+  chancePerFame: 1 / 200,
+  weeks: [4, 12],
+  incomeBase: 20,
+  incomeFameDivisor: 50,
+}
+
 export const TEST_CONTENT: SimContent = {
   buildings: TEST_CATALOG,
   floors: TEST_FLOORS,
@@ -386,6 +398,7 @@ export const TEST_CONTENT: SimContent = {
   match: TEST_MATCH,
   grants: TEST_GRANTS,
   sponsors: TEST_SPONSORS,
+  billboards: TEST_BILLBOARDS,
 }
 
 /**

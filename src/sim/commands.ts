@@ -43,6 +43,7 @@ import {
   type ActiveSponsor,
   type SponsorError,
 } from './club/sponsors'
+import { applyBuildBillboard, validateBuildBillboard, type BillboardError } from './club/billboards'
 import { applyPitchRepair, pitchMaxConditionAfterUpgrade } from './economy/upkeep'
 import { applyBlockMove, planBlockMove, type BlockMoveError } from './map/moveBlock'
 import type { FloorId } from './map/floors'
@@ -142,6 +143,8 @@ export type Command =
   /** Aceptar un patrocinio ofrecido (cobra el adelanto) o cancelar uno en marcha. */
   | { readonly type: 'acceptSponsor'; readonly offerId: string }
   | { readonly type: 'cancelSponsor'; readonly sponsorId: string }
+  /** Poner una valla publicitaria más en el pasillo de un campo (de pago). */
+  | { readonly type: 'buildBillboard'; readonly buildingId: BuildingId }
   /** Activa o desactiva el alquiler de un campo. */
   | { readonly type: 'setPitchRental'; readonly buildingId: BuildingId; readonly rental: boolean }
   | { readonly type: 'paintFloor'; readonly rect: TileRect; readonly floor: FloorId }
@@ -214,6 +217,8 @@ export type GameEvent =
   | { readonly type: 'sponsorsProgress' }
   | { readonly type: 'sponsorCompleted'; readonly sponsor: ActiveSponsor }
   | { readonly type: 'sponsorFailed'; readonly sponsor: ActiveSponsor }
+  /** Cambiaron las vallas de un campo (una nueva, o anunciantes que llegan o se van). */
+  | { readonly type: 'billboardsChanged'; readonly buildings: readonly PlacedBuilding[] }
   /** Cambiaron la fama, la afición o los socios. */
   | { readonly type: 'clubChanged' }
   /** Primera sala completa de estos tipos (+1 de fama cada una). */
@@ -292,6 +297,7 @@ export type CommandError =
   | BlockMoveError
   | GrantError
   | SponsorError
+  | BillboardError
   | 'needsPitch'
   | 'buildingNotFound'
   | 'notUpgradable'
@@ -396,6 +402,15 @@ export function executeCommand(
     case 'cancelGrant':
       if (!applyCancelGrant(state, command.grantId)) return { ok: false, reason: 'grantNotActive' }
       return { ok: true, event: { type: 'grantCancelled', grantId: command.grantId } }
+    case 'buildBillboard': {
+      const building = state.buildings[command.buildingId]
+      const def = building && content.buildings[building.type]
+      if (!building) return { ok: false, reason: 'buildingNotFound' }
+      const error = validateBuildBillboard(content, def, building)
+      if (error) return { ok: false, reason: error }
+      const updated = applyBuildBillboard(state, building)
+      return { ok: true, event: { type: 'billboardsChanged', buildings: [updated] } }
+    }
     case 'acceptSponsor': {
       const error = validateAcceptSponsor(state, content, command.offerId)
       if (error) return { ok: false, reason: error }

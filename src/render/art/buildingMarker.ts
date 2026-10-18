@@ -9,7 +9,7 @@ import { pitchSurface, type BuildingDef, type PitchRole } from '@/sim/buildings/
 import { rotateSize, type GridSize, type Rotation } from '@/sim/geometry'
 import { TILE_SIZE } from '../core/grid'
 import { OBJECT_ART, type ObjectPainter } from './objectArt'
-import { createPitchMarker } from './pitchMarker'
+import { createPitchMarker, type BillboardLook } from './pitchMarker'
 import { createRandom, seedFromText } from '../core/random'
 import { palette } from '../palette'
 import type { RenderAssets } from '../core/renderAssets'
@@ -33,6 +33,8 @@ export interface MarkerOptions {
   readonly role?: PitchRole
   /** Solo campos: nivel de sus banquillos (sin dato, no tiene). */
   readonly benches?: number
+  /** Solo campos: vallas del pasillo, con los colores del anunciante o null si están libres. */
+  readonly billboards?: readonly (BillboardLook | null)[]
   /** Tamaño sin girar si no es el del catálogo (gradas). */
   readonly size?: GridSize
 }
@@ -45,7 +47,7 @@ export function createBuildingMarker(
   def: BuildingDef,
   rotation: Rotation,
   assets?: RenderAssets,
-  { tier = 0, role, benches, size = def.size }: MarkerOptions = {},
+  { tier = 0, role, benches, billboards, size = def.size }: MarkerOptions = {},
 ): Container {
   // Los terrenos de juego tienen su propio dibujo (superficie + líneas de cal).
   if (def.pitch) {
@@ -55,6 +57,7 @@ export function createBuildingMarker(
       assets?.floors.pattern(pitchSurface(def, tier) ?? 'dirt') ?? def.markerColor,
       role,
       benches,
+      billboards,
     )
   }
   // Objetos con dibujo propio (taquilla, ducha, mesa…)

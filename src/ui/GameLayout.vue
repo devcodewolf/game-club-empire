@@ -18,19 +18,23 @@ defineSlots<{
 
 <template>
   <div
-    class="pointer-events-none absolute inset-0 grid grid-cols-[auto_1fr_auto] grid-rows-[auto_1fr_auto] gap-3 p-3"
+    class="pointer-events-none absolute inset-0 grid grid-cols-[auto_1fr_auto] grid-rows-[auto_minmax(0,1fr)_auto] gap-3 p-3"
   >
-    <header class="col-span-3 flex items-start gap-3 *:pointer-events-auto">
+    <!--
+      Altura fija (la del reloj): lo que crezca o aparezca arriba (avisos, el
+      marcador, el tablón…) flota por encima sin empujar las fichas laterales.
+    -->
+    <header class="col-span-3 flex h-[72px] items-start gap-3 *:pointer-events-auto">
       <slot name="top" />
     </header>
     <aside
-      class="side-slot flex flex-col gap-3 overflow-x-clip overflow-y-visible pr-1 pb-1 *:pointer-events-auto"
+      class="side-slot flex min-h-0 flex-col gap-3 overflow-x-clip overflow-y-visible pr-1 pb-1 *:pointer-events-auto"
     >
       <slot name="left" />
     </aside>
     <div />
     <aside
-      class="side-slot flex flex-col gap-3 overflow-x-clip overflow-y-visible pr-1 pb-1 *:pointer-events-auto"
+      class="side-slot flex min-h-0 flex-col gap-3 overflow-x-clip overflow-y-visible pr-1 pb-1 *:pointer-events-auto"
     >
       <slot name="right" />
     </aside>
@@ -45,7 +49,9 @@ defineSlots<{
  * Los paneles laterales entran deslizándose: durante la animación sobresalen
  * del hueco. Se recorta solo en horizontal (overflow-x-clip); en vertical el
  * panel crece con su contenido (overflow-y-visible): las fichas nunca hacen
- * scroll. A diferencia de "hidden", "clip" no fuerza scroll en el otro eje.
+ * scroll: las fichas largas hacen scroll dentro de su hoja (la fila del centro
+ * es `minmax(0, 1fr)`, así nunca empuja la barra de abajo fuera de la pantalla).
+ * A diferencia de "hidden", "clip" no fuerza scroll en el otro eje.
  * El padding deja sitio a la sombra plana de los paneles.
  */
 .side-slot {

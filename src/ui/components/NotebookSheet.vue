@@ -31,13 +31,24 @@ withDefaults(defineProps<{ margin?: boolean }>(), { margin: true })
   box-shadow: 4px 4px 0 rgb(0 0 0 / 0.35);
 }
 
-/* Margen rojo vertical, como en una libreta escolar */
-.notebook--margin::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 26px;
-  width: 1.5px;
-  background: var(--color-paper-margin);
-  pointer-events: none;
+/*
+ * Margen rojo vertical, como en una libreta escolar. Va como capa del fondo
+ * (no como ::before) para que siga entero cuando la hoja hace scroll.
+ */
+.notebook--margin {
+  background-image:
+    linear-gradient(var(--color-paper-margin), var(--color-paper-margin)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 23px,
+      color-mix(in srgb, var(--color-paper-line) 70%, transparent) 23px 24px
+    );
+  background-size:
+    1.5px 100%,
+    auto;
+  background-position:
+    26px 0,
+    0 8px;
+  background-repeat: repeat-y, repeat;
 }
 </style>

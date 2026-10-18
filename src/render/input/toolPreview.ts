@@ -11,6 +11,7 @@
  *
  * Solo lee el estado (validatePlacement, validateFloorPaint): nunca lo modifica.
  */
+import { billboardLooks } from '../art/billboardLooks'
 import { formatNumber } from '../core/formatNumber'
 import { Container, Graphics, Text } from 'pixi.js'
 import type { Game } from '@/sim/game'
@@ -198,6 +199,7 @@ export function createToolPreview(layer: Container, game: Game, assets: RenderAs
       tier: building.tier,
       role: building.role,
       benches: building.benches,
+      billboards: billboardLooks(game.content, building),
       ...(building.size ? { size: building.size } : {}),
     })
   }

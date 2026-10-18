@@ -50,6 +50,8 @@ export type LedgerConcept =
   | 'grants'
   /** Patrocinios locales: adelanto, bonus y devolución al cancelar. */
   | 'sponsors'
+  /** Vallas publicitarias con anunciante (cada lunes). */
+  | 'billboards'
 
 export interface LedgerEntry {
   /** Instante (minutos de juego). */

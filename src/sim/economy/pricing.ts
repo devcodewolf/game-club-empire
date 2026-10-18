@@ -276,6 +276,17 @@ export function commandPrice(state: MapState, content: SimContent, command: Comm
       const grant = grantDef(content, command.grantId)
       return { cost: 0, refund: grant?.advance ?? 0, concept: 'grants', refundConcept: 'grants' }
     }
+    case 'buildBillboard': {
+      const building = state.buildings[command.buildingId]
+      const def = building && buildings[building.type]
+      if (!building || !def?.pitch) return FREE
+      return {
+        cost: content.billboards.cost,
+        refund: 0,
+        concept: 'construction',
+        rect: buildingFootprint(building, def),
+      }
+    }
     case 'acceptSponsor': {
       const offer = state.club.sponsors.offers.find((o) => o.id === command.offerId)
       return {

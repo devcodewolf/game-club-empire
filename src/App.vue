@@ -57,10 +57,9 @@ useTimeShortcuts(game)
       <template #top>
         <!-- Sin capturar el ratón en los huecos: solo las fichas y el reloj reciben clics -->
         <div class="pointer-events-none! grid w-full grid-cols-[1fr_auto_1fr] items-start gap-3">
-          <!-- Arriba a la izquierda: el tablón (plegable), el partido en juego y el lunes de cuentas -->
+          <!-- Arriba a la izquierda: el tablón (plegable) y el lunes de cuentas -->
           <div class="flex flex-col items-start gap-2">
             <NoticeBoard />
-            <MatchChip />
             <WeeklyReportNote />
           </div>
           <div class="flex flex-col items-center gap-2">
@@ -72,6 +71,8 @@ useTimeShortcuts(game)
             >
               MODO DESARROLLO · todo desbloqueado{{ testMoney ? ' · dinero de pruebas' : '' }}
             </span>
+            <!-- Marcador del partido en juego, en el centro bajo las fichas -->
+            <MatchChip />
           </div>
           <!-- Reloj y, debajo, todo lo que "pasa" (avisos, lunes de cuentas…), flotando
                sobre lo de abajo para no empujar las fichas laterales al aparecer -->

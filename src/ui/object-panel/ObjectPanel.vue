@@ -4,9 +4,12 @@
  * si tiene siguiente nivel, qué cuesta y un botón para mejorarlo.
  * Mismo estilo que la ficha de sala (hoja de libreta).
  */
+import { billboardChance, billboardIncome, maxBillboards } from '@/sim/club/billboards'
+import { businessOf } from '@/sim/club/sponsors'
+import { MINUTES_PER_DAY } from '@/sim/time/calendar'
 import { IconLock } from '@tabler/icons-vue'
 import { formatNumber } from '@/render/core/formatNumber'
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { maxTier, tierQuality, type PitchRole } from '@/sim/buildings/buildings'
 import { buildingMaintenance, pitchRentalPerDay } from '@/sim/economy/recurring'
 import { pitchMaxCondition } from '@/sim/economy/staff'
@@ -128,6 +131,74 @@ const pitchState = computed(() => {
 })
 
 /** Banquillos del campo: nivel actual y siguiente (con su bloqueo por división). */
+/** Vallas publicitarias del campo: cuántas hay, cuántas con anunciante y lo que dan. */
+const billboards = computed(() => {
+  const b = building.value
+  const d = def.value
+  if (!b || !d?.pitch) return undefined
+  const boards = b.billboards ?? []
+  const max = maxBillboards(game.content, d, b.tier)
+  const nextMax = maxBillboards(game.content, d, b.tier + 1)
+  const occupied = boards.filter((board) => board.advertiser)
+  const fame = game.state.club.fame
+  const now = game.state.clock.time
+  return {
+    count: boards.length,
+    max,
+    /** Hueco extra al mejorar el campo (0 si ya está al máximo). */
+    moreWithUpgrade: nextMax > max && b.tier < maxTier(d) ? nextMax : 0,
+    occupied: occupied.length,
+    weekly: occupied.length * billboardIncome(game.content, fame),
+    perBoard: billboardIncome(game.content, fame),
+    chance: Math.round(billboardChance(game.content, fame) * 100),
+    // Agrupados por negocio: "Bar Casa Pepe ×2 (quedan 3 semanas)", con la que antes acaba
+    advertisers: [
+      ...occupied
+        .reduce((groups, board) => {
+          const id = board.advertiser ?? ''
+          const weeks = Math.max(1, Math.ceil((board.until - now) / (7 * MINUTES_PER_DAY)))
+          const group = groups.get(id)
+          if (group) {
+            group.count++
+            group.weeks = Math.min(group.weeks, weeks)
+          } else {
+            groups.set(id, { name: businessOf(game.content, id)?.name ?? id, count: 1, weeks })
+          }
+          return groups
+        }, new Map<string, { name: string; count: number; weeks: number }>())
+        .values(),
+    ],
+    cost: game.content.billboards.cost,
+    canAfford: game.state.money >= game.content.billboards.cost,
+  }
+})
+
+/**
+ * Pestañas de la ficha de un campo (tiene mucho que contar): césped y mejora,
+ * equipamiento (banquillos y vallas) y uso. Los demás objetos lo enseñan todo
+ * junto. Así la ficha cabe siempre en pantalla, sin scroll.
+ */
+type PitchTab = 'turf' | 'kit' | 'use'
+const PITCH_TABS: readonly { id: PitchTab; label: string }[] = [
+  { id: 'turf', label: 'Césped' },
+  { id: 'kit', label: 'Equipamiento' },
+  { id: 'use', label: 'Uso' },
+]
+const isPitch = computed(() => Boolean(def.value?.pitch))
+const pitchTab = ref<PitchTab>('turf')
+// Al seleccionar otro campo se vuelve a la primera pestaña
+watch(
+  () => building.value?.id,
+  () => (pitchTab.value = 'turf'),
+)
+/** ¿Se ve este apartado? (en los objetos que no son campos, siempre) */
+const shows = (tab: PitchTab): boolean => !isPitch.value || pitchTab.value === tab
+
+function buildBillboard(): void {
+  const b = building.value
+  if (b) game.dispatch({ type: 'buildBillboard', buildingId: b.id })
+}
+
 const benches = computed(() => {
   const b = building.value
   if (!b || !def.value?.pitch) return undefined
@@ -247,7 +318,7 @@ function upgrade(): void {
       v-if="building && def && info"
       role="dialog"
       :aria-label="`Objeto: ${info.title}`"
-      class="w-76 pt-2 pr-3 pb-4 pl-10"
+      class="w-80 pt-2 pr-3 pb-4 pl-10"
     >
       <header class="flex items-start gap-2">
         <h2
@@ -266,7 +337,32 @@ function upgrade(): void {
         </button>
       </header>
 
-      <template v-if="info.hasTiers">
+      <!-- Pestañas de la ficha de un campo, como separadores de libreta -->
+      <nav
+        v-if="isPitch"
+        class="mb-1.5 flex gap-1 border-b-2 border-ink"
+        role="tablist"
+        aria-label="Apartados del campo"
+      >
+        <button
+          v-for="tab in PITCH_TABS"
+          :key="tab.id"
+          type="button"
+          role="tab"
+          :aria-selected="pitchTab === tab.id"
+          class="-mb-0.5 cursor-pointer rounded-t-sm border-2 px-2 pt-0.5 font-hand text-[17px] leading-5 focus-visible:outline-2 focus-visible:outline-ink"
+          :class="
+            pitchTab === tab.id
+              ? 'border-ink border-b-paper bg-paper font-bold'
+              : 'border-transparent text-ink/60 hover:text-ink'
+          "
+          @click="pitchTab = tab.id"
+        >
+          {{ tab.label }}
+        </button>
+      </nav>
+
+      <template v-if="info.hasTiers && shows('turf')">
         <p class="font-hand text-[18px] leading-6 text-ink-blue">
           Nivel {{ info.level }} de {{ info.total }}
           <span
@@ -277,19 +373,24 @@ function upgrade(): void {
           </span>
         </p>
       </template>
-      <p class="font-hand text-[18px] leading-6 text-ink-blue">Calidad: {{ info.quality }}</p>
-      <p v-if="maintenance !== undefined" class="font-hand text-[18px] leading-6 text-ink-blue">
+      <p v-if="shows('turf')" class="font-hand text-[18px] leading-6 text-ink-blue">
+        Calidad: {{ info.quality }}
+      </p>
+      <p
+        v-if="maintenance !== undefined && shows('turf')"
+        class="font-hand text-[18px] leading-6 text-ink-blue"
+      >
         {{ rental ? 'Césped' : 'Mantenimiento' }}: {{ formatEuros(maintenance) }}/semana
       </p>
       <p v-if="standInfo" class="font-hand text-[18px] leading-6 text-ink-blue">
         Aforo: {{ standInfo.capacity }} espectadores
       </p>
 
-      <p v-if="pitchSeats" class="font-hand text-[18px] leading-6 text-ink-blue">
+      <p v-if="pitchSeats && shows('turf')" class="font-hand text-[18px] leading-6 text-ink-blue">
         Aforo: {{ pitchSeats }} espectadores
       </p>
 
-      <section v-if="pitchState" class="mt-2" aria-label="Estado del césped">
+      <section v-if="pitchState && shows('turf')" class="mt-2" aria-label="Estado del césped">
         <p class="font-hand text-[18px] leading-6 text-ink-blue">
           Estado:
           <span class="font-data text-sm font-bold tabular-nums"
@@ -334,7 +435,7 @@ function upgrade(): void {
 
       <p v-if="shedUse" class="font-hand text-[18px] leading-6 text-ink-blue">{{ shedUse }}</p>
 
-      <section v-if="benches" class="mt-2" aria-label="Banquillos">
+      <section v-if="benches && shows('kit')" class="mt-2" aria-label="Banquillos">
         <p v-if="benches.current" class="font-hand text-[18px] leading-6 text-ink-blue">
           Banquillos: {{ benches.current.name }} · +{{ benches.current.strength }} de fuerza en casa
           <span
@@ -376,6 +477,50 @@ function upgrade(): void {
         </template>
         <p v-else class="font-hand text-[18px] leading-6 text-green-700">Nivel máximo ★</p>
       </section>
+      <section v-if="billboards && shows('kit')" class="mt-3" aria-label="Vallas publicitarias">
+        <p class="font-hand text-[18px] leading-6 text-ink-blue">
+          Vallas publicitarias: {{ billboards.count }}/{{ billboards.max }}
+          <template v-if="billboards.count > 0">
+            · {{ billboards.occupied }} con anunciante
+          </template>
+        </p>
+        <p v-if="billboards.occupied > 0" class="font-hand text-[16px] leading-5 text-ink-blue">
+          Dan {{ formatEuros(billboards.weekly) }} cada lunes
+        </p>
+        <ul
+          v-if="billboards.advertisers.length"
+          class="font-hand text-[15px] leading-5 text-ink/80"
+        >
+          <li v-for="ad in billboards.advertisers" :key="ad.name">
+            · {{ ad.name }}{{ ad.count > 1 ? ` ×${ad.count}` : '' }} ({{
+              ad.weeks === 1 ? 'queda 1 semana' : `quedan ${ad.weeks} semanas`
+            }})
+          </li>
+        </ul>
+        <template v-if="billboards.count < billboards.max">
+          <button
+            type="button"
+            class="mt-1 w-full cursor-pointer border-2 border-[#7a5320] bg-[#a8742f] px-2 py-1 font-hand text-[17px] text-white shadow-[3px_3px_0_rgba(0,0,0,0.35)] hover:bg-[#b9843b] focus-visible:outline-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#a8742f]"
+            :disabled="!billboards.canAfford"
+            @click="buildBillboard"
+          >
+            Poner valla ({{ formatEuros(billboards.cost) }})
+          </button>
+          <p class="font-hand text-[15px] leading-5 text-ink-blue">
+            Cada lunes, una valla libre tiene un {{ billboards.chance }} % de conseguir anunciante,
+            que paga {{ formatEuros(billboards.perBoard) }}/semana (más con más fama).
+          </p>
+        </template>
+        <p
+          v-else-if="billboards.moreWithUpgrade"
+          class="font-hand text-[16px] leading-5 text-ink-blue"
+        >
+          Mejora el campo para poner más vallas (hasta {{ billboards.moreWithUpgrade }}).
+        </p>
+        <p v-else class="font-hand text-[16px] leading-5 text-green-700">
+          El campo está rodeado de vallas.
+        </p>
+      </section>
 
       <section v-if="breakdown" class="mt-2" aria-label="Avería">
         <p class="flex items-center gap-1 font-hand text-[18px] leading-6 text-red-700">
@@ -391,7 +536,7 @@ function upgrade(): void {
         </button>
       </section>
 
-      <section v-if="currentRole" class="mt-2">
+      <section v-if="currentRole && shows('use')" class="mt-2">
         <p
           id="pitch-role-label"
           class="font-hand text-[20px] leading-6 underline underline-offset-2"
@@ -421,7 +566,7 @@ function upgrade(): void {
         </p>
       </section>
 
-      <section v-if="rental" class="mt-2">
+      <section v-if="rental && shows('use')" class="mt-2">
         <button
           type="button"
           role="switch"
@@ -442,7 +587,7 @@ function upgrade(): void {
         </p>
       </section>
 
-      <section v-if="info.next" class="mt-2">
+      <section v-if="info.next && shows('turf')" class="mt-2">
         <p class="font-hand text-[20px] leading-6 underline underline-offset-2">Siguiente nivel:</p>
         <p class="font-hand text-[18px] leading-6 text-ink-blue">{{ info.next.name }}</p>
         <p class="font-hand text-[18px] leading-6 text-ink-blue">Coste: {{ info.next.cost }} €</p>
@@ -466,10 +611,13 @@ function upgrade(): void {
         </p>
       </section>
 
-      <p v-else-if="info.hasTiers" class="mt-3 font-hand text-[20px] leading-6 text-green-700">
+      <p
+        v-else-if="info.hasTiers && shows('turf')"
+        class="mt-3 font-hand text-[20px] leading-6 text-green-700"
+      >
         Nivel máximo ★
       </p>
-      <p v-else class="mt-3 font-hand text-[18px] leading-6 text-ink-blue">
+      <p v-else-if="!isPitch" class="mt-3 font-hand text-[18px] leading-6 text-ink-blue">
         Este objeto no tiene mejoras
       </p>
     </NotebookSheet>

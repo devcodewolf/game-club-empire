@@ -5,6 +5,7 @@
  * animación) y después se actualiza con los eventos de la partida: lo nuevo
  * aparece con andamio y rebote, lo demolido se va con polvo. Solo lee el estado.
  */
+import { billboardLooks } from '../art/billboardLooks'
 import { Container, Graphics, RenderLayer, Sprite } from 'pixi.js'
 import { placedSize, type BuildingId, type PlacedBuilding } from '@/sim/buildings/buildings'
 import type { Game } from '@/sim/game'
@@ -103,6 +104,7 @@ export function createBuildingsView(
       tier: building.tier,
       role: building.role,
       benches: building.benches,
+      billboards: billboardLooks(game.content, building),
       size,
     })
     const origin = tileToWorld(building.origin)
@@ -178,6 +180,13 @@ export function createBuildingsView(
       for (const id of [event.buildingId, event.demotedId]) {
         const building = id === undefined ? undefined : game.state.buildings[id]
         if (!building) continue
+        remove(building.id, false)
+        add(building, false)
+      }
+    }
+    if (event.type === 'billboardsChanged') {
+      // Valla nueva o anunciante que llega o se va: se redibuja el campo, sin rebote
+      for (const building of event.buildings) {
         remove(building.id, false)
         add(building, false)
       }

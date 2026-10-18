@@ -5,6 +5,7 @@
  * viven en `src/content/buildings.ts`. La simulación recibe el catálogo como
  * parámetro en lugar de importarlo, así los tests usan edificios de prueba.
  */
+import type { Billboard } from '../club/billboards'
 import type { FloorId } from '../map/floors'
 import type { GridSize, Rotation, TileCoord } from '../geometry'
 
@@ -120,6 +121,8 @@ export interface PlacedBuilding {
    * sin dato, no tiene). Son un dato del campo: se mueven con él.
    */
   readonly benches?: number
+  /** Solo campos: vallas publicitarias del pasillo de alrededor (ver `club/billboards.ts`). */
+  readonly billboards?: readonly Billboard[]
   /** Objetos: averiado (no cuenta para su sala hasta repararlo). */
   readonly broken?: boolean
   /** Solo gradas: campo y hueco al que está pegada. */

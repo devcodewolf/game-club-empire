@@ -20,6 +20,7 @@ import type { StaffRole } from '../economy/staff'
 import { pitchCondition } from '../economy/upkeep'
 import { mainPitch } from './match'
 import { clubChangingRooms } from './changingRooms'
+import { occupiedBillboards } from './billboards'
 
 export type Objective =
   /** Salas completas de un tipo (por defecto, una). */
@@ -43,6 +44,8 @@ export type Objective =
   | { readonly kind: 'benches'; readonly tier: number }
   /** Calidad (0-10) del vestuario local. */
   | { readonly kind: 'changingRoomQuality'; readonly min: number }
+  /** Vallas publicitarias con anunciante. */
+  | { readonly kind: 'billboards'; readonly min: number }
 
 /** Seguimiento de los objetivos de un contrato (subvención o patrocinio). */
 export interface ObjectivesProgress {
@@ -141,6 +144,8 @@ export function objectiveStatus(
     }
     case 'changingRoomQuality':
       return { current: clubChangingRooms(state, content).home.quality, target: objective.min }
+    case 'billboards':
+      return { current: occupiedBillboards(state), target: objective.min }
   }
 }
 

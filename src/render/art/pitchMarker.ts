@@ -1,6 +1,7 @@
 /**
- * Dibujo de un terreno de juego: superficie, líneas de cal, porterías y las
- * dos zonas de banquillos junto a la banda (con sus banquillos si los tiene).
+ * Dibujo de un terreno de juego: superficie, líneas de cal, porterías, las
+ * dos zonas de banquillos junto a la banda (con sus banquillos si los tiene)
+ * y las vallas publicitarias del pasillo.
  *
  * Las medidas se calculan en PROPORCIÓN al terreno (reglamento de fútbol 11:
  * 105×68 m), así sirven igual para fútbol 11 y fútbol 7 y para cualquier giro.
@@ -38,6 +39,7 @@ export function createPitchMarker(
   surface: FillInput,
   role?: PitchRole,
   benches?: number,
+  billboards: readonly (BillboardLook | null)[] = [],
 ): Container {
   const tiles = rotateSize(def.size, rotation)
   const width = tiles.width * TILE_SIZE
@@ -56,6 +58,7 @@ export function createPitchMarker(
   const horizontal = width >= height
   drawMarkings(g, margin, margin, width - margin * 2, height - margin * 2, horizontal)
   drawBenchZones(g, margin, margin, width - margin * 2, height - margin * 2, horizontal, benches)
+  drawBillboards(g, margin, margin, width - margin * 2, height - margin * 2, horizontal, billboards)
 
   const marker = new Container({ label: `building:${def.id}` })
   marker.addChild(g)
@@ -352,4 +355,117 @@ function drawBench(
   g.rect(rail.rx, rail.ry, rail.rw, rail.rh)
     .fill(palette.stoneDark)
     .stroke({ color: palette.outline, width: OUTLINE_DETAIL })
+}
+
+/** Aspecto de una valla con anunciante: los colores de su logotipo. */
+export interface BillboardLook {
+  readonly color: number
+  readonly accent: number
+}
+
+/** Medidas de las vallas, en casillas: largo, grosor y distancia a la línea. */
+const BILLBOARD = { length: 3, thickness: 0.34, gap: 0.5, offset: 1.35 } as const
+
+/**
+ * Huecos de las vallas en orden de llenado, estable al ir poniendo más: en la
+ * banda contraria a los banquillos desde el centro hacia fuera y, cada pocas,
+ * una detrás de cada portería. Coordenadas a lo largo/ancho del terreno.
+ */
+function billboardSlots(L: number, W: number): { along: number; across: number; side: boolean }[] {
+  const len = BILLBOARD.length * TILE_SIZE
+  const step = len + BILLBOARD.gap * TILE_SIZE
+  const out = BILLBOARD.offset * TILE_SIZE
+  // Banda: huecos centrados en la línea de medio campo, alternando a cada lado
+  const sideCount = Math.max(0, Math.floor(L / step))
+  const side: { along: number; across: number; side: boolean }[] = []
+  for (let i = 0; i < sideCount; i++) {
+    const k = Math.floor(i / 2) * (i % 2 === 0 ? 1 : -1) - (i % 2 === 0 ? 0 : 1)
+    const along =
+      L / 2 + k * step + (sideCount % 2 === 0 ? BILLBOARD.gap * TILE_SIZE * 0.5 : -len / 2)
+    if (along < 0 || along + len > L) continue
+    side.push({ along, across: -out, side: true })
+  }
+  // Fondos: detrás de cada portería, desde el centro hacia fuera
+  const endCount = Math.max(0, Math.floor(W / step))
+  const ends: { along: number; across: number; side: boolean }[] = []
+  for (let i = 0; i < endCount; i++) {
+    const k = Math.floor(i / 2) * (i % 2 === 0 ? 1 : -1) - (i % 2 === 0 ? 0 : 1)
+    const across = W / 2 + k * step - len / 2
+    if (across < 0 || across + len > W) continue
+    ends.push({ along: -out, across, side: false })
+    ends.push({ along: L + out - BILLBOARD.thickness * TILE_SIZE, across, side: false })
+  }
+  // Orden de llenado: cuatro de banda y luego una en cada fondo, y así sucesivamente
+  const order: { along: number; across: number; side: boolean }[] = []
+  let s = 0
+  let e = 0
+  while (s < side.length || e < ends.length) {
+    for (let i = 0; i < 4 && s < side.length; i++) order.push(side[s++]!)
+    for (let i = 0; i < 2 && e < ends.length; i++) order.push(ends[e++]!)
+  }
+  return order
+}
+
+/**
+ * Vallas publicitarias en el pasillo, mirando al campo: panel del color del
+ * anunciante con una franja y su "logotipo" (un círculo con el color de
+ * realce), o blanco con rayas grises si está libre.
+ */
+function drawBillboards(
+  g: Graphics,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  horizontal: boolean,
+  boards: readonly (BillboardLook | null)[],
+): void {
+  if (boards.length === 0) return
+  const L = horizontal ? w : h
+  const W = horizontal ? h : w
+  const slots = billboardSlots(L, W)
+  const len = BILLBOARD.length * TILE_SIZE
+  const thick = BILLBOARD.thickness * TILE_SIZE
+  boards.forEach((look, i) => {
+    const slot = slots[i]
+    if (!slot) return
+    // Las de banda van a lo largo; las de fondo, a lo ancho
+    const long = slot.side
+    const along = slot.along
+    const across = slot.across - (slot.side ? thick : 0)
+    const r = horizontal
+      ? long
+        ? { rx: x + along, ry: y + across, rw: len, rh: thick }
+        : { rx: x + along, ry: y + across, rw: thick, rh: len }
+      : long
+        ? { rx: x + across, ry: y + along, rw: thick, rh: len }
+        : { rx: x + across, ry: y + along, rw: len, rh: thick }
+    g.rect(r.rx + SHADOW_OFFSET, r.ry + SHADOW_OFFSET, r.rw, r.rh).fill({
+      color: palette.outline,
+      alpha: SHADOW_ALPHA,
+    })
+    const face = look?.color ?? palette.chalk
+    g.rect(r.rx, r.ry, r.rw, r.rh).fill(face).stroke({ color: palette.outline, width: OUTLINE })
+    const vertical = r.rh > r.rw
+    if (!look) {
+      // Libre: rayas diagonales grises
+      const n = 6
+      for (let k = 1; k < n; k++) {
+        const t = k / n
+        if (vertical) g.moveTo(r.rx, r.ry + r.rh * t).lineTo(r.rx + r.rw, r.ry + r.rh * t - r.rw)
+        else g.moveTo(r.rx + r.rw * t, r.ry + r.rh).lineTo(r.rx + r.rw * t + r.rh, r.ry)
+      }
+      g.stroke({ color: palette.stone, width: OUTLINE_DETAIL })
+      return
+    }
+    // Franja de realce a lo largo y logotipo en un extremo
+    if (vertical) g.rect(r.rx + r.rw * 0.38, r.ry + r.rh * 0.3, r.rw * 0.24, r.rh * 0.62)
+    else g.rect(r.rx + r.rw * 0.3, r.ry + r.rh * 0.38, r.rw * 0.62, r.rh * 0.24)
+    g.fill(look.accent)
+    const cx = vertical ? r.rx + r.rw / 2 : r.rx + r.rw * 0.15
+    const cy = vertical ? r.ry + r.rh * 0.15 : r.ry + r.rh / 2
+    g.circle(cx, cy, Math.min(r.rw, r.rh) * 0.36)
+      .fill(look.accent)
+      .stroke({ color: shade(look.color, -0.35), width: OUTLINE_DETAIL })
+  })
 }

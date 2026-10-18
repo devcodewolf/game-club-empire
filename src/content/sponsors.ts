@@ -124,6 +124,12 @@ export const SPONSORS: SponsorsContent = {
       objectives: [{ objective: { kind: 'fullHouse', count: 1 } }],
     },
     {
+      id: 'vallas',
+      difficulty: 2,
+      weeks: [4, 6],
+      objectives: [{ objective: { kind: 'billboards', min: 2 }, relative: true }],
+    },
+    {
       id: 'barAbierto',
       difficulty: 2,
       weeks: [4, 6],

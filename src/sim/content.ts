@@ -14,6 +14,7 @@ import type { EconomyContent } from './economy/ledger'
 import type { MatchContent } from './club/match'
 import type { GrantsContent } from './club/grants'
 import type { SponsorsContent } from './club/sponsors'
+import type { BillboardsContent } from './club/billboards'
 
 export interface SimContent {
   readonly buildings: BuildingCatalog
@@ -31,4 +32,6 @@ export interface SimContent {
   readonly grants: GrantsContent
   /** Patrocinios de los negocios del pueblo. */
   readonly sponsors: SponsorsContent
+  /** Vallas publicitarias alrededor de los campos. */
+  readonly billboards: BillboardsContent
 }

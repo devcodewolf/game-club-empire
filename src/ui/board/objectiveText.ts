@@ -41,6 +41,10 @@ const TEXTS: Texts = {
   benches: (o, content) =>
     `Banquillos: ${content.match.benches[o.tier]?.name ?? `nivel ${o.tier + 1}`}`,
   changingRoomQuality: (o) => `Vestuario local de calidad ${formatNumber(o.min)} o más`,
+  billboards: (o) =>
+    o.min === 1
+      ? '1 valla publicitaria con anunciante'
+      : `${o.min} vallas publicitarias con anunciante`,
 }
 
 /** Textos cortos para el tablón, donde cabe poco ("Campo a 55+ · 7 días"). */
@@ -61,6 +65,7 @@ const SHORT_TEXTS: Texts = {
   students: (o) => `${formatNumber(o.min)} alumnos`,
   benches: (o, content) => content.match.benches[o.tier]?.name ?? `Banquillos ${o.tier + 1}`,
   changingRoomQuality: (o) => `Vestuario de calidad ${formatNumber(o.min)}`,
+  billboards: (o) => (o.min === 1 ? '1 valla ocupada' : `${o.min} vallas ocupadas`),
 }
 
 /** Texto corto de un objetivo para el tablón ("100 socios"). */

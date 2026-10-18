@@ -184,7 +184,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [x] 🧠 Subvenciones del ayuntamiento como las de Prison Architect: lista encadenada con objetivos, adelanto al aceptar y bonus al cumplir, 2 activas, se tachan los objetivos al cumplirlos (idea de Raul; cadena inicial en `docs/IDEAS.md`)
 - [ ] 🧠 El tablón avisa de lo que frena al club ("El vestuario no cuenta: le faltan 2 duchas", "Nadie cuida el campo: contrata un jardinero"); cada nota lleva a su ficha al hacer clic
 - [x] 🧠 Tablón del vestuario y patrocinios locales con objetivos como datos. El tablón es el equivalente a la lista "Todo" de Prison Architect: nota de corcho arriba a la izquierda con secciones (próximo partido, patrocinios con sus objetivos tachados al cumplirlos, ofertas, averías, quiebra, lotería) y un contador de pendientes
-- [ ] 🧠 Vallas publicitarias (objeto, colocación en el pasillo perimetral, anunciantes)
+- [x] 🧠 Vallas publicitarias (dato del campo, como los banquillos: se compran desde su ficha y se colocan solas en el pasillo; anunciantes del pueblo cada lunes)
 - [ ] 🧠 Escuela de fútbol con monitores
 - [ ] 🧠 Lotería de Navidad
 - [ ] ⚡ Notas del tablón, carteles de los anunciantes y logotipos de los patrocinadores
@@ -242,6 +242,8 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 - [ ] ⚡ Día de partido animado: afición llegando por la carretera, focos, sonido de grada (placeholder)
 - [ ] 🧠 Peñas de aficionados: con suficiente afición nace una peña con nombre que pide mejoras; si se cumplen, sube la afición y anima en casa
 - [ ] 🧠 Rival fijo del pueblo vecino: el derbi llena el estadio y vale el doble de fama
+- [ ] 🧠 Focos en las esquinas del campo, mejorables por niveles; sin focos (o malos) los partidos de noche en invierno se juegan peor o no se pueden programar tarde. Va con el ciclo día/noche (idea de Raul; ver `docs/IDEAS.md`)
+- [ ] 🧠 Derechos de televisión al llegar a Segunda y Primera: ingreso por partido retransmitido según división y fama (idea de Raul)
 - [ ] 🧠 Túnel de vestuarios hasta el campo con calidades y precios (idea de Raul; ver `docs/IDEAS.md`)
 - [ ] 🧠 Entrenamientos (pestaña del cuaderno, como el "Regime" de PA): días y horas de campo, táctica, gimnasio y físico; suben la fuerza pero cansan y bajan la moral si se abusa (idea de Raul; ver `docs/IDEAS.md`)
 - [ ] ⚡ Palmarés: una línea por temporada terminada (división, puesto, puntos, ascenso) en la pestaña Partidos
