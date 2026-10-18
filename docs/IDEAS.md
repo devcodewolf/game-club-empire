@@ -76,6 +76,15 @@ En el tablón y en la pestaña Subvenciones del cuaderno, los objetivos se tacha
 - **Pero entrenar mucho cansa y baja la moral y el contento**: hay que dejar días de descanso, sobre todo antes del partido. Es una decisión con equilibrio, no "cuanto más, mejor".
 - En la Fase 3 se aplica al equipo entero; en la Fase 4, cada jugador lo nota según sus necesidades.
 
+### Árbol de decisiones con el presidente, como la "Bureaucracy" de PA · Fase 5 · En el plan
+- Un tablero con el **presidente** arriba y, unidos con líneas, los cargos y áreas del club (secretario técnico, director financiero, coordinador de cantera, jefe de mantenimiento, prensa…). Cada uno, una ficha con su retrato dibujado, su precio y lo que desbloquea (sistemas, pestañas del cuaderno, edificios, mejoras). Lo que aún no se puede pagar o no está desbloqueado sale apagado.
+- Encaja con el árbol de la Fase 5: en vez de un árbol abstracto, son **personas del club** que se van incorporando.
+- Se abre con un icono en la cabecera del tablón (la cara del presidente), como los iconos de la lista "Todo" de PA.
+
+### Tablón como la lista "Todo" de PA · Fase 2, Bloque F · Hecho
+- Hoja de libreta con renglones arriba a la izquierda: "Tablón 1/4" (tareas cumplidas sobre el total), apartados con cuadradito negro y título en negrita, el dinero de cada subvención en rojo a la derecha y las tareas tachadas al cumplirse. Toda la gestión, en las pestañas de Informes.
+- Más adelante, iconos en la cabecera (presidente, avisos…), como en PA.
+
 ### Pantalla de inicio con el nombre del club · Fase 2, Bloque I · En el plan
 - Al empezar una partida nueva se elige el **nombre del club** y otras cosas que se decidirán en su momento (colores, escudo dibujado, dificultad…). Hasta entonces el club se llama "Tu club".
 - Va junto al guardado: la pantalla de inicio ofrece nueva partida, continuar y cargar.

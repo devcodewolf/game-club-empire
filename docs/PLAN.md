@@ -282,7 +282,7 @@ Leyenda: 🧠 agente principal (Opus) · ⚡ delegable a Sonnet · ✅ checkpoin
 ## Fase 5 — Árbol de habilidades y desbloqueos
 - [ ] 🧠 Sistema de investigación/puntos (p. ej. puntos de prestigio por temporada)
 - [ ] ⚡ Definir el árbol en `content/tech-tree.ts` (ramas: deportiva, comercial, infraestructura)
-- [ ] ⚡ UI del árbol en Vue
+- [ ] ⚡ UI del árbol en Vue, como la "Bureaucracy" de Prison Architect: el **presidente** arriba y, colgando de él con líneas, los cargos y áreas del club (secretario técnico, director financiero, coordinador de cantera, jefe de mantenimiento…), cada uno con su retrato, su precio y lo que desbloquea; lo no disponible, apagado. Se abre con un icono en la cabecera del tablón (idea de Raul; ver `docs/IDEAS.md`)
 - [ ] 🧠 Conectar desbloqueos con edificios y mecánicas
 - [ ] 🧠 Eventos de temporada en el campo (fiestas del pueblo, concierto, feria): mucho dinero y fama a cambio de desgastar el césped
 - [ ] ⚡ Logros ("Rey del barro", "Cien socios", "Casa llena"…)
